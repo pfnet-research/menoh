@@ -9,6 +9,7 @@ Menoh is released under MIT Licence.
 This codebase contains C API and C++ API.
 
 See also
+- Chainer model to ONNX : [onnx-chainer](https://github.com/chainer/onnx-chainer)
 
 - C# wrapper : [menoh-sharp](https://github.com/pfnet-research/menoh-sharp)
 
