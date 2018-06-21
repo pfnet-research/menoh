@@ -10,9 +10,9 @@ This codebase contains C API and C++ API.
 
 See also
 
-- C# Wrapper : [pfnet-research/menoh-sharp](pfnet-research/menoh-sharp)
+- C# wrapper : [menoh-sharp](https://github.com/pfnet-research/menoh-sharp)
 
-- Haskell Wrapper : [pfnet-research/menoh-haskell](pfnet-research/menoh-haskell)
+- Haskell wrapper : [menoh-haskell](https://github.com/pfnet-research/menoh-haskell)
 
 ## Goal
 
