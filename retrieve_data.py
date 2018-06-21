@@ -1,8 +1,11 @@
 import sys
+import os
 
 def wget( address, target ):
     print('wget ' + address + ' -O ' + target)
     version = sys.version_info
+    if not os.path.exists("./data"):
+        os.mkdir("./data")
     if version[0] == 2:
         import urllib
         urllib.urlretrieve(address, target)

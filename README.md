@@ -31,7 +31,7 @@ See also
 Execute below commands in root directory.
 
 ```
-sh retrieve_data.py
+python retrieve_data.py
 mkdir build && cd build
 cmake ..
 make
@@ -80,7 +80,7 @@ Setup chainer
 Then, execute below commands in root directory.
 
 ```
-sh gen_test_data.py
+python gen_test_data.py
 cd build
 cmake -DENABLE_TEST=ON ..
 make
