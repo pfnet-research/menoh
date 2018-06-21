@@ -1,0 +1,2 @@
+add_executable(vgg16_benchmark vgg16_benchmark.cpp)
+target_link_libraries(vgg16_benchmark menoh)
