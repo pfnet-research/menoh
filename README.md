@@ -31,7 +31,7 @@ See also
 Execute below commands in root directory.
 
 ```
-sh retrieve_data.py
+python retrieve_data.py
 mkdir build && cd build
 cmake ..
 make
