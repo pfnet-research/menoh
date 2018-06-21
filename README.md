@@ -101,6 +101,7 @@ make
 
 ### Neural network connections
 - Conv
+- ConvTranspose
 - FC
 
 ### Mathematical functions
