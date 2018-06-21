@@ -1,4 +1,4 @@
-#Tutorial
+# Tutorial
 
 In this tutorial, we are going to make a CNN model inference software.
 
@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-##Preprocessing input
+## Preprocessing input
 
 First of all, preprocessing input is required. `data/VGG16.onnx` takes 3 channels 224 x 224 sized image but input image
 is not always sized 224x224. So we define *crop_and_resize* function using OpenCV :
