@@ -2,7 +2,7 @@
 
 Menoh is DNN inference library with C API.
 
-Menoh is released under MIT Licence.
+Menoh is released under MIT License.
 
 [Document](https://pfnet-research.github.io/menoh/)
 
@@ -117,7 +117,7 @@ make
 - GlobalMaxPool
 - MaxPool
 
-# Licence
+# License
 
 Menoh is released under MIT License. Please see the LICENSE file for details.
 
