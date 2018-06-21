@@ -10,7 +10,7 @@ def call( cmd ):
     ret = p.wait()
     print('')
 
-pyexe = 'python'
+pyexe = sys.executable
 
 # Generate input data
 call(pyexe + ' test/script/make_random_data.py 1 3 224 224 --output data/random_input_1_3_224_224.txt')

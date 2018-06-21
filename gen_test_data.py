@@ -1,3 +1,4 @@
+import sys
 import subprocess
 
 
@@ -11,7 +12,7 @@ def call(cmd):
     print('')
 
 
-pyexe = 'python'
+pyexe = sys.executable
 
 # Generate input data
 call(
