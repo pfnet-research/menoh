@@ -2,6 +2,7 @@
 #include <Windows.h>
 #endif
 
+#include <fstream>
 #include <iostream>
 #include <numeric>
 #include <queue>
