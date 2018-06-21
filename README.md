@@ -8,9 +8,11 @@ Menoh is released under MIT Licence.
 
 This codebase contains C API and C++ API.
 
-C# Wrapper : [pfnet-research/menoh-sharp](pfnet-research/menoh-sharp)
+See also
 
-Haskell Wrapper : [pfnet-research/menoh-haskell](pfnet-research/menoh-haskell)
+- C# Wrapper : [pfnet-research/menoh-sharp](pfnet-research/menoh-sharp)
+
+- Haskell Wrapper : [pfnet-research/menoh-haskell](pfnet-research/menoh-haskell)
 
 ## Goal
 
