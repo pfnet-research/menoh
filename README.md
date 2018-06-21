@@ -4,7 +4,7 @@ Menoh is DNN inference library with C API.
 
 Menoh is released under MIT Licence.
 
-[Document](https://github.pfidev.jp/pages/okada/Menoh/index.html)
+[Document](https://pfnet-research.github.io/menoh/)
 
 ## Goal
 
