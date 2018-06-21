@@ -2,7 +2,7 @@
 
 Menoh is DNN inference library written in C++.
 
-Menoh is released under MIT Licence.
+Menoh is released under MIT License.
 
 [Getting started](getting_started.md)
 
@@ -39,7 +39,7 @@ Menoh is released under MIT Licence.
 - GlobalMaxPool
 - MaxPool
 
-# Licence
+# License
 
 Menoh is released under MIT License. Please see the LICENSE file for details.
 
