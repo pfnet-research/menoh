@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['menoh_5fdtype_5ffloat',['menoh_dtype_float',['../group__vpt.html#ggaed24d6ab088cb2ae361b1848c8a41459a8eba7aaa95d343eeffdd114d1eac36d8',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5fbackend_5ferror',['menoh_error_code_backend_error',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2ad361fde7c437a99af6d01d36e5ebabff',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5fdimension_5fmismatch',['menoh_error_code_dimension_mismatch',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a4cb7fd3eadba984fa87b59386b4c726b',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5ffailed_5fto_5fconfigure_5foperator',['menoh_error_code_failed_to_configure_operator',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a6c4a13d41de3a7a86964b66783445bf1',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5findex_5fout_5fof_5frange',['menoh_error_code_index_out_of_range',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a91897086e2adbf0dfe666a412322b578',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5finvalid_5fattribute_5ftype',['menoh_error_code_invalid_attribute_type',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a5461f3fde1cfbe5bebdcea4db6138593',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5finvalid_5fbackend_5fname',['menoh_error_code_invalid_backend_name',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a653b0ea7cf520448494261fb142062f8',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5finvalid_5fdtype',['menoh_error_code_invalid_dtype',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a8f30f1409917f50f030578bc488a59d5',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5finvalid_5ffilename',['menoh_error_code_invalid_filename',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a4ad6a5aaeb0361555badc305c0a332ee',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5fjson_5fparse_5ferror',['menoh_error_code_json_parse_error',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2ac3357ddf825cb323dd635ff49aebef84',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5fonnx_5fparse_5ferror',['menoh_error_code_onnx_parse_error',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a7a245095038d3b8195cd0ee969885b2b',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5fsame_5fnamed_5fvariable_5falready_5fexist',['menoh_error_code_same_named_variable_already_exist',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a3899f1e44673baf4d2d696827622656c',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5fstd_5ferror',['menoh_error_code_std_error',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a67703fd1fa765bbc8a511f0aac6437b8',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5fsuccess',['menoh_error_code_success',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a850a474ae5e9716dcd3c9cf6c154346d',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5funknown_5ferror',['menoh_error_code_unknown_error',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2ae37abf692fdac356261fe1572dd78b76',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5funsupported_5fonnx_5fopset_5fversion',['menoh_error_code_unsupported_onnx_opset_version',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a85c57c1eb0ac92637d3d597e362de77a',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5funsupported_5foperator',['menoh_error_code_unsupported_operator',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2add3a89c8ff0ea1a6f5e05bcffc2cec11',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5funsupported_5foperator_5fattribute',['menoh_error_code_unsupported_operator_attribute',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2aa28b2e4b5969e56c42b7ffc539ec726c',1,'menoh.h']]],
+  ['menoh_5ferror_5fcode_5fvariable_5fnot_5ffound',['menoh_error_code_variable_not_found',['../group__error__handling.html#gga853d5083a41bad2455765453ed7207c2a89957a49bea1fd1f4f741f2ab1624eda',1,'menoh.h']]]
+];
