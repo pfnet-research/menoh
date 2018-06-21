@@ -6,6 +6,12 @@ Menoh is released under MIT Licence.
 
 [Document](https://pfnet-research.github.io/menoh/)
 
+This codebase contains C API and C++ API.
+
+C# Wrapper : [pfnet-research/menoh-sharp](pfnet-research/menoh-sharp)
+
+Haskell Wrapper : [pfnet-research/menoh-haskell](pfnet-research/menoh-haskell)
+
 ## Goal
 
 - DNN Inference with CPU
