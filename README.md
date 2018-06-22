@@ -10,6 +10,8 @@ Menoh is released under MIT License.
 
 This codebase contains C API and C++ API.
 
+For Windows users, prebuild libraries are [available](https://github.com/pfnet-research/menoh/releases/download/untagged-3aa294f64531bcbd766c/Menoh_Prebuild_Cpp_Win.zip) and Nuget package is [available](https://www.nuget.org/packages/Menoh/).
+
 See also
 - Chainer model to ONNX : [onnx-chainer](https://github.com/chainer/onnx-chainer)
 
