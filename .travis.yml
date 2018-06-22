@@ -1,32 +1,32 @@
 dist: trusty
-sudo: false
+sudo: required
 language: cpp
 addons:
     apt:
         sources:
             - ubuntu-toolchain-r-test
             - george-edison55-precise-backports
+            - sourceline: 'ppa:maarten-fonville/protobuf'
         packages:
             - gcc-7
             - g++-7
             - cmake-data
             - cmake
             - libopencv-dev
+            - libprotobuf-dev
+            - protobuf-compiler
             - python
 cache:
     directories:
-        - $HOME/protoc
         - $HOME/mkl-dnn
 install:
     - if [ "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
-    - sh .travis/install_protoc.sh
     - sh .travis/install_mkldnn.sh
     - mkdir -p data
     - pip install --user chainer
     - python retrieve_data.py
     - python gen_test_data.py
 before_script:
-    - ls -R $HOME/protoc
     - ls -R $HOME/mkl-dnn
 script:
     - mkdir build
