@@ -6,7 +6,8 @@ Menoh is DNN inference library with C API.
 
 Menoh is released under MIT License.
 
-Note: Menoh is now experimental. Please check supported operators before using. We have checked at least VGG16 and ResNet50 retrieved by Chainer are works fine.
+DISCLAIMER: Menoh is still experimental. Use it at your own risk.
+In particular not all operators in ONNX are supported, so please check whether the operators used in your model are supported. We have checked that VGG16 and ResNet50 models converted by onnx-chainer work fine.
 
 [Document](https://pfnet-research.github.io/menoh/)
 
