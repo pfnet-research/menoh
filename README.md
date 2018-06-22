@@ -73,7 +73,7 @@ top 5 categories are
 Please give `--help` option for details
 
 ```
-./example/vgg16_example --help
+./example/vgg16_example_in_cpp --help
 ```
 
 
