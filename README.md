@@ -1,5 +1,7 @@
 # Menoh
 
+[![travis](https://img.shields.io/travis/pfnet-research/menoh/master.svg)](https://travis-ci.org/pfnet-research/menoh)
+
 Menoh is DNN inference library with C API.
 
 Menoh is released under MIT License.
