@@ -12,7 +12,7 @@ Note: Menoh is now experimental. Please check supported operators before using. 
 
 This codebase contains C API and C++ API.
 
-For Windows users, prebuild libraries are [available](https://github.com/pfnet-research/menoh/releases/download/untagged-3aa294f64531bcbd766c/Menoh_Prebuild_Cpp_Win.zip) and Nuget package is [available](https://www.nuget.org/packages/Menoh/).
+For Windows users, prebuild libraries are available (see [release](https://github.com/pfnet-research/menoh/releases)) and Nuget package is [available](https://www.nuget.org/packages/Menoh/).
 
 See also
 - Chainer model to ONNX : [onnx-chainer](https://github.com/chainer/onnx-chainer)
