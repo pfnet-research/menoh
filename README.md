@@ -28,7 +28,7 @@ See also
 # Requirements
 
 - MKL-DNN Library (0.14 or later)
-- ProtocolBuffers (3.5.1 is checked)
+- Protocol Buffers (3.5.1 is checked)
 
 # Build
 
