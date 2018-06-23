@@ -1,6 +1,9 @@
 dist: trusty
 sudo: required
 language: cpp
+os:
+  - linux
+  - osx
 addons:
     apt:
         sources:
@@ -18,10 +21,19 @@ cache:
     directories:
         - $HOME/mkl-dnn
 install:
-    - if [ "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
-    - sh .travis/install_mkldnn.sh
+    - |
+      if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+        brew update
+        brew upgrade python
+        export PATH=/usr/local/opt/python/libexec/bin:$PATH
+        brew install numpy || true
+        brew install opencv mkl-dnn protobuf
+      else
+        pyenv local 3.6
+      fi
+    - if [ "$TRAVIS_OS_NAME" = "linux" -a "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sh .travis/install_mkldnn.sh; fi
     - mkdir -p data
-    - pyenv local 3.6
     - pip install --user chainer
     - python retrieve_data.py
     - python gen_test_data.py
@@ -30,6 +42,15 @@ before_script:
 script:
     - mkdir build
     - cd build
-    - sh ../.travis/run_cmake.sh
+    - |
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+        cmake -DENABLE_TEST=ON \
+        ..
+      else
+        cmake -DENABLE_TEST=ON \
+        -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn/include" \
+        -DMKLDNN_LIBRARY="$HOME/mkl-dnn/lib/libmkldnn.so" \
+        ..
+      fi
     - make
     # - ./test/menoh_test
