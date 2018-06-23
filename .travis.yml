@@ -15,7 +15,6 @@ addons:
             - libopencv-dev
             - libprotobuf-dev
             - protobuf-compiler
-            - python
 cache:
     directories:
         - $HOME/mkl-dnn
@@ -23,6 +22,7 @@ install:
     - if [ "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
     - sh .travis/install_mkldnn.sh
     - mkdir -p data
+    - pyenv local 3.6
     - pip install --user chainer
     - python retrieve_data.py
     - python gen_test_data.py
