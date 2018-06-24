@@ -5,7 +5,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
+#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
 #define MENOH_API __declspec(dllexport)
 #else
 #define MENOH_API
