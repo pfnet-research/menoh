@@ -1,0 +1,23 @@
+platform:
+- x64
+
+install:
+- git submodule update --init
+- set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
+#- pacman -Syu --noconfirm
+- pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-opencv mingw-w64-x86_64-protobuf mingw-w64-x86_64-python3 mingw-w64-x86_64-python3-pip mingw-w64-x86_64-python3-numpy mingw-w64-x86_64-hdf5 mingw-w64-x86_64-ca-certificates
+- curl -omingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz -L --insecure https://www.dropbox.com/s/bi1pb4pq7cc07o9/mingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz?dl=1
+- pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz
+- pip3 install --user chainer
+- mkdir -p data
+- python3 retrieve_data.py
+- python3 gen_test_data.py
+
+build_script:
+- mkdir build
+- cd build
+- cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 ..
+- make
+# to find libmenoh.dll, libgtest.dll and libgtest_main.dll
+- set PATH=C:\projects\menoh\build\menoh;C:\projects\menoh\build\test\lib\googletest\googlemock\gtest;%PATH%
+- test\menoh_test
