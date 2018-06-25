@@ -36,6 +36,8 @@ namespace menoh_impl {
                             return output_name == required_output_name;
                         });
                   });
+                if (needed_node_iter==node_list.end())
+                    continue;
                 auto is_already_added =
                   std::find(needed_node_list.begin(), needed_node_list.end(),
                             *needed_node_iter) != needed_node_list.end();
