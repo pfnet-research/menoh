@@ -22,4 +22,7 @@ build_script:
 - make
 # to find libmenoh.dll, libgtest.dll and libgtest_main.dll
 - set PATH=C:\projects\menoh\build\menoh;C:\projects\menoh\build\test\lib\googletest\googlemock\gtest;%PATH%
+- ldd test/menoh_test.exe
+- ldd /c/projects/menoh/build/menoh/libmenoh.dll
+- ldd /mingw64/bin/libmkldnn.dll
 - test\menoh_test
