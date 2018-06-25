@@ -35,7 +35,7 @@ install:
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sh .travis/install_mkldnn.sh; fi
     - mkdir -p data
     - pip install --user chainer
-    - python retrieve_data.py
+    # - python retrieve_data.py
     - python gen_test_data.py
 before_script:
     - ls -R $HOME/mkl-dnn
