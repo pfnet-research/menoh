@@ -53,4 +53,4 @@ script:
         ..
       fi
     - make
-    # - ./test/menoh_test
+    - ./test/menoh_test
