@@ -1,3 +1,6 @@
+cache:
+- C:\msys64\mkl-dnn-86b7129
+
 platform:
 - x64
 
@@ -11,21 +14,25 @@ install:
 
 #- curl -omingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz -L https://www.dropbox.com/s/bi1pb4pq7cc07o9/mingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz?dl=1
 #- pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz
-- git clone https://github.com/intel/mkl-dnn.git
-- cd mkl-dnn
-- git checkout 86b712989c82dffdd8742aa49ee1c7d883fc838b
-- cd scripts
-- prepare_mkl.bat
-- cd ..
-- sed -i "s/add_subdirectory(examples)//g" CMakeLists.txt
-- sed -i "s/add_subdirectory(tests)//g" CMakeLists.txt
-- mkdir build
-- cd build
-- set MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX="
-- cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64 ..
-- make
-- make DESTDIR=/ install 
-- cd ../..
+- if exist C:\msys64\mkl-dnn-86b7129 (
+    echo "Using cached directory."
+  ) else (
+    git clone https://github.com/intel/mkl-dnn.git &&
+    cd mkl-dnn &&
+    git checkout 86b712989c82dffdd8742aa49ee1c7d883fc838b &&
+    cd scripts &&
+    prepare_mkl.bat &&
+    cd .. &&
+    sed -i "s/add_subdirectory(examples)//g" CMakeLists.txt &&
+    sed -i "s/add_subdirectory(tests)//g" CMakeLists.txt &&
+    mkdir build &&
+    cd build &&
+    set MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" &&
+    cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mkl-dnn-86b7129 .. &&
+    make &&
+    make DESTDIR=/ install &&
+    cd ../..
+  )
 
 - pip3 install --user chainer
 - mkdir -p data
@@ -35,11 +42,11 @@ install:
 build_script:
 - mkdir build
 - cd build
-- cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 ..
+- cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 -DMKLDNN_INCLUDE_DIR=/mkl-dnn-86b7129/include -DMKLDNN_LIBRARY=/mkl-dnn-86b7129/lib/libmkldnn.dll.a ..
 - make
 # to find libmenoh.dll, libgtest.dll and libgtest_main.dll
-- set PATH=C:\projects\menoh\build\menoh;C:\projects\menoh\build\test\lib\googletest\googlemock\gtest;%PATH%
+- set PATH=C:\projects\menoh\build\menoh;C:\projects\menoh\build\test\lib\googletest\googlemock\gtest;C:\msys64\mkl-dnn-86b7129\bin;%PATH%
 - ldd test/menoh_test.exe
 - ldd /c/projects/menoh/build/menoh/libmenoh.dll
-- ldd /mingw64/bin/libmkldnn.dll
+- ldd /mkl-dnn-86b7129/bin/libmkldnn.dll
 - test\menoh_test
