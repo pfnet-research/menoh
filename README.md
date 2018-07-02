@@ -17,10 +17,11 @@ For Windows users, prebuild libraries are available (see [release](https://githu
 
 See also
 - Chainer model to ONNX : [onnx-chainer](https://github.com/chainer/onnx-chainer)
-
 - C# wrapper : [menoh-sharp](https://github.com/pfnet-research/menoh-sharp)
-
 - Haskell wrapper : [menoh-haskell](https://github.com/pfnet-research/menoh-haskell)
+- [Unofficial] Go wrapper by kou-m san : [gomenoh](https://github.com/kou-m/gomenoh)
+- [Unofficial] Rust wrapper by Y-Nak san : [menoh-rs](https://github.com/Y-Nak/menoh-rs)
+- [Unofficial] Rust wrapper by Hakuyume san : [menoh-rs](https://github.com/Hakuyume/menoh-rs)
 
 ## Goal
 
