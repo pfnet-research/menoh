@@ -1,52 +1,76 @@
 cache:
-- C:\msys64\mkl-dnn-86b7129
+- c:\msys64\mkl-dnn-86b7129-mingw
+- c:\mkl-dnn-v0.14-msvc
+- c:\protobuf-3.6.0-msvc
 
 platform:
 - x64
 
+image:
+- Visual Studio 2017
+
+environment:
+  matrix:
+    - TARGET: mingw
+    - TARGET: msvc
+
 install:
 - git submodule update --init
-- set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
-#- pacman -Syu --noconfirm
-- pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-opencv mingw-w64-x86_64-protobuf mingw-w64-x86_64-python3 mingw-w64-x86_64-python3-pip mingw-w64-x86_64-python3-numpy mingw-w64-x86_64-hdf5 mingw-w64-x86_64-ca-certificates
+- for /f "usebackq tokens=*" %%A in (`git rev-parse --short HEAD`) do set "MENOH_REV=%%A"
+- echo %MENOH_REV%
+
 - set SSL_CERT_FILE=C:\msys64\mingw64\ssl\cert.pem
 - set SSL_CERT_DIR=C:\msys64\mingw64\ssl\certs
+- if [%TARGET%]==[mingw] set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
+- if [%TARGET%]==[msvc] set PATH=C:\Miniconda3-x64;C:\Miniconda3-x64\Scripts;C:\Miniconda3-x64\Library\bin;%PATH%
 
-#- curl -omingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz -L https://www.dropbox.com/s/bi1pb4pq7cc07o9/mingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz?dl=1
-#- pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.14-2-any.pkg.tar.xz
-- if exist C:\msys64\mkl-dnn-86b7129 (
-    echo "Using cached directory."
+- if [%TARGET%]==[mingw] (
+    pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-opencv mingw-w64-x86_64-protobuf mingw-w64-x86_64-python3 mingw-w64-x86_64-python3-pip mingw-w64-x86_64-python3-numpy mingw-w64-x86_64-hdf5 mingw-w64-x86_64-ca-certificates &&
+    bash appveyor/install_mkldnn_mingw.sh
   ) else (
-    git clone https://github.com/intel/mkl-dnn.git &&
-    cd mkl-dnn &&
-    git checkout 86b712989c82dffdd8742aa49ee1c7d883fc838b &&
-    cd scripts &&
-    prepare_mkl.bat &&
-    cd .. &&
-    sed -i "s/add_subdirectory(examples)//g" CMakeLists.txt &&
-    sed -i "s/add_subdirectory(tests)//g" CMakeLists.txt &&
-    mkdir build &&
-    cd build &&
-    set MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" &&
-    cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mkl-dnn-86b7129 .. &&
-    make &&
-    make DESTDIR=/ install &&
-    cd ../..
+    call appveyor\install_protoc_msvc.bat &&
+    call appveyor\install_mkldnn_msvc.bat
   )
-
-- pip3 install --user chainer
-- mkdir -p data
-- python3 retrieve_data.py
-- python3 gen_test_data.py
+- if [%TARGET%]==[mingw] (
+    pip3 install --user chainer &&
+    mkdir -p data &&
+    python3 retrieve_data.py &&
+    python3 gen_test_data.py
+  ) else (
+    pip install --user chainer &&
+    md data &&
+    python retrieve_data.py &&
+    python gen_test_data.py
+  )
 
 build_script:
 - mkdir build
 - cd build
-- cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 -DMKLDNN_INCLUDE_DIR=/mkl-dnn-86b7129/include -DMKLDNN_LIBRARY=/mkl-dnn-86b7129/lib/libmkldnn.dll.a ..
-- make
+- if [%TARGET%]==[msvc] set PATH=%PATH%;c:\protobuf-3.6.0-msvc\bin;c:\protobuf-3.6.0-msvc\include;c:\protobuf-3.6.0-msvc\lib;c:\mkl-dnn-v0.14-msvc\bin;c:\mkl-dnn-v0.14-msvc\include;c:\mkl-dnn-v0.14-msvc\lib
+- if [%TARGET%]==[mingw] (
+    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 -DMKLDNN_INCLUDE_DIR=/mkl-dnn-86b7129-mingw/include -DMKLDNN_LIBRARY=/mkl-dnn-86b7129-mingw/lib/libmkldnn.dll.a .. &&
+    make
+  ) else (
+    cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
+    cmake --build . --config Release --target install
+  )
+
+test_script:
 # to find libmenoh.dll, libgtest.dll and libgtest_main.dll
-- set PATH=C:\projects\menoh\build\menoh;C:\projects\menoh\build\test\lib\googletest\googlemock\gtest;C:\msys64\mkl-dnn-86b7129\bin;%PATH%
-- ldd test/menoh_test.exe
-- ldd /c/projects/menoh/build/menoh/libmenoh.dll
-- ldd /mkl-dnn-86b7129/bin/libmkldnn.dll
-- test\menoh_test
+- if [%TARGET%]==[mingw] set PATH=C:\projects\menoh\build\menoh;C:\projects\menoh\build\test\lib\googletest\googlemock\gtest;C:\msys64\mkl-dnn-86b7129-mingw\bin;%PATH%
+- if [%TARGET%]==[mingw] (
+    ldd test/menoh_test.exe &&
+    ldd /c/projects/menoh/build/menoh/libmenoh.dll &&
+    ldd /mkl-dnn-86b7129-mingw/bin/libmkldnn.dll &&
+    test\menoh_test
+  )
+- cd ..
+
+after_test:
+- if [%TARGET%]==[msvc] (
+    7z a menoh-%MENOH_REV%-msvc.7z c:\menoh-%MENOH_REV%-msvc &&
+    7z a mkl-dnn-v0.14-msvc.7z c:\mkl-dnn-v0.14-msvc
+  )
+
+artifacts:
+- path: '*.7z'
