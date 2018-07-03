@@ -64,6 +64,7 @@ menoh_error_code check_error(Func func) {
         menoh_impl::set_last_error_message(e.what());
         return menoh_error_code_std_error; //
     } catch(...) {
+        menoh_impl::set_last_error_message("");
         return menoh_error_code_unknown_error; //
     }
     return menoh_error_code_success;
