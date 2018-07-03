@@ -70,8 +70,8 @@ test_script:
 
 after_test:
 - if [%TARGET%]==[msvc] (
-    7z a menoh-%MENOH_REV%-msvc.7z c:\menoh-%MENOH_REV%-msvc
+    7z a menoh-%MENOH_REV%-msvc.zip c:\menoh-%MENOH_REV%-msvc
   )
 
 artifacts:
-- path: '*.7z'
+- path: '*.zip'
