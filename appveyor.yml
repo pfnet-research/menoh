@@ -1,6 +1,4 @@
 cache:
-- c:\msys64\mkl-dnn-86b7129-mingw
-- c:\mkl-dnn-v0.14-msvc
 - c:\protobuf-3.6.0-msvc
 
 platform:
@@ -26,11 +24,15 @@ install:
 
 - if [%TARGET%]==[mingw] (
     pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-opencv mingw-w64-x86_64-protobuf mingw-w64-x86_64-python3 mingw-w64-x86_64-python3-pip mingw-w64-x86_64-python3-numpy mingw-w64-x86_64-hdf5 mingw-w64-x86_64-ca-certificates &&
-    bash appveyor/install_mkldnn_mingw.sh
+    curl -omingw-w64-x86_64-mkl-dnn-0.14-3-x86_64.pkg.tar.xz -L https://preferredjp.box.com/shared/static/eb90vngoz8zngp6yy69x91q0swp11ha1.xz &&
+    pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.14-3-x86_64.pkg.tar.xz
   ) else (
-    call appveyor\install_protoc_msvc.bat &&
-    call appveyor\install_mkldnn_msvc.bat
+    curl -omkl-dnn-0.14-win64.7z -L --insecure https://preferredjp.box.com/shared/static/njn6vrjt8zaslk82yjw7j1pczkcp3c0f.7z &&
+    mkdir mkl-dnn-0.14-win64 &&
+    7z x -omkl-dnn-0.14-win64 mkl-dnn-0.14-win64.7z &&
+    call appveyor\install_protoc_msvc.bat
   )
+
 - if [%TARGET%]==[mingw] (
     pip3 install --user chainer &&
     mkdir -p data &&
@@ -46,9 +48,9 @@ install:
 build_script:
 - mkdir build
 - cd build
-- if [%TARGET%]==[msvc] set PATH=%PATH%;c:\protobuf-3.6.0-msvc\bin;c:\protobuf-3.6.0-msvc\include;c:\protobuf-3.6.0-msvc\lib;c:\mkl-dnn-v0.14-msvc\bin;c:\mkl-dnn-v0.14-msvc\include;c:\mkl-dnn-v0.14-msvc\lib
+- if [%TARGET%]==[msvc] set PATH=%PATH%;c:\protobuf-3.6.0-msvc\bin;c:\protobuf-3.6.0-msvc\include;c:\protobuf-3.6.0-msvc\lib;c:\projects\menoh\mkl-dnn-0.14-win64\bin;c:\projects\menoh\mkl-dnn-0.14-win64\include;c:\projects\menoh\mkl-dnn-0.14-win64\lib
 - if [%TARGET%]==[mingw] (
-    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 -DMKLDNN_INCLUDE_DIR=/mkl-dnn-86b7129-mingw/include -DMKLDNN_LIBRARY=/mkl-dnn-86b7129-mingw/lib/libmkldnn.dll.a .. &&
+    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 .. &&
     make
   ) else (
     cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
@@ -61,16 +63,15 @@ test_script:
 - if [%TARGET%]==[mingw] (
     ldd test/menoh_test.exe &&
     ldd /c/projects/menoh/build/menoh/libmenoh.dll &&
-    ldd /mkl-dnn-86b7129-mingw/bin/libmkldnn.dll &&
+    ldd /mingw64/bin/libmkldnn.dll &&
     test\menoh_test
   )
 - cd ..
 
 after_test:
 - if [%TARGET%]==[msvc] (
-    7z a menoh-%MENOH_REV%-msvc.7z c:\menoh-%MENOH_REV%-msvc &&
-    7z a mkl-dnn-v0.14-msvc.7z c:\mkl-dnn-v0.14-msvc
+    7z a menoh-%MENOH_REV%-msvc.zip c:\menoh-%MENOH_REV%-msvc
   )
 
 artifacts:
-- path: '*.7z'
+- path: '*.zip'
