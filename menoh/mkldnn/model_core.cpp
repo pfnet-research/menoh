@@ -146,7 +146,9 @@ namespace menoh_impl {
                     }
                 } catch(mkldnn::error const& e) {
                     throw failed_to_configure_operator(
-                      node.op_type, node.output_name_list.at(0), e.message);
+                      node.op_type, node.output_name_list.at(0),
+                      std::string("status: ") + std::to_string(e.status) +
+                        ", message: " + e.message);
                 }
             }
             return std::make_tuple(nets, variable_memory_table,
@@ -221,7 +223,9 @@ namespace menoh_impl {
                   .submit(nets_)
                   .wait();
             } catch(mkldnn::error const& e) {
-                throw backend_error("mkldnn", e.message);
+                throw backend_error("mkldnn", std::string("status: ") +
+                                                std::to_string(e.status) +
+                                                ", message: " + e.message);
             }
         }
 
@@ -244,7 +248,9 @@ namespace menoh_impl {
             } catch(nlohmann::json::parse_error const& e) {
                 throw json_parse_error(e.what());
             } catch(mkldnn::error const& e) {
-                throw backend_error("mkldnn", e.message);
+                throw backend_error("mkldnn", std::string("status: ") +
+                                                std::to_string(e.status) +
+                                                ", message: " + e.message);
             }
         }
 
