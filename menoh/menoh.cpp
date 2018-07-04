@@ -36,7 +36,9 @@ namespace menoh_impl {
             auto cont =
               std::copy(prefix, prefix + std::char_traits<char>::length(prefix),
                         arr.begin());
-            std::copy(message, message + (static_cast<size_t>(arr.end() - cont) - 1), cont);
+            std::copy(message,
+                      message + (static_cast<size_t>(arr.end() - cont) - 1),
+                      cont);
 
         } else {
             std::copy(message, message + message_size, arr.data());
