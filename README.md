@@ -18,7 +18,7 @@ For Windows users, prebuild libraries are available (see [release](https://githu
 See also
 - Chainer model to ONNX : [onnx-chainer](https://github.com/chainer/onnx-chainer)
 - C# wrapper : [menoh-sharp](https://github.com/pfnet-research/menoh-sharp)
-- Go wrapper : [menoh-go](https://github.com/pfnet-research/menoh-go)
+- Go wrapper : [go-menoh](https://github.com/pfnet-research/go-menoh)
   - (unofficial wrapper [gomenoh](https://github.com/kou-m/gomenoh) by kou-m san has been merged)
 - Haskell wrapper : [menoh-haskell](https://github.com/pfnet-research/menoh-haskell)
 - Ruby wrapper : [menoh-ruby](https://github.com/pfnet-research/menoh-ruby)
