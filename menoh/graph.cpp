@@ -12,8 +12,6 @@
 #include <menoh/optional.hpp>
 #include <menoh/utility.hpp>
 
-#include <iostream>
-
 namespace menoh_impl {
 
     std::vector<node> extract_needed_node_list(
@@ -249,6 +247,9 @@ namespace menoh_impl {
         std::unordered_map<std::string, std::vector<int>> variable_dims_table(
           input_name_and_dims_pair_list.begin(),
           input_name_and_dims_pair_list.end());
+        for(auto const& p : model_data.parameter_name_and_array_list) {
+            variable_dims_table.insert({p.first, p.second.dims()});
+        }
         auto graph = make_graph(model_data.node_list);
         auto parameter_table = std::unordered_map<std::string, array>(
           model_data.parameter_name_and_array_list.begin(),
@@ -368,8 +369,7 @@ namespace menoh_impl {
                 auto output_dims = find_value(variable_dims_table, input_name);
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
-            }
-            else {
+            } else {
                 throw unsupported_operator(node.op_type);
             }
         }

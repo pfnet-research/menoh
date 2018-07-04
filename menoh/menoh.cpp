@@ -156,8 +156,6 @@ menoh_model_data_add_attribute_floats_to_current_node(
 menoh_error_code MENOH_API menoh_model_data_add_initializer(
   menoh_model_data* model_data, const char* initializer_name, menoh_dtype dtype,
   int32_t dims_size, const int32_t* dims, void* buffer_handle) {
-    std::cout << __func__ << std::endl;
-    std::cout << initializer_name << " " << buffer_handle << std::endl;
     return check_error([&]() {
         model_data->model_data.parameter_name_and_array_list.push_back(
           {std::string(initializer_name),
