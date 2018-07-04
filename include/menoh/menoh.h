@@ -107,8 +107,7 @@ void MENOH_API menoh_delete_model_data(menoh_model_data_handle model_data);
  * This struct configure profiles of variables.
  *
  * See
- *  - menoh_variable_profile_table_builder_add_input_profile_dims_2()
- *  - menoh_variable_profile_table_builder_add_input_profile_dims_4()
+ *  - menoh_variable_profile_table_builder_add_input_profile()
  *  - menoh_variable_profile_table_builder_add_output_profile().
  */
 struct menoh_variable_profile_table_builder;
@@ -127,27 +126,14 @@ menoh_error_code MENOH_API menoh_make_variable_profile_table_builder(
 void MENOH_API menoh_delete_variable_profile_table_builder(
   menoh_variable_profile_table_builder_handle builder);
 
-/*! \brief Add 2D input profile
+/*! \brief Add input profile
  *
- * Input profile contains name, dtype and dims (num, size). This 2D input is
- * conventional batched 1D inputs.
+ * Input profile contains name, dtype and dims.
  */
 menoh_error_code MENOH_API
-menoh_variable_profile_table_builder_add_input_profile_dims_2(
+menoh_variable_profile_table_builder_add_input_profile(
   menoh_variable_profile_table_builder_handle builder, const char* name,
-  menoh_dtype dtype, int32_t num, int32_t size);
-
-/*! \brief Add 4D input profile
- *
- * Input profile contains name, dtype and dims (num, channel, height, width).
- * This 4D input is conventional batched image inputs. Image input is
- * 3D(channel, height, width).
- */
-menoh_error_code MENOH_API
-menoh_variable_profile_table_builder_add_input_profile_dims_4(
-  menoh_variable_profile_table_builder_handle builder, const char* name,
-  menoh_dtype dtype, int32_t num, int32_t channel, int32_t height,
-  int32_t width);
+  menoh_dtype dtype, int32_t dims_size, const int32_t* dims);
 
 /*! \brief Add output profile
  *

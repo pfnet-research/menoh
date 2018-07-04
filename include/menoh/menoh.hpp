@@ -70,6 +70,8 @@ namespace menoh {
     };
     /** @} */
 
+    enum class dtype_t { float_ = menoh_dtype_float };
+
     class variable_profile_table;
 
     /** @addtogroup cpp_model_data Model data
@@ -122,7 +124,6 @@ namespace menoh {
 
     /** @addtogroup cpp_vpt Veriable profile table
      * @{ */
-    enum class dtype_t { float_ = menoh_dtype_float };
 
     struct variable_profile {
         dtype_t dtype;
@@ -199,23 +200,10 @@ namespace menoh {
         //! Add input profile. That profile contains name, dtype and dims.
         void add_input_profile(std::string const& name, dtype_t dtype,
                                std::vector<int32_t> const& dims) {
-            if(dims.size() == 2) {
-                MENOH_CPP_API_ERROR_CHECK(
-                  menoh_variable_profile_table_builder_add_input_profile_dims_2(
-                    impl_.get(), name.c_str(), static_cast<menoh_dtype>(dtype),
-                    dims.at(0), dims.at(1)));
-            } else if(dims.size() == 4) {
-                MENOH_CPP_API_ERROR_CHECK(
-                  menoh_variable_profile_table_builder_add_input_profile_dims_4(
-                    impl_.get(), name.c_str(), static_cast<menoh_dtype>(dtype),
-                    dims.at(0), dims.at(1), dims.at(2), dims.at(3)));
-            } else {
-                throw error(error_code_t::invalid_dims_size,
-                            "menoh invalid dims size error (2 or 4 is valid): "
-                            "dims size of " +
-                              name + " is specified " +
-                              std::to_string(dims.size()));
-            }
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_variable_profile_table_builder_add_input_profile(
+                impl_.get(), name.c_str(), static_cast<menoh_dtype>(dtype),
+                dims.size(), dims.data()));
         }
 
         //! Add output profile. That profile contains name, dtype.
