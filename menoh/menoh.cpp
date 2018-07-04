@@ -76,6 +76,98 @@ struct menoh_model_data {
     menoh_impl::model_data model_data;
 };
 
+menoh_error_code menoh_make_model_data(menoh_model_data_handle* dst_handle) {
+    return check_error([&]() {
+        *dst_handle = std::make_unique<menoh_model_data>().release();
+        return menoh_error_code_success;
+    });
+}
+
+menoh_error_code MENOH_API menoh_model_data_add_new_node(
+  menoh_model_data* model_data, const char* op_type) {
+    return check_error([&]() {
+        model_data->model_data.node_list.push_back({op_type, {}, {}, {}});
+        return menoh_error_code_success;
+    });
+}
+
+menoh_error_code MENOH_API menoh_model_data_add_input_name_to_current_node(
+  menoh_model_data* model_data, const char* input_name) {
+    return check_error([&]() {
+        model_data->model_data.node_list.back().input_name_list.push_back(
+          input_name);
+        return menoh_error_code_success;
+    });
+}
+
+menoh_error_code MENOH_API menoh_model_data_add_output_name_to_current_node(
+  menoh_model_data* model_data, const char* output_name) {
+    return check_error([&]() {
+        model_data->model_data.node_list.back().output_name_list.push_back(
+          output_name);
+        return menoh_error_code_success;
+    });
+}
+
+menoh_error_code MENOH_API menoh_model_data_add_attribute_int_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name,
+  int32_t value) {
+    return check_error([&]() {
+        model_data->model_data.node_list.back().attribute_table.insert(
+          {std::string(attribute_name), value});
+        return menoh_error_code_success;
+    });
+}
+
+menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, float value) {
+    return check_error([&]() {
+        model_data->model_data.node_list.back().attribute_table.insert(
+          {std::string(attribute_name), value});
+        return menoh_error_code_success;
+    });
+}
+
+menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
+  const int* value) {
+    return check_error([&]() {
+        model_data->model_data.node_list.back().attribute_table.insert(
+          {std::string(attribute_name),
+           std::vector<int32_t>(value, value + size)});
+        return menoh_error_code_success;
+    });
+}
+
+menoh_error_code MENOH_API
+menoh_model_data_add_attribute_floats_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
+  const float* value) {
+    return check_error([&]() {
+        model_data->model_data.node_list.back().attribute_table.insert(
+          {std::string(attribute_name),
+           std::vector<float>(value, value + size)});
+        return menoh_error_code_success;
+    });
+}
+
+menoh_error_code MENOH_API menoh_model_data_add_initializer(
+  menoh_model_data* model_data, const char* initializer_name, menoh_dtype dtype,
+  int32_t dims_size, const int32_t* dims, void* buffer_handle) {
+    std::cout << __func__ << std::endl;
+    std::cout << initializer_name << " " << buffer_handle << std::endl;
+    return check_error([&]() {
+        model_data->model_data.parameter_name_and_array_list.push_back(
+          {std::string(initializer_name),
+           menoh_impl::array(static_cast<menoh_impl::dtype_t>(dtype),
+                             std::vector<int32_t>(dims, dims + dims_size),
+                             buffer_handle)});
+        return menoh_error_code_success;
+    });
+}
+
+// menoh_error_code menoh_model_data_add_node(const char* op_type, )
+
 menoh_error_code
 menoh_make_model_data_from_onnx(const char* onnx_filename,
                                 menoh_model_data_handle* dst_handle) {
