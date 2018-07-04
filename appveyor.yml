@@ -24,10 +24,10 @@ install:
 
 - if [%TARGET%]==[mingw] (
     pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-opencv mingw-w64-x86_64-protobuf mingw-w64-x86_64-python3 mingw-w64-x86_64-python3-pip mingw-w64-x86_64-python3-numpy mingw-w64-x86_64-hdf5 mingw-w64-x86_64-ca-certificates &&
-    curl -omingw-w64-x86_64-mkl-dnn-0.14-3-x86_64.pkg.tar.xz -L https://github.com/msakai/mkl-dnn/releases/download/v0.14/mingw-w64-x86_64-mkl-dnn-0.14-3-x86_64.pkg.tar.xz &&
+    curl -omingw-w64-x86_64-mkl-dnn-0.14-3-x86_64.pkg.tar.xz -L https://preferredjp.box.com/shared/static/eb90vngoz8zngp6yy69x91q0swp11ha1.xz &&
     pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.14-3-x86_64.pkg.tar.xz
   ) else (
-    curl -omkl-dnn-0.14-win64.7z -L --insecure https://github.com/msakai/mkl-dnn/releases/download/v0.14/mkl-dnn-0.14-win64.7z &&
+    curl -omkl-dnn-0.14-win64.7z -L --insecure https://preferredjp.box.com/shared/static/njn6vrjt8zaslk82yjw7j1pczkcp3c0f.7z &&
     mkdir mkl-dnn-0.14-win64 &&
     7z x -omkl-dnn-0.14-win64 mkl-dnn-0.14-win64.7z &&
     call appveyor\install_protoc_msvc.bat
