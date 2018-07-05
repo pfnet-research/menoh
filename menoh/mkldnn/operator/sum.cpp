@@ -28,7 +28,7 @@ namespace menoh_impl {
 
             std::vector<mkldnn::memory> input_memories;
             std::vector<mkldnn::memory::primitive_desc> input_pds;
-            std::vector<std::vector<int>> input_dims;
+            std::vector<std::vector<int32_t>> input_dims;
             for(auto const& name : node.input_name_list) {
                 input_memories.push_back(
                   find_value(variable_memory_table, name));

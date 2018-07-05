@@ -122,7 +122,11 @@ namespace menoh {
 
     /** @addtogroup cpp_vpt Veriable profile table
      * @{ */
-    enum class dtype_t { float_ = menoh_dtype_float };
+    enum class dtype_t {
+        int32 = menoh_dtype_int32,
+        int64 = menoh_dtype_int64,
+        float_ = menoh_dtype_float
+    };
 
     struct variable_profile {
         dtype_t dtype;

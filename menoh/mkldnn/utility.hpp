@@ -17,13 +17,13 @@ namespace menoh_impl {
 namespace menoh_impl {
     namespace mkldnn_backend {
 
-        std::vector<int> extract_dims(mkldnn::memory const& m);
+        std::vector<int32_t> extract_dims(mkldnn::memory const& m);
 
         mkldnn::memory::data_type
         dtype_to_mkldnn_memory_data_type(dtype_t dtype);
 
         mkldnn::memory array_to_memory(array const& arr,
-                                       std::vector<int> const& dims,
+                                       std::vector<int32_t> const& dims,
                                        mkldnn::memory::format format,
                                        mkldnn::engine const& engine);
 

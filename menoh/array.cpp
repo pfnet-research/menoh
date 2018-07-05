@@ -2,31 +2,46 @@
 
 namespace menoh_impl {
 
-    array::array(dtype_t d, std::vector<int> const& dims, void* data_handle)
+    array::array(dtype_t d, std::vector<int32_t> const& dims, void* data_handle)
       : dtype_(d), dims_(dims), data_(nullptr), data_handle_(data_handle) {}
 
-    array::array(dtype_t d, std::vector<int> const& dims,
+    array::array(dtype_t d, std::vector<int32_t> const& dims,
                  std::shared_ptr<void> data)
       : dtype_(d), dims_(dims), data_(std::move(data)),
         data_handle_(data_.get()) {}
 
     std::shared_ptr<void> allocate_data(dtype_t d,
-                                        std::vector<int> const& dims) {
+                                        std::vector<int32_t> const& dims) {
         auto total_size = calc_total_size(dims);
-        if(d == dtype_t::float_) {
+        if(d == dtype_t::int32) {
             // libc++ workaround
             // Below 2 lines are equal to `return std::unique_ptr<float[]>(new
             // float[total_size]);`
+            auto u = std::make_unique<int32_t[]>(total_size);
+            return std::shared_ptr<void>(u.release(), u.get_deleter());
+        } else if(d == dtype_t::int64) {
+            auto u = std::make_unique<int64_t[]>(total_size);
+            return std::shared_ptr<void>(u.release(), u.get_deleter());
+        } else if(d == dtype_t::float_) {
             auto u = std::make_unique<float[]>(total_size);
             return std::shared_ptr<void>(u.release(), u.get_deleter());
         }
-        throw invalid_dtype(std::to_string(static_cast<int>(d)));
+        throw invalid_dtype(std::to_string(static_cast<int32_t>(d)));
     }
 
-    array::array(dtype_t d, std::vector<int> const& dims)
+    array::array(dtype_t d, std::vector<int32_t> const& dims)
       : array(d, dims, allocate_data(d, dims)) {}
 
     std::size_t total_size(array const& a) { return calc_total_size(a.dims()); }
+
+    int32_t* ibegin(array const& a) {
+        assert(a.dtype() == dtype_t::int32);
+        return static_cast<int32_t*>(a.data());
+    }
+    int32_t* iend(array const& a) {
+        assert(a.dtype() == dtype_t::int32);
+        return ibegin(a) + total_size(a);
+    }
 
     float* fbegin(array const& a) {
         assert(a.dtype() == dtype_t::float_);
@@ -37,12 +52,16 @@ namespace menoh_impl {
         return fbegin(a) + total_size(a);
     }
 
+    int32_t& iat(array const& a, std::size_t i) {
+        assert(a.dtype() == dtype_t::int32);
+        return *(static_cast<int32_t*>(a.data()) + i);
+    }
     float& fat(array const& a, std::size_t i) {
         assert(a.dtype() == dtype_t::float_);
         return *(static_cast<float*>(a.data()) + i);
     }
 
-    array zeros(dtype_t d, std::vector<int> const& dims) {
+    array zeros(dtype_t d, std::vector<int32_t> const& dims) {
         return uniforms(d, dims, 0.);
     }
 

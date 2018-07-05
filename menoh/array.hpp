@@ -15,12 +15,12 @@ namespace menoh_impl {
     public:
         array() = default;
 
-        array(dtype_t d, std::vector<int> const& dims, void* data_handle);
+        array(dtype_t d, std::vector<int32_t> const& dims, void* data_handle);
 
-        array(dtype_t d, std::vector<int> const& dims,
+        array(dtype_t d, std::vector<int32_t> const& dims,
               std::shared_ptr<void> data);
 
-        array(dtype_t d, std::vector<int> const& dims);
+        array(dtype_t d, std::vector<int32_t> const& dims);
 
         dtype_t dtype() const { return dtype_; }
         auto const& dims() const { return dims_; }
@@ -29,31 +29,43 @@ namespace menoh_impl {
 
     private:
         dtype_t dtype_;
-        std::vector<int> dims_;
+        std::vector<int32_t> dims_;
         std::shared_ptr<void> data_;
         void* data_handle_;
     };
 
     std::size_t total_size(array const& a);
 
+    int32_t* ibegin(array const& a);
+    int32_t* iend(array const& a);
+
     float* fbegin(array const& a);
     float* fend(array const& a);
 
+    int32_t& iat(array const& a, std::size_t i);
     float& fat(array const& a, std::size_t i);
 
     template <typename T>
-    auto uniforms(dtype_t d, std::vector<int> const& dims, T val) {
+    auto uniforms(dtype_t d, std::vector<int32_t> const& dims, T val) {
         static_assert(std::is_arithmetic<T>::value, "");
         auto arr = array(d, dims);
-        if(d == dtype_t::float_) {
+        if(d == dtype_t::int32) {
+            std::fill_n(static_cast<int32_t*>(arr.data()),
+                        calc_total_size(dims), static_cast<int32_t>(val));
+            return arr;
+        } else if(d == dtype_t::int64) {
+            std::fill_n(static_cast<int64_t*>(arr.data()),
+                        calc_total_size(dims), static_cast<int64_t>(val));
+            return arr;
+        } else if(d == dtype_t::float_) {
             std::fill_n(static_cast<float*>(arr.data()), calc_total_size(dims),
                         static_cast<float>(val));
             return arr;
         }
-        throw invalid_dtype(std::to_string(static_cast<int>(d)));
+        throw invalid_dtype(std::to_string(static_cast<int32_t>(d)));
     }
 
-    array zeros(dtype_t d, std::vector<int> const& dims);
+    array zeros(dtype_t d, std::vector<int32_t> const& dims);
 
 } // namespace menoh_impl
 

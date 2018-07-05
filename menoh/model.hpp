@@ -20,7 +20,7 @@ namespace menoh_impl {
     public:
         model(
           std::vector<
-            std::tuple<std::string, dtype_t, std::vector<int>, void*>> const&
+            std::tuple<std::string, dtype_t, std::vector<int32_t>, void*>> const&
             input_name_and_dtype_and_dims_and_data_handle_list,
           std::vector<std::tuple<std::string, dtype_t, void*>> const&
             required_output_name_and_dtype_and_data_handle_list,

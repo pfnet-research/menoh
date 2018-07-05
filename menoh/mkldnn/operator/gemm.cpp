@@ -67,7 +67,7 @@ namespace menoh_impl {
               find_value(parameter_table, node.input_name_list.at(1));
             auto weight_dims = weight_arr.dims();
             if(weight_format == mkldnn::memory::format::oihw) {
-                weight_dims = std::vector<int>{weight_dims.front()};
+                weight_dims = std::vector<int32_t>{weight_dims.front()};
                 weight_dims.insert(weight_dims.end(), input_dims.begin() + 1,
                                    input_dims.end());
             }
@@ -81,7 +81,7 @@ namespace menoh_impl {
               owned_array_list);
 
             auto bias_dims = extract_dims(bias_memory);
-            int output_size = weight_arr.dims()[0];
+            int32_t output_size = weight_arr.dims()[0];
             if(output_size != bias_dims[0]) {
                 throw failed_to_configure_operator(
                   node.op_type, node.output_name_list.at(0),

@@ -6,19 +6,19 @@ namespace menoh_impl {
 
     model::model(
       std::vector<
-        std::tuple<std::string, dtype_t, std::vector<int>, void*>> const&
+        std::tuple<std::string, dtype_t, std::vector<int32_t>, void*>> const&
         input_name_and_dtype_and_dims_and_data_handle_list,
       std::vector<std::tuple<std::string, dtype_t, void*>> const&
         required_output_name_and_dtype_and_data_handle_list,
       menoh_impl::model_data const& model_data, std::string const& backend_name,
       backend_config const& config) {
-        std::vector<std::pair<std::string, std::vector<int>>>
+        std::vector<std::pair<std::string, std::vector<int32_t>>>
           input_name_and_dims_pair_list;
         for(auto const& t :
             input_name_and_dtype_and_dims_and_data_handle_list) {
             std::string input_name;
             dtype_t dtype;
-            std::vector<int> input_dims;
+            std::vector<int32_t> input_dims;
             void* data_handle;
             std::tie(input_name, dtype, input_dims, data_handle) = t;
             assert(input_table_.find(input_name) == input_table_.end());

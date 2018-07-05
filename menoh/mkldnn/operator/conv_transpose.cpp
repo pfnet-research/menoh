@@ -24,12 +24,12 @@ namespace menoh_impl {
             std::vector<mkldnn::memory> temp_memory_list;
             std::vector<array> owned_array_list;
 
-            std::vector<int> strides, kernel_shape, pads;
+            std::vector<int32_t> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) =
               attributes_for_2d_data_processing(node);
 
-            std::vector<int> padding_l{pads[0], pads[1]};
-            std::vector<int> padding_r{pads[2], pads[3]};
+            std::vector<int32_t> padding_l{pads[0], pads[1]};
+            std::vector<int32_t> padding_r{pads[2], pads[3]};
 
             auto const& input_memory =
               find_value(variable_memory_table, node.input_name_list.at(0));
@@ -39,10 +39,10 @@ namespace menoh_impl {
             std::swap(weight_tr_dims[0], weight_tr_dims[1]);
             menoh_impl::array weight_tr_arr(weight_arr.dtype(), weight_tr_dims);
             assert(weight_arr.dtype() == dtype_t::float_);
-            for(int o = 0; o < weight_arr.dims()[0]; ++o) {
-                for(int i = 0; i < weight_arr.dims()[1]; ++i) {
-                    for(int h = 0; h < weight_arr.dims()[2]; ++h) {
-                        for(int w = 0; w < weight_arr.dims()[3]; ++w) {
+            for(int32_t o = 0; o < weight_arr.dims()[0]; ++o) {
+                for(int32_t i = 0; i < weight_arr.dims()[1]; ++i) {
+                    for(int32_t h = 0; h < weight_arr.dims()[2]; ++h) {
+                        for(int32_t w = 0; w < weight_arr.dims()[3]; ++w) {
                             auto weight_i =
                               o * weight_arr.dims()[1] * weight_arr.dims()[2] *
                                 weight_arr.dims()[3] +

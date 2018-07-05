@@ -42,7 +42,7 @@ namespace menoh_impl {
               find_value(parameter_table, node.input_name_list.at(1));
             auto weight_dims = weight_arr.dims();
             if(weight_format == mkldnn::memory::format::oihw) {
-                weight_dims = std::vector<int>{weight_dims.front()};
+                weight_dims = std::vector<int32_t>{weight_dims.front()};
                 weight_dims.insert(weight_dims.end(), input_dims.begin() + 1,
                                    input_dims.end());
             }

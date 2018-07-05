@@ -24,11 +24,11 @@ namespace menoh_impl {
             std::vector<mkldnn::memory> temp_memory_list;
             std::vector<array> owned_array_list;
 
-            std::vector<int> strides, kernel_shape, pads;
+            std::vector<int32_t> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) =
               attributes_for_2d_data_processing(node);
-            std::vector<int> padding_l{pads[0], pads[1]};
-            std::vector<int> padding_r{pads[2], pads[3]};
+            std::vector<int32_t> padding_l{pads[0], pads[1]};
+            std::vector<int32_t> padding_r{pads[2], pads[3]};
 
             auto const& input_memory =
               find_value(variable_memory_table, node.input_name_list.at(0));

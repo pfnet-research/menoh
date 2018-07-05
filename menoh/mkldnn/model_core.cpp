@@ -21,7 +21,7 @@ namespace menoh_impl {
         using inplace_primitive_factory =
           std::function<primitive_factory_return_type(
             node,
-            int,                      // node_index
+            int32_t,                      // node_index
             std::vector<node> const&, // node_list
             std::unordered_map<std::string,
                                array> const&, // parameter table
@@ -235,11 +235,11 @@ namespace menoh_impl {
           menoh_impl::model_data const& model_data,
           backend_config const& config) {
             try {
-                int cpu_id = 0;
+                int32_t cpu_id = 0;
                 if(!config.empty()) {
                     auto c = nlohmann::json::parse(config);
                     if(c.find("cpu_id") != c.end()) {
-                        cpu_id = c["cpu_id"].get<int>();
+                        cpu_id = c["cpu_id"].get<int32_t>();
                     }
                 }
                 mkldnn::engine engine(mkldnn::engine::cpu, cpu_id);

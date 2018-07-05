@@ -17,7 +17,7 @@ namespace menoh_impl {
     namespace mkldnn_backend {
 
         inline auto array_to_memory_and_deal_ownership(
-          array const& arr, std::vector<int> const& dims,
+          array const& arr, std::vector<int32_t> const& dims,
           mkldnn::memory::format format, mkldnn::engine const& engine,
           std::vector<mkldnn::memory>& temp_memory_list,
           std::vector<array>& owned_array_list) {
@@ -98,11 +98,11 @@ namespace menoh_impl {
           mkldnn::memory::primitive_desc const& output_pd,
           std::unordered_map<std::string, mkldnn::memory>& output_memory_table,
           std::unordered_map<std::string, array> const& output_table,
-          std::vector<mkldnn::memory>& temp_memory_list, int node_index,
+          std::vector<mkldnn::memory>& temp_memory_list, int32_t node_index,
           std::vector<menoh_impl::node> const& node_list,
           mkldnn::engine const& engine,
           OpPrimitiveGenerator op_primitive_generator) {
-            assert(node_index < static_cast<int>(node_list.size()));
+            assert(node_index < static_cast<int32_t>(node_list.size()));
 
             menoh_impl::optional<mkldnn::memory> output_memory_opt;
             auto found = output_table.find(output_name);

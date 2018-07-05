@@ -41,7 +41,7 @@ namespace menoh_impl {
               find_value(parameter_table, node.input_name_list.at(1));
             auto const& b_arr =
               find_value(parameter_table, node.input_name_list.at(2));
-            std::vector<int> weights_dims{2};
+            std::vector<int32_t> weights_dims{2};
             weights_dims.insert(weights_dims.end(), scale_arr.dims().begin(),
                                 scale_arr.dims().end());
             mkldnn::memory weights_memory(

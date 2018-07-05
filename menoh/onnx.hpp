@@ -22,8 +22,8 @@ namespace menoh_impl {
     class unsupported_onnx_opset_version : public exception {
     public:
         unsupported_onnx_opset_version(std::string const& filename,
-                                       int actual_version,
-                                       int supported_version)
+                                       int32_t actual_version,
+                                       int32_t supported_version)
           : exception(
               menoh_error_code_unsupported_onnx_opset_version,
               "menoh unsupported onnx opset version error: " + filename +

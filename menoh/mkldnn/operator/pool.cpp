@@ -18,16 +18,16 @@ namespace menoh_impl {
           std::unordered_map<std::string, mkldnn::memory> const&
             variable_memory_table,
           std::unordered_map<std::string, array> const& required_output_table,
-          mkldnn::engine const& engine, std::vector<int> const& strides,
-          std::vector<int> const& kernel_shape, std::vector<int> const& pads) {
+          mkldnn::engine const& engine, std::vector<int32_t> const& strides,
+          std::vector<int32_t> const& kernel_shape, std::vector<int32_t> const& pads) {
 
             std::vector<mkldnn::primitive> net;
             std::unordered_map<std::string, mkldnn::memory> output_memory_table;
             std::unordered_map<std::string, array> output_table;
             std::vector<mkldnn::memory> temp_memory_list;
 
-            std::vector<int> padding_l{pads[0], pads[1]};
-            std::vector<int> padding_r{pads[2], pads[3]};
+            std::vector<int32_t> padding_l{pads[0], pads[1]};
+            std::vector<int32_t> padding_r{pads[2], pads[3]};
 
             auto const& input_memory =
               find_value(variable_memory_table, node.input_name_list.at(0));
@@ -79,7 +79,7 @@ namespace menoh_impl {
             variable_memory_table,
           std::unordered_map<std::string, array> const& required_output_table,
           mkldnn::engine const& engine) {
-            std::vector<int> strides, kernel_shape, pads;
+            std::vector<int32_t> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) =
               attributes_for_2d_data_processing(node);
             return make_pool_primitive_impl<pooling_alg>(
@@ -119,9 +119,9 @@ namespace menoh_impl {
             auto const& input_memory =
               find_value(variable_memory_table, node.input_name_list.at(0));
             auto input_dims = extract_dims(input_memory);
-            std::vector<int> strides{1, 1};
-            std::vector<int> kernel_shape{input_dims.at(2), input_dims.at(3)};
-            std::vector<int> pads{0, 0, 0, 0};
+            std::vector<int32_t> strides{1, 1};
+            std::vector<int32_t> kernel_shape{input_dims.at(2), input_dims.at(3)};
+            std::vector<int32_t> pads{0, 0, 0, 0};
             return make_pool_primitive_impl<pooling_alg>(
               node, variable_memory_table, required_output_table, engine,
               strides, kernel_shape, pads);

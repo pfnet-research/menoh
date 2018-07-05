@@ -95,7 +95,7 @@ void menoh_delete_model_data(menoh_model_data_handle model_data) {
  * variable_profile_table_builder
  */
 struct menoh_variable_profile_table_builder {
-    std::vector<std::tuple<std::string, menoh_dtype, std::vector<int>>>
+    std::vector<std::tuple<std::string, menoh_dtype, std::vector<int32_t>>>
       input_name_and_dtype_and_dims_list;
     std::vector<std::tuple<std::string, menoh_dtype>>
       output_name_and_dtype_list;
@@ -118,7 +118,7 @@ menoh_error_code menoh_variable_profile_table_builder_add_input_profile_dims_2(
   menoh_variable_profile_table_builder_handle builder, const char* name,
   menoh_dtype dtype, int32_t num, int32_t size) {
     return check_error([&]() {
-        std::vector<int> dims = {num, size};
+        std::vector<int32_t> dims = {num, size};
         builder->input_name_and_dtype_and_dims_list.push_back(
           std::make_tuple(std::string(name), dtype, dims));
         return menoh_error_code_success;
@@ -129,7 +129,7 @@ menoh_error_code menoh_variable_profile_table_builder_add_input_profile_dims_4(
   menoh_dtype dtype, int32_t num, int32_t channel, int32_t height,
   int32_t width) {
     return check_error([&]() {
-        std::vector<int> dims = {num, channel, height, width};
+        std::vector<int32_t> dims = {num, channel, height, width};
         builder->input_name_and_dtype_and_dims_list.push_back(
           std::make_tuple(std::string(name), dtype, dims));
         return menoh_error_code_success;
@@ -160,9 +160,9 @@ menoh_error_code menoh_variable_profile_table_builder_add_output_profile(
  * variable_profile_table
  */
 struct menoh_variable_profile_table {
-    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
+    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int32_t>>>
       input_profile_table;
-    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
+    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int32_t>>>
       output_profile_table;
 };
 
@@ -172,7 +172,7 @@ menoh_error_code menoh_build_variable_profile_table(
   menoh_variable_profile_table_handle* dst_handle) {
     return check_error([&]() {
         std::unordered_map<std::string,
-                           std::tuple<menoh_dtype, std::vector<int>>>
+                           std::tuple<menoh_dtype, std::vector<int32_t>>>
           input_profile_table;
         std::transform(
           builder->input_name_and_dtype_and_dims_list.begin(),
@@ -184,7 +184,7 @@ menoh_error_code menoh_build_variable_profile_table(
                 std::make_tuple(std::get<1>(t), std::get<2>(t)));
           });
 
-        std::vector<std::pair<std::string, std::vector<int>>>
+        std::vector<std::pair<std::string, std::vector<int32_t>>>
           input_name_and_dims_pair_list;
         std::transform(
           builder->input_name_and_dtype_and_dims_list.begin(),
@@ -196,7 +196,7 @@ menoh_error_code menoh_build_variable_profile_table(
           model_data->model_data, input_name_and_dims_pair_list);
 
         std::unordered_map<std::string,
-                           std::tuple<menoh_dtype, std::vector<int>>>
+                           std::tuple<menoh_dtype, std::vector<int32_t>>>
           output_profile_table;
         std::transform(
           builder->output_name_and_dtype_list.begin(),
@@ -256,7 +256,7 @@ menoh_error_code menoh_variable_profile_table_get_dtype(
   const char* name, menoh_dtype* dst_dtype) {
     return impl::menoh_variable_profile_table_get_variable_attribute(
       variable_profile_table, name,
-      [&](std::tuple<menoh_dtype, std::vector<int>> const& t) {
+      [&](std::tuple<menoh_dtype, std::vector<int32_t>> const& t) {
           *dst_dtype = std::get<0>(t);
       });
 }
@@ -265,7 +265,7 @@ menoh_error_code menoh_variable_profile_table_get_dims_size(
   const char* name, int32_t* dst_size) {
     return impl::menoh_variable_profile_table_get_variable_attribute(
       variable_profile_table, name,
-      [&](std::tuple<menoh_dtype, std::vector<int>> const& t) {
+      [&](std::tuple<menoh_dtype, std::vector<int32_t>> const& t) {
           *dst_size = static_cast<int32_t>(std::get<1>(t).size());
       });
 }
@@ -274,7 +274,7 @@ menoh_error_code menoh_variable_profile_table_get_dims_at(
   const char* name, int32_t index, int32_t* dst_size) {
     return impl::menoh_variable_profile_table_get_variable_attribute(
       variable_profile_table, name,
-      [&](std::tuple<menoh_dtype, std::vector<int>> const& t) {
+      [&](std::tuple<menoh_dtype, std::vector<int32_t>> const& t) {
           *dst_size = std::get<1>(t).at(index);
       });
 }
@@ -299,9 +299,9 @@ menoh_error_code menoh_model_data_optimize(
  * model builder
  */
 struct menoh_model_builder {
-    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
+    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int32_t>>>
       input_profile_table;
-    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
+    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int32_t>>>
       output_profile_table;
     std::unordered_map<std::string, void*> external_buffer_handle_table;
 };
@@ -361,10 +361,10 @@ menoh_error_code menoh_build_model(const menoh_model_builder_handle builder,
         std::unordered_map<std::string, menoh_impl::array> input_table;
         for(auto p : builder->input_profile_table) {
             std::string name;
-            std::tuple<menoh_dtype, std::vector<int>> t;
+            std::tuple<menoh_dtype, std::vector<int32_t>> t;
             std::tie(name, t) = p;
             menoh_dtype dtype;
-            std::vector<int> dims;
+            std::vector<int32_t> dims;
             std::tie(dtype, dims) = t;
 
             auto buff = builder->external_buffer_handle_table.find(name);
@@ -384,10 +384,10 @@ menoh_error_code menoh_build_model(const menoh_model_builder_handle builder,
         std::unordered_map<std::string, menoh_impl::array> output_table;
         for(auto p : builder->output_profile_table) {
             std::string name;
-            std::tuple<menoh_dtype, std::vector<int>> t;
+            std::tuple<menoh_dtype, std::vector<int32_t>> t;
             std::tie(name, t) = p;
             menoh_dtype dtype;
-            std::vector<int> dims;
+            std::vector<int32_t> dims;
             std::tie(dtype, dims) = t;
 
             auto buff = builder->external_buffer_handle_table.find(name);

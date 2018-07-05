@@ -20,6 +20,8 @@ namespace menoh_impl {
 
     enum class dtype_t {
         undefined,
+        int32 = menoh_dtype_int32,
+        int64 = menoh_dtype_int64,
         float_ = menoh_dtype_float
         // TODO more types
     };
@@ -45,7 +47,7 @@ namespace menoh_impl {
     using dtype_to_type_t = typename dtype_to_type<d>::type;
 
     template <dtype_t d>
-    constexpr int size_in_bytes = sizeof(dtype_to_type_t<d>);
+    constexpr int32_t size_in_bytes = sizeof(dtype_to_type_t<d>);
 
 } // namespace menoh_impl
 

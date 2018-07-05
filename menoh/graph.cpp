@@ -221,9 +221,9 @@ namespace menoh_impl {
                         node_list.end());
     }
 
-    std::unordered_map<std::string, std::vector<int>> make_output_dims_table(
+    std::unordered_map<std::string, std::vector<int32_t>> make_output_dims_table(
       menoh_impl::model_data const& model_data,
-      std::vector<std::pair<std::string, std::vector<int>>> const&
+      std::vector<std::pair<std::string, std::vector<int32_t>>> const&
         input_name_and_dims_pair_list) {
 
         std::vector<std::string> supported_operator_list{{"Abs",
@@ -247,7 +247,7 @@ namespace menoh_impl {
                                                           "Softmax",
                                                           "Sum"}};
 
-        std::unordered_map<std::string, std::vector<int>> variable_dims_table(
+        std::unordered_map<std::string, std::vector<int32_t>> variable_dims_table(
           input_name_and_dims_pair_list.begin(),
           input_name_and_dims_pair_list.end());
         auto graph = make_graph(model_data.node_list);
@@ -264,7 +264,7 @@ namespace menoh_impl {
                                                        variable_dims_table);
                 auto dilations =
                   optional_attribute_ints(node, "dilations", {1, 1});
-                if(dilations != std::vector<int>({1, 1})) {
+                if(dilations != std::vector<int32_t>({1, 1})) {
                     auto actual = "(" + std::to_string(dilations.at(0)) + ", " +
                                   std::to_string(dilations.at(1)) + ")";
                     throw unsupported_operator_attribute(
@@ -288,7 +288,7 @@ namespace menoh_impl {
                     auto pads = optional_attribute_ints(node, "pads", {0, 0});
                     auto count_include_pad = optional_attribute_int(
                       node, "count_include_pad", 1); // TODO
-                    if(pads != std::vector<int>({0, 0}) &&
+                    if(pads != std::vector<int32_t>({0, 0}) &&
                        count_include_pad == 0) {
                         throw unsupported_operator_attribute(
                           node.op_type, node.output_name_list.front(),
@@ -326,7 +326,7 @@ namespace menoh_impl {
                       "input[1] and weight[1]", std::to_string(input_size),
                       std::to_string(weight_dims[1]));
                 }
-                std::vector<int> output_dims{batch_size, weight_dims[0]};
+                std::vector<int32_t> output_dims{batch_size, weight_dims[0]};
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
             } else if(node.op_type == "Gemm") {
@@ -358,7 +358,7 @@ namespace menoh_impl {
                       "input[1] and weight[1]", std::to_string(input_size),
                       std::to_string(weight_dims[1]));
                 }
-                std::vector<int> output_dims{batch_size, weight_dims[0]};
+                std::vector<int32_t> output_dims{batch_size, weight_dims[0]};
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
             } else if(std::find(supported_operator_list.begin(),

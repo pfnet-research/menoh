@@ -82,9 +82,9 @@ namespace menoh_impl {
                         " valid value: " + valid_value) {}
     };
 
-    std::unordered_map<std::string, std::vector<int>> make_output_dims_table(
+    std::unordered_map<std::string, std::vector<int32_t>> make_output_dims_table(
       menoh_impl::model_data const& model_data,
-      std::vector<std::pair<std::string, std::vector<int>>> const&
+      std::vector<std::pair<std::string, std::vector<int32_t>>> const&
         input_dims_table);
 
 } // namespace menoh_impl
