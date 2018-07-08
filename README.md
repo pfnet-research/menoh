@@ -13,9 +13,14 @@ In particular not all operators in ONNX are supported, so please check whether t
 
 This codebase contains C API and C++ API.
 
-For Windows users, prebuild libraries are available (see [release](https://github.com/pfnet-research/menoh/releases)) and Nuget package is [available](https://www.nuget.org/packages/Menoh/).
+## Goal
 
-See also
+- DNN Inference with CPU
+- ONNX support
+- Easy to use.
+
+## Related Projects
+
 - Chainer model to ONNX : [onnx-chainer](https://github.com/chainer/onnx-chainer)
 - C# wrapper : [menoh-sharp](https://github.com/pfnet-research/menoh-sharp)
 - Go wrapper : [go-menoh](https://github.com/pfnet-research/go-menoh)
@@ -27,18 +32,19 @@ See also
 - [Unofficial] ROS interface by Akio Ochiai san : [menoh_ros](https://github.com/akio/menoh_ros)
 - [Unofficial] OCaml wrapper by wkwkes san : [Menohcaml](https://github.com/wkwkes/Menohcaml)
 
-## Goal
+# Installation using package manager or binary packages
 
-- DNN Inference with CPU
-- ONNX support
-- Easy to use.
+- For Windows users, prebuild libraries are available (see [release](https://github.com/pfnet-research/menoh/releases)) and [Nuget package](https://www.nuget.org/packages/Menoh/) is available.
+- For macOS user, [Homebrew tap repository](https://github.com/pfnet-research/homebrew-menoh) is available.
 
-# Requirements
+# Installation from source
+
+## Requirements
 
 - MKL-DNN Library (0.14 or later)
 - Protocol Buffers (3.5.1 is checked)
 
-# Build
+## Build
 
 Execute below commands in root directory.
 
@@ -49,7 +55,7 @@ cmake ..
 make
 ```
 
-# Installation
+## Installation
 
 Execute below command in build directory created at Build section.
 
