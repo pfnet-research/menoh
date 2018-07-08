@@ -101,6 +101,13 @@ namespace menoh {
                            {"bias", bias_filename}},
                           {{"output", true_output_filename}});
         }
+        auto relu_test(std::string const& input_filename,
+                       std::string const& true_output_filename) {
+            menoh::model_data model_data;
+            model_data.add_new_node("Relu");
+            operator_test("naive", "", model_data, {{"input", input_filename}},
+                          {{"output", true_output_filename}});
+        }
     };
 
     TEST_F(BackendTest, gemm_1d_test) {
@@ -108,5 +115,8 @@ namespace menoh {
                   "../data/random_weight_256_4096.txt",
                   "../data/random_bias_256.txt",
                   "../data/linear_1d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
+    }
+    TEST_F(BackendTest, relu_1d_test) {
+        relu_test("../data/random_input_3_4096.txt", "../data/relu_1d.txt");
     }
 } // namespace menoh

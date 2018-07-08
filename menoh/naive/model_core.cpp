@@ -6,6 +6,7 @@
 #include <menoh/naive/computation_node.hpp>
 #include <menoh/naive/computation_node_factory.hpp>
 #include <menoh/naive/operator/gemm.hpp>
+#include <menoh/naive/operator/relu.hpp>
 
 namespace menoh_impl {
     namespace naive_backend {
@@ -27,7 +28,8 @@ namespace menoh_impl {
               model_data.parameter_name_and_array_list.end());
 
             std::unordered_map<std::string, computation_node_factory>
-              computation_node_factory_table = {{"Gemm", make_gemm}};
+              computation_node_factory_table = {{"Gemm", make_gemm},
+                                                {"Relu", make_relu}};
 
             for(std::size_t i = 0; i < graph.node_list().size(); ++i) {
                 auto const& node = graph.node_list().at(i);
@@ -43,7 +45,8 @@ namespace menoh_impl {
                 std::vector<std::pair<std::string, array>>
                   new_variable_named_list;
                 std::tie(computation_node, new_variable_named_list) =
-                  found_factory->second.operator()(node, variable_table_);
+                  found_factory->second.operator()(i, graph.node_list(),
+                                                   variable_table_);
 
                 computation_node_list_.push_back(computation_node);
 

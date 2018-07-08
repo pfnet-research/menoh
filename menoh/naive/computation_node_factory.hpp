@@ -19,7 +19,8 @@ namespace menoh_impl {
 
         using computation_node_factory =
           std::function<computation_node_factory_return_type(
-            node const&, std::unordered_map<std::string, array> const&)>;
+            int32_t, std::vector<node> const&,
+            std::unordered_map<std::string, array> const&)>;
 
     } // namespace naive_backend
 } // namespace menoh_impl

@@ -10,8 +10,9 @@ namespace menoh_impl {
     namespace naive_backend {
 
         computation_node_factory_return_type make_gemm(
-          node const& node,
+          int32_t i, std::vector<node> const& node_list,
           std::unordered_map<std::string, array> const& variable_table) {
+            auto const& node = node_list.at(i);
 
             auto alpha = optional_attribute_float(node, "alpha", 1.f);
             auto beta = optional_attribute_float(node, "beta", 1.f);
@@ -53,7 +54,7 @@ namespace menoh_impl {
 
             auto computation_node = [alpha, beta, batch_size, input_size,
                                      output_size, a_arr, b_arr, c_arr,
-                                     output_opt]() {
+                                     output = *output_opt]() {
                 for(int n = 0; n < batch_size; ++n) {
                     for(int o = 0; o < output_size; ++o) {
                         float sum = 0;
@@ -62,7 +63,7 @@ namespace menoh_impl {
                                    fat(b_arr, o * input_size + i);
                         }
                         sum += beta * fat(c_arr, o);
-                        fat(*output_opt, n * output_size + o) = sum;
+                        fat(output, n * output_size + o) = sum;
                     }
                 }
             };

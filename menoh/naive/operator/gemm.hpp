@@ -9,7 +9,7 @@ namespace menoh_impl {
     namespace naive_backend {
 
         computation_node_factory_return_type
-        make_gemm(node const& node,
+        make_gemm(int32_t i, std::vector<node> const& node_list,
                   std::unordered_map<std::string, array> const& variable_table);
 
     } // namespace naive_backend
