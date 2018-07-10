@@ -28,11 +28,13 @@ int main(int argc, char** argv) {
 
     std::cout << "parameter list\n";
     for(auto const& tensor : graph.initializer()) {
-        std::cout << "name: " << tensor.name() << " dims: ";
+        std::cout << "name: " << tensor.name();
+        std::cout << " dtype: " << TensorProto_DataType_Name(tensor.data_type());
+        std::cout << " dims: ";
         for(int j = 0; j < tensor.dims_size(); ++j) {
             std::cout << tensor.dims(j) << " ";
         }
-        if(tensor.has_raw_data()) {
+        if(tensor.has_raw_data() && tensor.data_type() == onnx::TensorProto_DataType_FLOAT) {
             std::cout << " values: ";
             auto f = static_cast<float const*>(static_cast<void const*>(tensor.raw_data().c_str()));
             std::vector<float> floats;
