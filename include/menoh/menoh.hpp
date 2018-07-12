@@ -138,6 +138,14 @@ namespace menoh {
                 impl_.get(), attribute_name.c_str(), value));
         }
 
+        void
+        add_attribute_float_to_current_node(std::string const& attribute_name,
+                                            float value) {
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_model_data_add_attribute_float_to_current_node(
+                impl_.get(), attribute_name.c_str(), value));
+        }
+
         void add_initializer(std::string const& initializer_name, dtype_t dtype,
                              std::vector<int> const& dims,
                              void* buffer_handle) {
