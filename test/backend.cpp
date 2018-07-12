@@ -45,7 +45,7 @@ namespace menoh {
 
             for(auto const& p : input_filename_table) {
                 auto const& input_name = p.first;
-                auto const& input_filename = p.second;
+                // auto const& input_filename = p.second;
                 dtype_t dtype = dtype_t::float_; // TODO other dtype
                 model_data.add_initializer(
                   input_name, dtype, std::get<0>(input_table.at(input_name)),
@@ -88,6 +88,28 @@ namespace menoh {
             }
         }
 
+        auto concat_test(float axis,
+                         std::vector<std::string> const& input_filename_list,
+                         std::string const& true_output_filename) {
+            menoh::model_data model_data;
+            model_data.add_new_node("Concat");
+            model_data.add_attribute_int_to_current_node("axis", axis);
+            std::vector<std::pair<std::string, std::string>> inputs;
+            for(int32_t i = 0; i < input_filename_list.size(); ++i) {
+                auto const& filename = input_filename_list.at(i);
+                inputs.push_back({"input" + std::to_string(i), filename});
+            }
+            operator_test("naive", "", model_data, inputs,
+                          {{"output", true_output_filename}});
+        }
+        auto elu_test(float alpha, std::string const& input_filename,
+                      std::string const& true_output_filename) {
+            menoh::model_data model_data;
+            model_data.add_new_node("Elu");
+            model_data.add_attribute_float_to_current_node("alpha", alpha);
+            operator_test("naive", "", model_data, {{"input", input_filename}},
+                          {{"output", true_output_filename}});
+        }
         auto gemm_test(std::string const& input_filename,
                        std::string const& weight_filename,
                        std::string const& bias_filename,
@@ -101,6 +123,14 @@ namespace menoh {
                            {"bias", bias_filename}},
                           {{"output", true_output_filename}});
         }
+        auto leaky_relu_test(float alpha, std::string const& input_filename,
+                             std::string const& true_output_filename) {
+            menoh::model_data model_data;
+            model_data.add_new_node("LeakyRelu");
+            model_data.add_attribute_float_to_current_node("alpha", alpha);
+            operator_test("naive", "", model_data, {{"input", input_filename}},
+                          {{"output", true_output_filename}});
+        }
         auto relu_test(std::string const& input_filename,
                        std::string const& true_output_filename) {
             menoh::model_data model_data;
@@ -108,15 +138,78 @@ namespace menoh {
             operator_test("naive", "", model_data, {{"input", input_filename}},
                           {{"output", true_output_filename}});
         }
+        auto tanh_test(std::string const& input_filename,
+                       std::string const& true_output_filename) {
+            menoh::model_data model_data;
+            model_data.add_new_node("Tanh");
+            operator_test("naive", "", model_data, {{"input", input_filename}},
+                          {{"output", true_output_filename}});
+        }
     };
 
+    TEST_F(BackendTest, concat_test_axis0_2) {
+        concat_test(0,
+                    {"../data/random_input_3_4096.txt",
+                     "../data/random_input_3_4096.txt"},
+                    "../data/concat_1d_6_4096.txt");
+    }
+    TEST_F(BackendTest, concat_test_axis1_2) {
+        concat_test(1,
+                    {"../data/random_input_3_4096.txt",
+                     "../data/random_input_3_4096.txt"},
+                    "../data/concat_1d_3_8192.txt");
+    }
+    TEST_F(BackendTest, concat_test_axis0_3) {
+        concat_test(0,
+                    {"../data/random_input_3_4096.txt",
+                     "../data/random_input_3_4096.txt",
+                     "../data/random_input_3_4096.txt"},
+                    "../data/concat_1d_9_4096.txt");
+    }
+    TEST_F(BackendTest, concat_test_axis1_3) {
+        concat_test(1,
+                    {"../data/random_input_3_4096.txt",
+                     "../data/random_input_3_4096.txt",
+                     "../data/random_input_3_4096.txt"},
+                    "../data/concat_1d_3_12288.txt");
+    }
+    TEST_F(BackendTest, elu_1d_test) {
+        elu_test(1.1, "../data/random_input_3_4096.txt", "../data/elu_1d.txt");
+    }
+    TEST_F(BackendTest, elu_2d_test) {
+        elu_test(1.1, "../data/random_input_3_4_32_32.txt",
+                 "../data/elu_2d.txt");
+    }
     TEST_F(BackendTest, gemm_1d_test) {
         gemm_test("../data/random_input_3_4096.txt",
                   "../data/random_weight_256_4096.txt",
                   "../data/random_bias_256.txt",
                   "../data/linear_1d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
     }
+    TEST_F(BackendTest, gemm_2d_test) {
+        gemm_test("../data/random_input_3_4_32_32.txt",
+                  "../data/random_weight_256_4096.txt",
+                  "../data/random_bias_256.txt",
+                  "../data/linear_2d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
+    }
+    TEST_F(BackendTest, leaky_relu_1d_test) {
+        leaky_relu_test(0.001, "../data/random_input_3_4096.txt",
+                        "../data/leaky_relu_1d.txt");
+    }
+    TEST_F(BackendTest, leaky_relu_2d_test) {
+        leaky_relu_test(0.001, "../data/random_input_3_4_32_32.txt",
+                        "../data/leaky_relu_2d.txt");
+    }
     TEST_F(BackendTest, relu_1d_test) {
         relu_test("../data/random_input_3_4096.txt", "../data/relu_1d.txt");
+    }
+    TEST_F(BackendTest, relu_2d_test) {
+        relu_test("../data/random_input_3_4_32_32.txt", "../data/relu_2d.txt");
+    }
+    TEST_F(BackendTest, tanh_1d_test) {
+        tanh_test("../data/random_input_3_4096.txt", "../data/tanh_1d.txt");
+    }
+    TEST_F(BackendTest, tanh_2d_test) {
+        tanh_test("../data/random_input_3_4_32_32.txt", "../data/tanh_2d.txt");
     }
 } // namespace menoh

@@ -5,8 +5,15 @@
 
 #include <menoh/naive/computation_node.hpp>
 #include <menoh/naive/computation_node_factory.hpp>
-#include <menoh/naive/operator/gemm.hpp>
+
+#include <menoh/naive/operator/elu.hpp>
+#include <menoh/naive/operator/leaky_relu.hpp>
 #include <menoh/naive/operator/relu.hpp>
+#include <menoh/naive/operator/tanh.hpp>
+
+#include <menoh/naive/operator/concat.hpp>
+
+#include <menoh/naive/operator/gemm.hpp>
 
 namespace menoh_impl {
     namespace naive_backend {
@@ -28,8 +35,11 @@ namespace menoh_impl {
               model_data.parameter_name_and_array_list.end());
 
             std::unordered_map<std::string, computation_node_factory>
-              computation_node_factory_table = {{"Gemm", make_gemm},
-                                                {"Relu", make_relu}};
+              computation_node_factory_table = {{"Concat", make_concat}, {"Elu", make_elu},
+                                                {"Gemm", make_gemm},
+                                                {"LeakyRelu", make_leaky_relu},
+                                                {"Relu", make_relu},
+                                                {"Tanh", make_tanh}};
 
             for(std::size_t i = 0; i < graph.node_list().size(); ++i) {
                 auto const& node = graph.node_list().at(i);
