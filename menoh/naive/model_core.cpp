@@ -15,6 +15,9 @@
 
 #include <menoh/naive/operator/gemm.hpp>
 
+#include <menoh/naive/operator/add.hpp>
+#include <menoh/naive/operator/sum.hpp>
+
 namespace menoh_impl {
     namespace naive_backend {
 
@@ -35,10 +38,13 @@ namespace menoh_impl {
               model_data.parameter_name_and_array_list.end());
 
             std::unordered_map<std::string, computation_node_factory>
-              computation_node_factory_table = {{"Concat", make_concat}, {"Elu", make_elu},
+              computation_node_factory_table = {{"Add", make_add},
+                                                {"Concat", make_concat},
+                                                {"Elu", make_elu},
                                                 {"Gemm", make_gemm},
                                                 {"LeakyRelu", make_leaky_relu},
                                                 {"Relu", make_relu},
+                                                {"Sum", make_sum},
                                                 {"Tanh", make_tanh}};
 
             for(std::size_t i = 0; i < graph.node_list().size(); ++i) {

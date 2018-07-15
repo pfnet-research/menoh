@@ -88,6 +88,18 @@ namespace menoh {
             }
         }
 
+        auto add_test(std::vector<std::string> const& input_filename_list,
+                      std::string const& true_output_filename) {
+            menoh::model_data model_data;
+            model_data.add_new_node("Add");
+            std::vector<std::pair<std::string, std::string>> inputs;
+            for(int32_t i = 0; i < input_filename_list.size(); ++i) {
+                auto const& filename = input_filename_list.at(i);
+                inputs.push_back({"input" + std::to_string(i), filename});
+            }
+            operator_test("naive", "", model_data, inputs,
+                          {{"output", true_output_filename}});
+        }
         auto concat_test(float axis,
                          std::vector<std::string> const& input_filename_list,
                          std::string const& true_output_filename) {
@@ -138,6 +150,18 @@ namespace menoh {
             operator_test("naive", "", model_data, {{"input", input_filename}},
                           {{"output", true_output_filename}});
         }
+        auto sum_test(std::vector<std::string> const& input_filename_list,
+                      std::string const& true_output_filename) {
+            menoh::model_data model_data;
+            model_data.add_new_node("Sum");
+            std::vector<std::pair<std::string, std::string>> inputs;
+            for(int32_t i = 0; i < input_filename_list.size(); ++i) {
+                auto const& filename = input_filename_list.at(i);
+                inputs.push_back({"input" + std::to_string(i), filename});
+            }
+            operator_test("naive", "", model_data, inputs,
+                          {{"output", true_output_filename}});
+        }
         auto tanh_test(std::string const& input_filename,
                        std::string const& true_output_filename) {
             menoh::model_data model_data;
@@ -147,6 +171,16 @@ namespace menoh {
         }
     };
 
+    TEST_F(BackendTest, add_1d_test) {
+        add_test({"../data/random_input_3_4096.txt",
+                  "../data/random_input_3_4096.txt"},
+                 "../data/add_1d.txt");
+    }
+    TEST_F(BackendTest, add_2d_test) {
+        add_test({"../data/random_input_3_4_32_32.txt",
+                  "../data/random_input_3_4_32_32.txt"},
+                 "../data/add_2d.txt");
+    }
     TEST_F(BackendTest, concat_test_axis0_2) {
         concat_test(0,
                     {"../data/random_input_3_4096.txt",
@@ -205,6 +239,16 @@ namespace menoh {
     }
     TEST_F(BackendTest, relu_2d_test) {
         relu_test("../data/random_input_3_4_32_32.txt", "../data/relu_2d.txt");
+    }
+    TEST_F(BackendTest, sum_1d_test) {
+        sum_test({"../data/random_input_3_4096.txt",
+                  "../data/random_input_3_4096.txt"},
+                 "../data/add_1d.txt"); // TODO change from add
+    }
+    TEST_F(BackendTest, sum_2d_test) {
+        sum_test({"../data/random_input_3_4_32_32.txt",
+                  "../data/random_input_3_4_32_32.txt"},
+                 "../data/add_2d.txt"); // TODO change from add
     }
     TEST_F(BackendTest, tanh_1d_test) {
         tanh_test("../data/random_input_3_4096.txt", "../data/tanh_1d.txt");
