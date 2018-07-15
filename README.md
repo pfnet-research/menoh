@@ -126,9 +126,11 @@ make
 - Abs
 - Add
 - Sqrt
+- Sum
 
 ### Normalization functions
 - BatchNormalization
+- LRN
 
 ### Spatial pooling
 - AveragePool
