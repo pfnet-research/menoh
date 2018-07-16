@@ -29,7 +29,8 @@ namespace menoh_impl {
             indices_to_flat_index(std::vector<int32_t> const& indices) const {
                 assert(indices.size() == offsets_.size());
                 int32_t flat_index = 0;
-                for(int32_t i = 0; i < indices.size(); ++i) {
+                for(int32_t i = 0; i < static_cast<int32_t>(indices.size());
+                    ++i) {
                     flat_index += indices[i] * offsets_[i];
                 }
                 return flat_index;

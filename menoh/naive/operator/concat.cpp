@@ -20,7 +20,8 @@ namespace menoh_impl {
             auto axis = attribute_int(node, "axis");
 
             std::vector<array> inputs;
-            for(int32_t i = 0; i < node.input_name_list.size(); ++i) {
+            for(int32_t i = 0;
+                i < static_cast<int32_t>(node.input_name_list.size()); ++i) {
                 inputs.push_back(
                   find_value(variable_table, node.input_name_list.at(i)));
             }
@@ -44,7 +45,8 @@ namespace menoh_impl {
                 int32_t offset = 0;
                 for(auto const& input : inputs) {
                     index_converter cvt(input.dims());
-                    for(int32_t i = 0; i < total_size(input); ++i) {
+                    for(int32_t i = 0;
+                        i < static_cast<int32_t>(total_size(input)); ++i) {
                         auto indices = cvt.flat_index_to_indices(i);
                         auto dst_indices = indices;
                         dst_indices[axis] += offset;

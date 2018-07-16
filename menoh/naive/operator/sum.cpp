@@ -21,7 +21,8 @@ namespace menoh_impl {
             auto first_input =
               find_value(variable_table, node.input_name_list.front());
             inputs.push_back(first_input);
-            for(int32_t i = 1; i < node.input_name_list.size(); ++i) {
+            for(int32_t i = 1;
+                i < static_cast<int32_t>(node.input_name_list.size()); ++i) {
                 auto input =
                   find_value(variable_table, node.input_name_list.at(i));
                 if(input.dims() != first_input.dims()) {
