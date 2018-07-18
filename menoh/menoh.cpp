@@ -125,6 +125,28 @@ menoh_error_code menoh_variable_profile_table_builder_add_input_profile(
     });
 }
 
+menoh_error_code menoh_variable_profile_table_builder_add_input_profile_dims_2(
+  menoh_variable_profile_table_builder_handle builder, const char* name,
+  menoh_dtype dtype, int32_t num, int32_t size) {
+    return check_error([&]() {
+        std::vector<int> dims = {num, size};
+        builder->input_name_and_dtype_and_dims_list.push_back(
+          std::make_tuple(std::string(name), dtype, dims));
+        return menoh_error_code_success;
+    });
+}
+menoh_error_code menoh_variable_profile_table_builder_add_input_profile_dims_4(
+  menoh_variable_profile_table_builder_handle builder, const char* name,
+  menoh_dtype dtype, int32_t num, int32_t channel, int32_t height,
+  int32_t width) {
+    return check_error([&]() {
+        std::vector<int> dims = {num, channel, height, width};
+        builder->input_name_and_dtype_and_dims_list.push_back(
+          std::make_tuple(std::string(name), dtype, dims));
+        return menoh_error_code_success;
+    });
+}
+
 menoh_error_code menoh_variable_profile_table_builder_add_output_profile(
   menoh_variable_profile_table_builder_handle builder, const char* name,
   menoh_dtype dtype) {
