@@ -1,4 +1,4 @@
-#include <menoh/naive/operator/max_pool.hpp>
+#include <menoh/naive/operator/average_pool.hpp>
 
 #include <numeric>
 
