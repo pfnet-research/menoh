@@ -42,7 +42,7 @@ This codebase contains C API and C++ API.
 ## Requirements
 
 - MKL-DNN Library (0.14 or later)
-- Protocol Buffers (3.5.1 is checked)
+- Protocol Buffers (2.6.1 or later)
 
 ## Build
 
