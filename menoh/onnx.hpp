@@ -37,7 +37,7 @@ namespace menoh_impl {
                                std::string const& attribute_type)
           : exception(menoh_error_code_invalid_attribute_type,
                       "menoh invalid attribute type error: attribute type " +
-                        attribute_type + " for " + attribute_name) {}
+                        attribute_type + " for \"" + attribute_name + "\"") {}
     };
 
     model_data load_onnx(std::string const& filename);

@@ -170,7 +170,7 @@ namespace menoh_impl {
                 } else {
                     throw invalid_attribute_type(
                       attr.name(),
-                      std::to_string(static_cast<int>(attr.type())));
+                      AttributeProto_AttributeType_Name(attr.type()));
                 }
             }
             menoh_impl::node n{
