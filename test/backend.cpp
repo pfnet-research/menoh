@@ -178,6 +178,14 @@ namespace menoh {
             operator_test("naive", "", model_data, {{"input", input_filename}},
                           {{"output", true_output_filename}});
         }
+        auto softmax_test(int32_t axis, std::string const& input_filename,
+                          std::string const& true_output_filename) {
+            menoh::model_data model_data;
+            model_data.add_new_node("Softmax");
+            model_data.add_attribute_int_to_current_node("axis", axis);
+            operator_test("naive", "", model_data, {{"input", input_filename}},
+                          {{"output", true_output_filename}});
+        }
         auto sum_test(std::vector<std::string> const& input_filename_list,
                       std::string const& true_output_filename) {
             menoh::model_data model_data;
@@ -211,18 +219,18 @@ namespace menoh {
     }
     TEST_F(BackendTest, average_pool_k2_test) {
         average_pool_test({2, 2}, {0, 0}, {2, 2},
-                      "../data/random_input_3_4_32_32.txt",
-                      "../data/average_pooling_2d_k2_s2_p0.txt");
+                          "../data/random_input_3_4_32_32.txt",
+                          "../data/average_pooling_2d_k2_s2_p0.txt");
     }
     TEST_F(BackendTest, average_pool_k3_test) {
         average_pool_test({3, 3}, {0, 0}, {2, 2},
-                      "../data/random_input_3_4_32_32.txt",
-                      "../data/average_pooling_2d_k3_s2_p0.txt");
+                          "../data/random_input_3_4_32_32.txt",
+                          "../data/average_pooling_2d_k3_s2_p0.txt");
     }
     TEST_F(BackendTest, average_pool_k3_p1_test) {
         average_pool_test({3, 3}, {1, 1}, {2, 2},
-                      "../data/random_input_3_4_32_32.txt",
-                      "../data/average_pooling_2d_k3_s2_p1.txt");
+                          "../data/random_input_3_4_32_32.txt",
+                          "../data/average_pooling_2d_k3_s2_p1.txt");
     }
     TEST_F(BackendTest, concat_test_axis0_2) {
         concat_test(0,
@@ -297,6 +305,10 @@ namespace menoh {
     }
     TEST_F(BackendTest, relu_2d_test) {
         relu_test("../data/random_input_3_4_32_32.txt", "../data/relu_2d.txt");
+    }
+    TEST_F(BackendTest, softmax_1d_test) {
+        softmax_test(1, "../data/random_input_3_4096.txt",
+                     "../data/softmax_1d.txt");
     }
     TEST_F(BackendTest, sum_1d_test) {
         sum_test({"../data/random_input_3_4096.txt",

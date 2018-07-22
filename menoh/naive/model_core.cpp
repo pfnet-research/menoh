@@ -9,6 +9,7 @@
 #include <menoh/naive/operator/elu.hpp>
 #include <menoh/naive/operator/leaky_relu.hpp>
 #include <menoh/naive/operator/relu.hpp>
+#include <menoh/naive/operator/softmax.hpp>
 #include <menoh/naive/operator/tanh.hpp>
 
 #include <menoh/naive/operator/concat.hpp>
@@ -46,7 +47,8 @@ namespace menoh_impl {
                 {"Concat", make_concat},    {"Elu", make_elu},
                 {"Gemm", make_gemm},        {"LeakyRelu", make_leaky_relu},
                 {"MaxPool", make_max_pool}, {"Relu", make_relu},
-                {"Sum", make_sum},          {"Tanh", make_tanh}};
+                {"Softmax", make_softmax},  {"Sum", make_sum},
+                {"Tanh", make_tanh}};
 
             for(std::size_t i = 0; i < graph.node_list().size(); ++i) {
                 auto const& node = graph.node_list().at(i);
