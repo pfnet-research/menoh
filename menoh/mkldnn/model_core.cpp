@@ -171,7 +171,7 @@ namespace menoh_impl {
             inplace_primitive_factory_table.insert(
               {"Sqrt", make_sqrt_primitive});
             inplace_primitive_factory_table.insert(
-              {"Tanh", make_sqrt_primitive});
+              {"Tanh", make_tanh_primitive});
 
             std::unordered_map<std::string, primitive_factory>
               primitive_factory_table;
