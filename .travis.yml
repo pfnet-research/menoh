@@ -1,25 +1,44 @@
 dist: trusty
 sudo: required
 language: cpp
-os:
-  - linux
-  - osx
-addons:
-    apt:
-        sources:
-            - ubuntu-toolchain-r-test
-            - sourceline: 'ppa:maarten-fonville/protobuf'
-        packages:
-            - gcc-7
-            - g++-7
-            - cmake-data
-            - cmake
-            - libopencv-dev
-            - libprotobuf-dev
-            - protobuf-compiler
+matrix:
+    include:
+        - os: osx
+        - os: linux
+          addons:
+              apt:
+                  sources:
+                      - ubuntu-toolchain-r-test
+                      - sourceline: 'ppa:maarten-fonville/protobuf'
+                  packages:
+                      - gcc-7
+                      - g++-7
+                      - cmake-data
+                      - cmake
+                      - libopencv-dev
+                      - libprotobuf-dev
+                      - protobuf-compiler
+              coverity_scan:
+                  project:
+                      name: "pfnet-research/menoh"
+                      description: "Menoh: DNN inference library"
+                  notification_email: sakai@preferred.jp
+                  build_command_prepend: cov-configure --compiler /usr/bin/g++-7 --comptype g++ -- -march=native -fPIC -std=gnu++14 && cmake -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn/include" -DMKLDNN_LIBRARY="$HOME/mkl-dnn/lib/libmkldnn.so" .
+                  build_command: make
+                  branch_pattern: coverity_scan
+env:
+    global:
+        # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+        #   via the "travis encrypt" command using the project repo's public key
+        - secure: "q1I4YsB5VcNaF9Unmm6T92ht9/KwOGbxZVCpXIp5XUVulpaZq7sTd3rL1v3r1mUCYaabkcy9N4UPQjJZsuOlU4jc8zPzPxPir7hOER5umlkfSMuc1RhmShT8cK9naznqv7FLSTIjTZIao85Lrgxgw0B6xzcWc0kSeJPJVAmS5kwmC/FCQS2MPQpyhfE5JjpUrePOT+lRTB6Psm5bWyEww8bPsatO2k5b8DDdmUJIxmuJ1UTCx5rj/ZcTJLWAsj8D7u9aUfCmOhV5+hqHBvJd/06FLt254SNmvzmVLW9CVU/aZvuTtRECgBYCVndR7NxWpRHo1SBKqgLu+cNOFoFyt++1V+FAbpxj9JMktZNyxWp22c/FvBBdHynOsxBxVFdGIzhcwhQMiHFLOK3pnyiByabtINhERqrszkbpztOepBE3o8PGpjOz8iIx1TtLgmWwAw5D6WXx8FeP5FMkJwpXckCMI5tX5wPoU8cpZIwPjCxG3Z+ojHw+80pQWCrMZnEDfcf9zskJNsmv/GbiWGEvI8xVG0gst5VmjaAXK7JhC0cKvPOEmCFRGY+BWdjD3dkYIIElUmBRfTRDpcDJV6j5r1xMv7QKRFDfAjnC33KLJo2aALZTrkRPveIP2h2jU13ZbemN8GKWwEWNzidmwtCbH4rpe80rFqASWkyfii7HrEI="
 cache:
     directories:
         - $HOME/mkl-dnn
+before_install:
+    - |
+      if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+        echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+      fi
 install:
     - |
       if [ "$TRAVIS_OS_NAME" = "osx" ]; then
@@ -40,6 +59,9 @@ install:
 before_script:
     - ls -R $HOME/mkl-dnn
 script:
+    #- if [ -f cov-int/build-log.txt ]; then cat cov-int/build-log.txt; fi
+    # CMakeCache.txt generated for coverity_scan build hinders out-of-source build
+    - if [ -f CMakeCache.txt ]; then rm CMakeCache.txt; fi
     - mkdir build
     - cd build
     - |
