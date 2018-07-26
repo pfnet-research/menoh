@@ -31,7 +31,7 @@ namespace menoh_impl {
         dtype_t dtype_;
         std::vector<int> dims_;
         std::shared_ptr<void> data_;
-        void* data_handle_;
+        void* data_handle_ = nullptr;
     };
 
     std::size_t total_size(array const& a);
