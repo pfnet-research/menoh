@@ -15,6 +15,7 @@
 namespace menoh_impl {
     namespace mkldnn_backend {
 
+
         class model_core final : public menoh_impl::model_core {
         public:
             model_core(
