@@ -2,10 +2,10 @@
 #define MENOH_MODEL_DATA_HPP
 
 #include <algorithm>
+#include <iterator>
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <iterator>
 
 #include <menoh/array.hpp>
 #include <menoh/graph.hpp>
@@ -30,12 +30,13 @@ namespace menoh_impl {
         std::vector<std::string> all_parameter_name_list;
         all_parameter_name_list.reserve(
           model_data.parameter_name_and_array_list.size());
-        std::transform(model_data.parameter_name_and_array_list.begin(),
-                       model_data.parameter_name_and_array_list.end(),
-                       std::back_inserter(all_parameter_name_list),
-                       [](auto const& name_and_array_pair) {
-                           return name_and_array_pair.first;
-                       });
+        std::transform(
+          model_data.parameter_name_and_array_list.begin(),
+          model_data.parameter_name_and_array_list.end(),
+          std::back_inserter(all_parameter_name_list),
+          [](std::pair<std::string, array> const& name_and_array_pair) {
+              return name_and_array_pair.first;
+          });
 
         auto all_input_name_set =
           extract_all_input_name_set(model_data.node_list);
@@ -51,8 +52,8 @@ namespace menoh_impl {
         auto new_end_iter = std::remove_if(
           model_data.parameter_name_and_array_list.begin(),
           model_data.parameter_name_and_array_list.end(),
-          [&needed_parameter_name_set](
-            auto const& parameter_name_and_array_pair) {
+          [&needed_parameter_name_set](std::pair<std::string, array> const&
+                                         parameter_name_and_array_pair) {
               auto const& parameter_name = parameter_name_and_array_pair.first;
               return needed_parameter_name_set.find(parameter_name) ==
                      needed_parameter_name_set.end();

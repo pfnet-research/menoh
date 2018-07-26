@@ -9,7 +9,8 @@
 #include <menoh/array.hpp>
 
 namespace menoh_impl {
-    inline auto load_np_array(std::string const& filename) {
+    inline std::tuple<int, std::vector<int>, std::vector<float>>
+    load_np_array(std::string const& filename) {
         std::ifstream ifs(filename);
         if(!ifs) {
             throw std::runtime_error(filename + " is not found");
@@ -31,7 +32,7 @@ namespace menoh_impl {
         std::vector<float> data;
         {
             auto total_num = std::accumulate(shape.begin(), shape.end(), 1,
-                                             std::multiplies<>());
+                                             std::multiplies<int>());
             std::getline(ifs, line);
             std::istringstream iss(line);
             for(int i = 0; i < total_num; ++i) {
@@ -43,7 +44,7 @@ namespace menoh_impl {
         return std::make_tuple(dims_num, shape, data);
     }
 
-    inline auto load_np_array_as_array(std::string const& filename) {
+    inline array load_np_array_as_array(std::string const& filename) {
         int dims_num;
         std::vector<int> shape;
         std::vector<float> data;

@@ -41,7 +41,10 @@ namespace menoh_impl {
                              array> const&, // required output table
           mkldnn::engine const&)>;
 
-        auto make_nets_core(
+        std::tuple<std::vector<mkldnn::primitive>,
+                   std::unordered_map<std::string, mkldnn::memory>,
+                   std::vector<mkldnn::memory>, std::vector<array>>
+        make_nets_core(
           menoh_impl::graph const& graph,
           std::unordered_map<std::string, array> const& parameter_table,
           std::unordered_map<std::string, array> const& input_table,
@@ -76,7 +79,9 @@ namespace menoh_impl {
             {
                 std::transform(output_table.begin(), output_table.end(),
                                std::back_inserter(output_name_sorted_list),
-                               [](auto const& e) { return e.first; });
+                               [](std::pair<std::string, array> const& e) {
+                                   return e.first;
+                               });
                 std::sort(output_name_sorted_list.begin(),
                           output_name_sorted_list.end());
             }
@@ -135,7 +140,9 @@ namespace menoh_impl {
                       new_output_memory_table.begin(),
                       new_output_memory_table.end(),
                       std::inserter(variable_name_set, variable_name_set.end()),
-                      [](auto const& e) { return e.first; });
+                      [](std::pair<std::string, mkldnn::memory> const& e) {
+                          return e.first;
+                      });
                     std::vector<std::string> diffs;
                     std::set_difference(
                       output_name_sorted_list.begin(),
@@ -155,7 +162,9 @@ namespace menoh_impl {
                                    temp_memory_list, owned_array_list);
         }
 
-        auto
+        std::tuple<std::vector<mkldnn::primitive>,
+                   std::unordered_map<std::string, mkldnn::memory>,
+                   std::vector<mkldnn::memory>, std::vector<array>>
         make_nets(std::unordered_map<std::string, array> const& input_table,
                   std::unordered_map<std::string, array> const& output_table,
                   menoh_impl::model_data const& model_data,

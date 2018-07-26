@@ -57,7 +57,7 @@ namespace menoh_impl {
               net, output_name, mkldnn::memory::format::nchw,
               lrn_pd.dst_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, engine,
-              [&net, &lrn_input_memory, &lrn_pd](auto& op_output_memory) {
+              [&net, &lrn_input_memory, &lrn_pd](mkldnn::memory& op_output_memory) {
                   net.push_back(mkldnn::lrn_forward(lrn_pd, lrn_input_memory,
                                                     op_output_memory));
               });

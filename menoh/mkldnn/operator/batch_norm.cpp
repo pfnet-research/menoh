@@ -98,7 +98,7 @@ namespace menoh_impl {
               bn_pd.dst_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, engine,
               [&net, &input_memory, &weights_memory, &mean_memory, &var_memory,
-               &bn_pd](auto& op_output_memory) {
+               &bn_pd](mkldnn::memory& op_output_memory) {
                   net.push_back(mkldnn::batch_normalization_forward(
                     bn_pd, static_cast<mkldnn::primitive::at>(input_memory),
                     static_cast<mkldnn::primitive::at>(mean_memory),

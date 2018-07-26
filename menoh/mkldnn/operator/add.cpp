@@ -64,7 +64,7 @@ namespace menoh_impl {
               output_memory_table, required_output_table, temp_memory_list,
               engine,
               [&net, &input_a_memory, &input_b_memory,
-               &add_pd](auto& op_output_memory) {
+               &add_pd](mkldnn::memory& op_output_memory) {
                   std::vector<mkldnn::primitive::at> inputs{
                     static_cast<mkldnn::primitive::at>(input_a_memory),
                     static_cast<mkldnn::primitive::at>(input_b_memory)};

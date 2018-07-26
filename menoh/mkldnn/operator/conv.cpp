@@ -103,7 +103,7 @@ namespace menoh_impl {
               conv_pd.dst_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, engine,
               [&net, &conv_input_memory, &conv_weight_memory, &conv_pd,
-               &bias_memory_opt](auto& op_output_memory) {
+               &bias_memory_opt](mkldnn::memory& op_output_memory) {
                   if(bias_memory_opt) {
                       net.push_back(mkldnn::convolution_forward(
                         conv_pd, conv_input_memory, conv_weight_memory,

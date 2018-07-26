@@ -18,8 +18,8 @@ namespace menoh_impl {
     };
 
     template <typename T>
-    auto const& find_value(std::unordered_map<std::string, T> const& m,
-                           std::string const& key) {
+    T const& find_value(std::unordered_map<std::string, T> const& m,
+                        std::string const& key) {
         auto found = m.find(key);
         if(found == m.end()) {
             throw variable_not_found(key);
@@ -28,7 +28,7 @@ namespace menoh_impl {
     }
 
     template <typename T>
-    auto& find_value(std::unordered_map<std::string, T>& m,
+    T& find_value(std::unordered_map<std::string, T>& m,
                      std::string const& key) {
         auto found = m.find(key);
         if(found == m.end()) {

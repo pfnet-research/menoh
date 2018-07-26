@@ -65,7 +65,8 @@ namespace menoh_impl {
               net, output_name, output_format, concat_pd.dst_primitive_desc(),
               output_memory_table, required_output_table, temp_memory_list,
               engine,
-              [&net, &input_memories, &concat_pd](auto& op_output_memory) {
+              [&net, &input_memories,
+               &concat_pd](mkldnn::memory& op_output_memory) {
                   std::vector<mkldnn::primitive::at> inputs;
                   for(auto const& input_memory : input_memories) {
                       inputs.push_back(

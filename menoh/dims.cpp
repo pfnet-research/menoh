@@ -11,7 +11,7 @@ namespace menoh_impl {
     std::size_t calc_total_size(std::vector<int> const& dims) {
         return std::accumulate(dims.begin(), dims.end(),
                                static_cast<std::size_t>(1),
-                               std::multiplies<>());
+                               std::multiplies<int>());
     }
 
     template <typename CalcLength>

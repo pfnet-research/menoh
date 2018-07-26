@@ -19,8 +19,8 @@
 namespace menoh_impl {
     namespace mkldnn_backend {
 
-        auto load_np_array_as_memory(std::string const& filename,
-                                     mkldnn::engine const& engine) {
+        mkldnn::memory load_np_array_as_memory(std::string const& filename,
+                                               mkldnn::engine const& engine) {
             auto data = menoh_impl::load_np_array_as_array(filename);
             assert(data.dims().size() == 2 || data.dims().size() == 4);
             mkldnn::memory::format format = data.dims().size() == 2
@@ -41,7 +41,7 @@ namespace menoh_impl {
             OperatorTest() = default;
             virtual void SetUp() {}
 
-            auto relu_test(std::string const& input_filename,
+            void relu_test(std::string const& input_filename,
                            std::string const& true_output_filename) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -62,7 +62,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto
+            void
             leaky_relu_test(std::string const& input_filename,
                             std::string const& true_output_filename) const {
                 auto input_memory =
@@ -85,7 +85,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto elu_test(std::string const& input_filename,
+            void elu_test(std::string const& input_filename,
                           std::string const& true_output_filename) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -107,7 +107,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto abs_test(std::string const& input_filename,
+            void abs_test(std::string const& input_filename,
                           std::string const& true_output_filename) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -128,7 +128,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto sqrt_test(std::string const& input_filename,
+            void sqrt_test(std::string const& input_filename,
                            std::string const& true_output_filename) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -149,7 +149,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto tanh_test(std::string const& input_filename,
+            void tanh_test(std::string const& input_filename,
                            std::string const& true_output_filename) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -170,7 +170,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto softmax_test(std::string const& input_filename,
+            void softmax_test(std::string const& input_filename,
                               std::string const& true_output_filename) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -190,7 +190,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto fc_test(std::string const& input_filename,
+            void fc_test(std::string const& input_filename,
                          std::string const& weight_filename,
                          std::string const& bias_filename,
                          std::string const& true_output_filename) const {
@@ -220,7 +220,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto max_pool_test(std::string const& input_filename, int k, int s,
+            void max_pool_test(std::string const& input_filename, int k, int s,
                                int p) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -251,7 +251,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto global_max_pool_test(
+            void global_max_pool_test(
               std::string const& input_filename,
               std::string const& true_output_filename) const {
                 auto input_memory =
@@ -278,7 +278,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto average_pool_test(std::string const& input_filename, int k,
+            void average_pool_test(std::string const& input_filename, int k,
                                    int s, int p) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -309,7 +309,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto global_average_pool_test(
+            void global_average_pool_test(
               std::string const& input_filename,
               std::string const& true_output_filename) const {
                 auto input_memory =
@@ -336,7 +336,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto conv_test(std::string const& input_filename, int k, int s,
+            void conv_test(std::string const& input_filename, int k, int s,
                            int p) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -372,7 +372,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto conv_with_bias_test(std::string const& input_filename, int k,
+            void conv_with_bias_test(std::string const& input_filename, int k,
                                      int s, int p) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -411,7 +411,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto conv_transpose_test(std::string const& input_filename, int k,
+            void conv_transpose_test(std::string const& input_filename, int k,
                                      int s, int p) const {
                 auto input_memory =
                   load_np_array_as_memory(input_filename, engine_);
@@ -447,7 +447,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto
+            void
             conv_transpose_with_bias_test(std::string const& input_filename,
                                           int k, int s, int p) const {
                 auto input_memory =
@@ -487,7 +487,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto
+            void
             batch_norm_test(std::string const& input_filename,
                             std::string const& mean_filename,
                             std::string const& var_fileanme,
@@ -523,7 +523,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto add_test(std::string const& input_a_filename,
+            void add_test(std::string const& input_a_filename,
                           std::string const& input_b_filename,
                           std::string const& true_output_filename) const {
                 auto input_a_memory =
@@ -548,7 +548,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto
+            void
             concat_test(std::vector<std::string> const& input_filename_list,
                         int axis,
                         std::string const& true_output_filename) const {
@@ -586,7 +586,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto lrn_test(std::string const& input_filename, float alpha,
+            void lrn_test(std::string const& input_filename, float alpha,
                           float beta, float bias, int size,
                           std::string const& true_output_filename) {
                 auto input_memory =
@@ -617,7 +617,7 @@ namespace menoh_impl {
                                  10.e-4);
             }
 
-            auto gemm_test(std::string const& input_filename,
+            void gemm_test(std::string const& input_filename,
                            std::string const& weight_filename,
                            std::string const& bias_filename,
                            std::string const& true_output_filename, float alpha,

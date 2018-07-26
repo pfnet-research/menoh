@@ -103,7 +103,7 @@ namespace menoh_impl {
               fc_pd.dst_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, engine,
               [&net, &fc_input_memory, &fc_weight_memory, &fc_pd,
-               &bias_memory](auto& op_output_memory) {
+               &bias_memory](mkldnn::memory& op_output_memory) {
                   net.push_back(mkldnn::inner_product_forward(
                     fc_pd, fc_input_memory, fc_weight_memory, bias_memory,
                     op_output_memory));

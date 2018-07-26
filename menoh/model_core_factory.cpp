@@ -1,3 +1,4 @@
+#include <menoh/make_unique.hpp>
 #include <menoh/model_core.hpp>
 #include <menoh/model_core_factory.hpp>
 
@@ -12,7 +13,7 @@ namespace menoh_impl {
                     std::string const& backend_name,
                     backend_config const& config) {
         if(backend_name == "mkldnn") {
-            return std::make_unique<mkldnn_backend::model_core>(
+            return menoh_impl::make_unique<mkldnn_backend::model_core>(
               mkldnn_backend::make_model_core(input_table, output_table,
                                               model_data, config));
         }

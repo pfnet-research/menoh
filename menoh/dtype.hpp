@@ -44,8 +44,10 @@ namespace menoh_impl {
     template <dtype_t d>
     using dtype_to_type_t = typename dtype_to_type<d>::type;
 
+    /*
     template <dtype_t d>
     constexpr int size_in_bytes = sizeof(dtype_to_type_t<d>);
+    */
 
 } // namespace menoh_impl
 

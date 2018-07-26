@@ -15,7 +15,7 @@
 
 #include "../external/cmdline.h"
 
-auto crop_and_resize(cv::Mat mat, cv::Size const& size) {
+cv::Mat crop_and_resize(cv::Mat mat, cv::Size const& size) {
     auto short_edge = std::min(mat.size().width, mat.size().height);
     cv::Rect roi;
     roi.x = (mat.size().width - short_edge) / 2;
@@ -27,7 +27,7 @@ auto crop_and_resize(cv::Mat mat, cv::Size const& size) {
     return resized;
 }
 
-auto reorder_to_nchw(cv::Mat const& mat) {
+std::vector<float> reorder_to_nchw(cv::Mat const& mat) {
     assert(mat.channels() == 3);
     std::vector<float> data(mat.channels() * mat.rows * mat.cols);
     for(int y = 0; y < mat.rows; ++y) {
@@ -44,7 +44,8 @@ auto reorder_to_nchw(cv::Mat const& mat) {
 }
 
 template <typename InIter>
-auto extract_top_k_index_list(
+std::vector<typename std::iterator_traits<InIter>::difference_type>
+extract_top_k_index_list(
   InIter first, InIter last,
   typename std::iterator_traits<InIter>::difference_type k) {
     using diff_t = typename std::iterator_traits<InIter>::difference_type;
@@ -62,7 +63,8 @@ auto extract_top_k_index_list(
     return indices;
 }
 
-auto load_category_list(std::string const& synset_words_path) {
+std::vector<std::string>
+load_category_list(std::string const& synset_words_path) {
     std::ifstream ifs(synset_words_path);
     if(!ifs) {
         throw std::runtime_error("File open error: " + synset_words_path);

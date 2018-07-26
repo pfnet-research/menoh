@@ -28,15 +28,18 @@ namespace menoh_impl {
                 // Search node that issues required output
                 auto needed_node_iter = std::find_if(
                   node_list.begin(), node_list.end(),
-                  [&required_output_name](auto const& node) {
-                      return std::any_of(
-                        node.output_name_list.begin(),
-                        node.output_name_list.end(),
-                        [&required_output_name](auto const& output_name) {
-                            return output_name == required_output_name;
-                        });
+                  [&required_output_name](node const& node) {
+                      return std::any_of(node.output_name_list.begin(),
+                                         node.output_name_list.end(),
+                                         [&required_output_name](
+                                           std::string const& output_name) {
+                                             return output_name ==
+                                                    required_output_name;
+                                         });
                   });
-                if(needed_node_iter == node_list.end()) { continue; }
+                if(needed_node_iter == node_list.end()) {
+                    continue;
+                }
                 auto is_already_added =
                   std::find(needed_node_list.begin(), needed_node_list.end(),
                             *needed_node_iter) != needed_node_list.end();
@@ -82,13 +85,15 @@ namespace menoh_impl {
         return diff_name_list;
     }
 
-    auto extract_graph_input_name_list(std::vector<node> const& node_list) {
+    auto extract_graph_input_name_list(std::vector<node> const& node_list)
+      -> decltype(name_set_difference(extract_all_input_name_set(node_list),
+                                      extract_all_output_name_set(node_list))) {
         auto all_input_name_set = extract_all_input_name_set(node_list);
         auto all_output_name_set = extract_all_output_name_set(node_list);
         return name_set_difference(all_input_name_set, all_output_name_set);
     }
 
-    auto check_graph_computable(std::vector<node> const& node_list) {
+    bool check_graph_computable(std::vector<node> const& node_list) {
         (void)node_list;
         return true; // TODO impl
     }
@@ -148,7 +153,7 @@ namespace menoh_impl {
         return menoh_impl::graph(ordered_node_list);
     }
 
-    auto
+    optional<std::reference_wrapper<node>>
     extract_node_ref_that_has_specific_output(std::vector<node>& node_list,
                                               std::string const& output_name) {
         for(auto& node : node_list) {
@@ -163,7 +168,8 @@ namespace menoh_impl {
         return optional<std::reference_wrapper<node>>();
     }
 
-    auto extract_node_ref_list_that_has_specific_input(
+    std::vector<std::reference_wrapper<node>>
+    extract_node_ref_list_that_has_specific_input(
       std::vector<node>& node_list, std::string const& input_name) {
         std::vector<std::reference_wrapper<node>> node_ref_list;
         for(auto& node : node_list) {
@@ -195,13 +201,13 @@ namespace menoh_impl {
 
     void trim_dropout(std::vector<node>& node_list) {
         reconstruct_node_list(
-          node_list, [](std::vector<node>& node_list, auto const& node) {
+          node_list, [](std::vector<node>& node_list, node const& node) {
               if(node.op_type == "Dropout") {
                   trim_node(node_list, node);
               }
           });
         node_list.erase(std::remove_if(node_list.begin(), node_list.end(),
-                                       [](auto const& node) {
+                                       [](node const& node) {
                                            return node.op_type == "Dropout";
                                        }),
                         node_list.end());
@@ -209,13 +215,13 @@ namespace menoh_impl {
 
     void trim_reshape(std::vector<node>& node_list) {
         reconstruct_node_list(
-          node_list, [](std::vector<node>& node_list, auto const& node) {
+          node_list, [](std::vector<node>& node_list, node const& node) {
               if(node.op_type == "Reshape") {
                   trim_node(node_list, node);
               }
           });
         node_list.erase(std::remove_if(node_list.begin(), node_list.end(),
-                                       [](auto const& node) {
+                                       [](node const& node) {
                                            return node.op_type == "Reshape";
                                        }),
                         node_list.end());
@@ -319,7 +325,7 @@ namespace menoh_impl {
                     .dims();
                 auto input_size =
                   std::accumulate(input_dims.begin() + 1, input_dims.end(), 1,
-                                  std::multiplies<void>());
+                                  std::multiplies<int>());
                 if(input_size != weight_dims[1]) {
                     throw dimension_mismatch(
                       node.op_type, node.output_name_list.front(),
@@ -351,7 +357,7 @@ namespace menoh_impl {
                 }
                 auto input_size =
                   std::accumulate(input_dims.begin() + 1, input_dims.end(), 1,
-                                  std::multiplies<void>());
+                                  std::multiplies<int>());
                 if(input_size != weight_dims[1]) {
                     throw dimension_mismatch(
                       node.op_type, node.output_name_list.front(),
@@ -369,8 +375,7 @@ namespace menoh_impl {
                 auto output_dims = find_value(variable_dims_table, input_name);
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
-            }
-            else {
+            } else {
                 throw unsupported_operator(node.op_type);
             }
         }

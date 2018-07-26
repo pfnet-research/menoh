@@ -16,7 +16,7 @@
 namespace menoh_impl {
     namespace mkldnn_backend {
 
-        inline auto array_to_memory_and_deal_ownership(
+        inline mkldnn::memory array_to_memory_and_deal_ownership(
           array const& arr, std::vector<int> const& dims,
           mkldnn::memory::format format, mkldnn::engine const& engine,
           std::vector<mkldnn::memory>& temp_memory_list,
@@ -29,7 +29,7 @@ namespace menoh_impl {
             return mem;
         }
 
-        inline auto array_to_memory_and_deal_ownership(
+        inline mkldnn::memory array_to_memory_and_deal_ownership(
           array const& arr, mkldnn::memory::format format,
           mkldnn::engine const& engine,
           std::vector<mkldnn::memory>& temp_memory_list,
@@ -40,7 +40,7 @@ namespace menoh_impl {
         }
 
         template <typename OpPrimitiveGenerator>
-        auto manage_output_memory(
+        void manage_output_memory(
           std::vector<mkldnn::primitive>& net, std::string const& output_name,
           mkldnn::memory::format output_format,
           mkldnn::memory::primitive_desc const& output_pd,
@@ -91,7 +91,7 @@ namespace menoh_impl {
         }
 
         template <typename OpPrimitiveGenerator>
-        auto manage_output_memory_inplace_if_possible(
+        void manage_output_memory_inplace_if_possible(
           std::vector<mkldnn::primitive>& net, std::string const& input_name,
           mkldnn::memory const& input_memory, std::string const& output_name,
           mkldnn::memory::format output_format,
@@ -128,7 +128,7 @@ namespace menoh_impl {
             } else if(output_table.find(input_name) == output_table.end() &&
                       all_of(
                         node_list.begin() + node_index + 1, node_list.end(),
-                        [&input_name](auto const& following_node) {
+                        [&input_name](node const& following_node) {
                             return std::find(
                                      following_node.input_name_list.begin(),
                                      following_node.input_name_list.end(),

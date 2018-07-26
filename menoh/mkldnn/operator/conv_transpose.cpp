@@ -135,7 +135,7 @@ namespace menoh_impl {
               deconv_pd.dst_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, engine,
               [&net, &deconv_input_memory, &deconv_weight_memory, &deconv_pd,
-               &bias_memory_opt](auto& op_output_memory) {
+               &bias_memory_opt](mkldnn::memory& op_output_memory) {
                   if(bias_memory_opt) {
                       net.push_back(mkldnn::deconvolution_forward(
                         deconv_pd, deconv_input_memory, deconv_weight_memory,

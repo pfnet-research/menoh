@@ -6,6 +6,7 @@
 
 #include <mkldnn.hpp>
 
+#include <menoh/make_unique.hpp>
 #include <menoh/model.hpp>
 #include <menoh/onnx.hpp>
 
@@ -27,7 +28,7 @@ namespace menoh_impl {
             std::vector<int> input_dims{batch_size, channel_num, height, width};
 
             // Load ONNX model data
-            auto model_data = std::make_unique<menoh_impl::model_data>(
+            auto model_data = menoh_impl::make_unique<menoh_impl::model_data>(
               menoh_impl::load_onnx("../data/VGG16.onnx"));
 
             // Construct computation primitive list and memories

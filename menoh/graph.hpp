@@ -29,7 +29,7 @@ namespace menoh_impl {
         explicit graph(std::vector<node>&& node_list);
         explicit graph(std::vector<node> const& node_list);
 
-        auto const& node_list() const { return node_list_; }
+        std::vector<node> const& node_list() const { return node_list_; }
 
     private:
         std::vector<node> node_list_;
@@ -38,7 +38,7 @@ namespace menoh_impl {
     graph make_graph(std::vector<node> node_list);
 
     template <typename Visitor>
-    auto reconstruct_node_list(std::vector<node>& node_list, Visitor visitor) {
+    void reconstruct_node_list(std::vector<node>& node_list, Visitor visitor) {
         auto node_list_for_loop = node_list;
         for(auto& node : node_list_for_loop) {
             visitor(node_list, node);

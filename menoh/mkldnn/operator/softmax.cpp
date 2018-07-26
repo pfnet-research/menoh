@@ -13,7 +13,8 @@ namespace menoh_impl {
     namespace mkldnn_backend {
 
         primitive_factory_return_type make_softmax_primitive(
-          menoh_impl::node const& node, std::unordered_map<std::string, array> const&,
+          menoh_impl::node const& node,
+          std::unordered_map<std::string, array> const&,
           std::unordered_map<std::string, mkldnn::memory> const&
             variable_memory_table,
           std::unordered_map<std::string, array> const& required_output_table,
@@ -48,7 +49,7 @@ namespace menoh_impl {
               net, output_name, output_format,
               input_memory.get_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, engine,
-              [&net, &input_memory, &op_pd](auto& op_output_memory) {
+              [&net, &input_memory, &op_pd](mkldnn::memory& op_output_memory) {
                   net.push_back(mkldnn::softmax_forward(op_pd, input_memory,
                                                         op_output_memory));
               });

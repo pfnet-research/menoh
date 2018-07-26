@@ -4,8 +4,8 @@
 
 #include <mkldnn.hpp>
 
-#include <menoh/utility.hpp>
 #include <menoh/model_core.hpp>
+#include <menoh/utility.hpp>
 
 #include <menoh/mkldnn/operator/common.hpp>
 #include <menoh/mkldnn/utility.hpp>
@@ -35,10 +35,11 @@ namespace menoh_impl {
                 input_pds.push_back(input_memories.back().get_primitive_desc());
                 input_dims.push_back(extract_dims(input_memories.back()));
             }
-            if(!std::all_of(input_dims.begin() + 1, input_dims.end(),
-                            [&input_dims](auto const& e) {
-                                return input_dims.front() == e;
-                            })) {
+            if(!std::all_of(
+                 input_dims.begin() + 1, input_dims.end(),
+                 [&input_dims](decltype(input_dims.front()) const& e) {
+                     return input_dims.front() == e;
+                 })) {
                 throw failed_to_configure_operator(
                   node.op_type, node.output_name_list.at(0),
                   "at least one of input has different dims: broadcast is not "
@@ -68,11 +69,14 @@ namespace menoh_impl {
             manage_output_memory(
               net, output_name, output_format, sum_pd.dst_primitive_desc(),
               output_memory_table, required_output_table, temp_memory_list,
-              engine, [&net, &input_memories, &sum_pd](auto& op_output_memory) {
+              engine,
+              [&net, &input_memories,
+               &sum_pd](mkldnn::memory& op_output_memory) {
                   std::vector<mkldnn::primitive::at> inputs;
                   inputs.reserve(input_memories.size());
                   std::transform(input_memories.begin(), input_memories.end(),
-                                 std::back_inserter(inputs), [](auto& e) {
+                                 std::back_inserter(inputs),
+                                 [](decltype(input_memories.front())& e) {
                                      return static_cast<mkldnn::primitive::at>(
                                        e);
                                  });

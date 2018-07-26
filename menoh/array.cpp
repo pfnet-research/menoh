@@ -1,4 +1,5 @@
 #include <menoh/array.hpp>
+#include <menoh/make_unique.hpp>
 
 namespace menoh_impl {
 
@@ -17,7 +18,7 @@ namespace menoh_impl {
             // libc++ workaround
             // Below 2 lines are equal to `return std::unique_ptr<float[]>(new
             // float[total_size]);`
-            auto u = std::make_unique<float[]>(total_size);
+            auto u = menoh_impl::make_unique<float[]>(total_size);
             return std::shared_ptr<void>(u.release(), u.get_deleter());
         }
         throw invalid_dtype(std::to_string(static_cast<int>(d)));

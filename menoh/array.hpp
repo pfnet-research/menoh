@@ -23,8 +23,8 @@ namespace menoh_impl {
         array(dtype_t d, std::vector<int> const& dims);
 
         dtype_t dtype() const { return dtype_; }
-        auto const& dims() const { return dims_; }
-        auto* data() const { return data_handle_; }
+        std::vector<int> const& dims() const { return dims_; }
+        void* data() const { return data_handle_; }
         bool has_ownership() const { return static_cast<bool>(data_); }
 
     private:
@@ -42,7 +42,7 @@ namespace menoh_impl {
     float& fat(array const& a, std::size_t i);
 
     template <typename T>
-    auto uniforms(dtype_t d, std::vector<int> const& dims, T val) {
+    array uniforms(dtype_t d, std::vector<int> const& dims, T val) {
         static_assert(std::is_arithmetic<T>::value, "");
         auto arr = array(d, dims);
         if(d == dtype_t::float_) {

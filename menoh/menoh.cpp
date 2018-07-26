@@ -11,6 +11,7 @@
 #include <menoh/menoh.h>
 
 #include <menoh/exception.hpp>
+#include <menoh/make_unique.hpp>
 #include <menoh/model_core.hpp>
 #include <menoh/model_core_factory.hpp>
 #include <menoh/model_data.hpp>
@@ -36,7 +37,9 @@ namespace menoh_impl {
             auto cont =
               std::copy(prefix, prefix + std::char_traits<char>::length(prefix),
                         arr.begin());
-            std::copy(message, message + (static_cast<size_t>(arr.end() - cont) - 1), cont);
+            std::copy(message,
+                      message + (static_cast<size_t>(arr.end() - cont) - 1),
+                      cont);
 
         } else {
             std::copy(message, message + message_size, arr.data());
@@ -81,7 +84,7 @@ menoh_error_code
 menoh_make_model_data_from_onnx(const char* onnx_filename,
                                 menoh_model_data_handle* dst_handle) {
     return check_error([&]() {
-        *dst_handle = std::make_unique<menoh_model_data>(
+        *dst_handle = menoh_impl::make_unique<menoh_model_data>(
                         menoh_model_data{menoh_impl::load_onnx(onnx_filename)})
                         .release();
         return menoh_error_code_success;
@@ -105,7 +108,8 @@ menoh_error_code menoh_make_variable_profile_table_builder(
   menoh_variable_profile_table_builder_handle* dst_handle) {
     return check_error([&]() {
         *dst_handle =
-          std::make_unique<menoh_variable_profile_table_builder>().release();
+          menoh_impl::make_unique<menoh_variable_profile_table_builder>()
+            .release();
         return menoh_error_code_success;
     });
 }
@@ -140,10 +144,12 @@ menoh_error_code menoh_variable_profile_table_builder_add_output_profile(
   menoh_variable_profile_table_builder_handle builder, const char* name,
   menoh_dtype dtype) {
     return check_error([&]() {
-        auto found = std::find_if(
-          builder->output_name_and_dtype_list.begin(),
-          builder->output_name_and_dtype_list.end(),
-          [name](auto const& t) { return name == std::get<0>(t); });
+        auto found =
+          std::find_if(builder->output_name_and_dtype_list.begin(),
+                       builder->output_name_and_dtype_list.end(),
+                       [name](std::tuple<std::string, menoh_dtype> const& t) {
+                           return name == std::get<0>(t);
+                       });
         if(found != builder->output_name_and_dtype_list.end()) {
             auto message =
               std::string("menoh same named variable already exist: ") + name;
@@ -178,7 +184,7 @@ menoh_error_code menoh_build_variable_profile_table(
           builder->input_name_and_dtype_and_dims_list.begin(),
           builder->input_name_and_dtype_and_dims_list.end(),
           std::inserter(input_profile_table, input_profile_table.end()),
-          [](auto const& t) {
+          [](std::tuple<std::string, menoh_dtype, std::vector<int>> const& t) {
               return std::make_pair(
                 std::get<0>(t),
                 std::make_tuple(std::get<1>(t), std::get<2>(t)));
@@ -189,7 +195,8 @@ menoh_error_code menoh_build_variable_profile_table(
         std::transform(
           builder->input_name_and_dtype_and_dims_list.begin(),
           builder->input_name_and_dtype_and_dims_list.end(),
-          std::back_inserter(input_name_and_dims_pair_list), [](auto const& t) {
+          std::back_inserter(input_name_and_dims_pair_list),
+          [](std::tuple<std::string, menoh_dtype, std::vector<int>> const& t) {
               return std::make_pair(std::get<0>(t), std::get<2>(t));
           });
         auto output_dims_table = menoh_impl::make_output_dims_table(
@@ -202,7 +209,7 @@ menoh_error_code menoh_build_variable_profile_table(
           builder->output_name_and_dtype_list.begin(),
           builder->output_name_and_dtype_list.end(),
           std::inserter(output_profile_table, output_profile_table.end()),
-          [&output_dims_table](auto const& t) {
+          [&output_dims_table](std::tuple<std::string, menoh_dtype> const& t) {
               std::string name;
               menoh_dtype dtype;
               std::tie(name, dtype) = t;
@@ -211,7 +218,7 @@ menoh_error_code menoh_build_variable_profile_table(
                                                output_dims_table, name)));
           });
         *dst_handle =
-          std::make_unique<menoh_variable_profile_table>(
+          menoh_impl::make_unique<menoh_variable_profile_table>(
             menoh_variable_profile_table{std::move(input_profile_table),
                                          std::move(output_profile_table)})
             .release();
@@ -284,10 +291,14 @@ menoh_error_code menoh_model_data_optimize(
   const menoh_variable_profile_table_handle variable_profile_table) {
     return check_error([&]() {
         std::vector<std::string> required_output_name_list;
-        std::transform(variable_profile_table->output_profile_table.begin(),
-                       variable_profile_table->output_profile_table.end(),
-                       std::back_inserter(required_output_name_list),
-                       [](auto const& e) { return e.first; });
+        std::transform(
+          variable_profile_table->output_profile_table.begin(),
+          variable_profile_table->output_profile_table.end(),
+          std::back_inserter(required_output_name_list),
+          [](std::pair<std::string,
+                       std::tuple<menoh_dtype, std::vector<int>>> const& e) {
+              return e.first;
+          });
         auto optimized = trim_redundant_nodes(model_data->model_data,
                                               required_output_name_list);
         std::swap(model_data->model_data, optimized);
@@ -311,7 +322,7 @@ menoh_error_code menoh_make_model_builder(
   menoh_model_builder_handle* dst_handle) {
     return check_error([&]() {
         *dst_handle =
-          std::make_unique<menoh_model_builder>(
+          menoh_impl::make_unique<menoh_model_builder>(
             menoh_model_builder{variable_profile_table->input_profile_table,
                                 variable_profile_table->output_profile_table,
                                 {}})
@@ -329,7 +340,9 @@ menoh_error_code menoh_model_builder_attach_external_buffer(
         auto found =
           std::find_if(builder->external_buffer_handle_table.begin(),
                        builder->external_buffer_handle_table.end(),
-                       [name](auto const& p) { return name == p.first; });
+                       [name](std::pair<std::string, void*> const& p) {
+                           return name == p.first;
+                       });
         if(found != builder->external_buffer_handle_table.end()) {
             auto message =
               std::string("menoh same named variable already exist: ") + name;
@@ -405,7 +418,7 @@ menoh_error_code menoh_build_model(const menoh_model_builder_handle builder,
         }
 
         *dst_model_handle =
-          std::make_unique<menoh_model>(
+          menoh_impl::make_unique<menoh_model>(
             menoh_model{input_table, output_table,
                         menoh_impl::make_model_core(
                           input_table, output_table, model_data->model_data,

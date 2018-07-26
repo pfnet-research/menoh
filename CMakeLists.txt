@@ -14,7 +14,7 @@ option(ENABLE_EXAMPLE "Build example" ON)
 option(ENABLE_TOOL "Build tool" ON)
 
 # C++ setup
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     message(STATUS "CMAKE_BUILD_TYPE is unset, defaulting to Release")
     set(CMAKE_BUILD_TYPE "Release")

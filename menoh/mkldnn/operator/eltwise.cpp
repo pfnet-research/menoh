@@ -14,7 +14,7 @@ namespace menoh_impl {
     namespace mkldnn_backend {
 
         template <mkldnn::algorithm eltwise_alg>
-        auto make_eltwise_primitive(
+        primitive_factory_return_type make_eltwise_primitive(
           float alpha, float beta, menoh_impl::node const& node, int node_index,
           std::vector<menoh_impl::node> const& node_list,
           std::unordered_map<std::string, array> const& /*parameter_table*/,
@@ -49,7 +49,7 @@ namespace menoh_impl {
               output_format, op_pd.dst_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, node_index, node_list,
               engine,
-              [&net, &input_memory, &node, &op_pd](auto& op_output_memory) {
+              [&net, &input_memory, &node, &op_pd](mkldnn::memory& op_output_memory) {
                   net.push_back(mkldnn::eltwise_forward(op_pd, input_memory,
                                                         op_output_memory));
               });

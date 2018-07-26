@@ -4,8 +4,8 @@
 
 #include <mkldnn.hpp>
 
-#include <menoh/utility.hpp>
 #include <menoh/model_core.hpp>
+#include <menoh/utility.hpp>
 
 #include <menoh/mkldnn/operator/common.hpp>
 #include <menoh/mkldnn/utility.hpp>
@@ -139,7 +139,7 @@ namespace menoh_impl {
               gemm_pd.dst_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, engine,
               [&net, &gemm_input_memory, &gemm_weight_memory, &gemm_pd,
-               &bias_memory](auto& op_output_memory) {
+               &bias_memory](mkldnn::memory& op_output_memory) {
                   net.push_back(mkldnn::inner_product_forward(
                     gemm_pd, gemm_input_memory, gemm_weight_memory, bias_memory,
                     op_output_memory));

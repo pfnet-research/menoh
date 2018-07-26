@@ -18,6 +18,7 @@
 #include <menoh/dtype.hpp>
 #include <menoh/exception.hpp>
 #include <menoh/graph.hpp>
+#include <menoh/make_unique.hpp>
 #include <menoh/model_data.hpp>
 #include <menoh/node.hpp>
 
@@ -41,14 +42,15 @@ namespace menoh_impl {
         return onnx_model;
     }
 
-    auto tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt) {
+    dtype_t tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt) {
         if(tpdt == onnx::TensorProto_DataType_FLOAT) {
             return dtype_t::float_;
         }
         throw invalid_dtype(std::to_string(tpdt));
     }
 
-    auto extract_parameter_name_set(onnx::GraphProto const& graph) {
+    std::set<std::string>
+    extract_parameter_name_set(onnx::GraphProto const& graph) {
         std::set<std::string> parameter_name_set;
         for(int i = 0; i < graph.initializer_size(); ++i) {
             auto& tensor = graph.initializer(i);
@@ -57,7 +59,7 @@ namespace menoh_impl {
         return parameter_name_set;
     }
 
-    auto
+    std::set<std::string>
     extract_needed_input_name_set(std::vector<node> const& node_list,
                                   std::set<std::string> parameter_name_set) {
         std::set<std::string> input_name_set;
@@ -75,7 +77,7 @@ namespace menoh_impl {
         return needed_input_name_set;
     }
 
-    auto extract_needed_parameter_name_set(
+    std::set<std::string> extract_needed_parameter_name_set(
       std::vector<node> const& node_list,
       std::set<std::string> given_input_name_set) {
         std::set<std::string> input_name_set;
@@ -94,7 +96,8 @@ namespace menoh_impl {
         return needed_parameter_name_set;
     }
 
-    auto extract_parameter_name_and_array_list_from_onnx_graph(
+    std::vector<std::pair<std::string, menoh_impl::array>>
+    extract_parameter_name_and_array_list_from_onnx_graph(
       onnx::GraphProto& graph,
       std::vector<std::string> const& needed_parameter_name_list) {
         std::vector<std::pair<std::string, menoh_impl::array>>
@@ -129,7 +132,7 @@ namespace menoh_impl {
                 // libc++ workaround
                 // Below 2 lines are equal to `data =
                 // std::unique_ptr<float_t[]>(new float_t[total_size]);`
-                auto u = std::make_unique<float_t[]>(total_size);
+                auto u = menoh_impl::make_unique<float_t[]>(total_size);
                 data = std::shared_ptr<void>(u.release(), u.get_deleter());
                 // TODO other format: float_data
                 assert(tensor.has_raw_data());
@@ -149,7 +152,8 @@ namespace menoh_impl {
         return parameter_name_and_array_list;
     }
 
-    auto extract_node_list_from_onnx_graph(onnx::GraphProto const& graph) {
+    std::vector<node>
+    extract_node_list_from_onnx_graph(onnx::GraphProto const& graph) {
         std::vector<node> node_list;
         for(auto const& onnx_node : graph.node()) {
             std::unordered_map<std::string, attribute> attribute_table;
@@ -212,7 +216,8 @@ namespace menoh_impl {
         std::transform(onnx_model.graph().initializer().begin(),
                        onnx_model.graph().initializer().end(),
                        std::back_inserter(all_parameter_name_list),
-                       [](auto const& tensor) { return tensor.name(); });
+                       [](decltype(*onnx_model.graph().initializer().begin())
+                            const& tensor) { return tensor.name(); });
 
         auto all_input_name_set = extract_all_input_name_set(node_list);
 
@@ -245,7 +250,7 @@ namespace menoh_impl {
           model_data.parameter_name_and_array_list.begin(),
           model_data.parameter_name_and_array_list.end(),
           std::back_inserter(parameter_name_and_all_output_name_list),
-          [](auto const& p) { return p.first; });
+          [](std::pair<std::string, array> const& p) { return p.first; });
         parameter_name_and_all_output_name_list.insert(
           parameter_name_and_all_output_name_list.end(),
           all_output_name_set.begin(), all_output_name_set.end());

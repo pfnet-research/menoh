@@ -10,7 +10,7 @@ namespace menoh_impl {
 
     namespace {
 
-        auto print_node_list(std::vector<node> const& node_list) {
+        void print_node_list(std::vector<node> const& node_list) {
             for(auto const& node : node_list) {
                 for(auto const& input : node.input_name_list) {
                     std::cout << input << " ";

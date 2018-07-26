@@ -13,7 +13,7 @@ namespace menoh_impl {
     namespace mkldnn_backend {
 
         template <mkldnn::algorithm pooling_alg>
-        auto make_pool_primitive_impl(
+        primitive_factory_return_type make_pool_primitive_impl(
           menoh_impl::node const& node,
           std::unordered_map<std::string, mkldnn::memory> const&
             variable_memory_table,
@@ -49,12 +49,13 @@ namespace menoh_impl {
             auto pool_pd =
               mkldnn::pooling_forward::primitive_desc(pool_desc, engine);
 
+            auto pa = pooling_alg;
             manage_output_memory(
               net, output_name, mkldnn::memory::format::nchw,
               pool_pd.dst_primitive_desc(), output_memory_table,
               required_output_table, temp_memory_list, engine,
-              [pa = pooling_alg, &net, &input_memory, &temp_memory_list,
-               &pool_pd](auto& op_output_memory) {
+              [pa, &net, &input_memory, &temp_memory_list,
+               &pool_pd](mkldnn::memory& op_output_memory) {
                   if(pa == mkldnn::pooling_max) {
                       auto pool_indices_memory =
                         mkldnn::memory(pool_pd.workspace_primitive_desc());
@@ -73,7 +74,7 @@ namespace menoh_impl {
         }
 
         template <mkldnn::algorithm pooling_alg>
-        auto make_pool_primitive(
+        primitive_factory_return_type make_pool_primitive(
           menoh_impl::node const& node,
           std::unordered_map<std::string, mkldnn::memory> const&
             variable_memory_table,
@@ -110,7 +111,7 @@ namespace menoh_impl {
         }
 
         template <mkldnn::algorithm pooling_alg>
-        auto make_global_pool_primitive(
+        primitive_factory_return_type make_global_pool_primitive(
           menoh_impl::node const& node,
           std::unordered_map<std::string, mkldnn::memory> const&
             variable_memory_table,
