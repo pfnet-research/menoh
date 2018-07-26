@@ -28,7 +28,7 @@ namespace menoh_impl {
         bool has_ownership() const { return static_cast<bool>(data_); }
 
     private:
-        dtype_t dtype_;
+        dtype_t dtype_ = dtype_t::undefined;
         std::vector<int> dims_;
         std::shared_ptr<void> data_;
         void* data_handle_ = nullptr;
