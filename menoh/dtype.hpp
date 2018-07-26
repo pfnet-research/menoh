@@ -19,10 +19,11 @@ namespace menoh_impl {
                   "Checking one float is 32bit: failed");
 
     enum class dtype_t {
-        undefined,
+        undefined = -1,
         float_ = menoh_dtype_float
         // TODO more types
     };
+    static_assert(dtype_t::undefined != dtype_t::float_, "");
 
     class invalid_dtype : public exception {
     public:
