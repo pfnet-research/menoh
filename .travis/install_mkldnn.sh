@@ -1,7 +1,7 @@
 if [ ! -d "$HOME/mkl-dnn/lib" ]; then
     git clone https://github.com/intel/mkl-dnn.git
     cd mkl-dnn
-    git checkout v0.14
+    git checkout v0.15
     cd scripts && bash ./prepare_mkl.sh && cd ..
     sed -i 's/add_subdirectory(examples)//g' CMakeLists.txt
     sed -i 's/add_subdirectory(tests)//g' CMakeLists.txt
