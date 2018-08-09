@@ -77,19 +77,19 @@ script:
     - make
     - ./test/menoh_test
 deploy:
-  - provider: releases
-    api_key:
-        secure: "Ji7bCcKD6J5ptB6uaiBRGZc7SvNX+TJs+ODm5YnF1Q9lkbv+0J14g8RednSC6IdEef7ENYmDICw4slasOc+6hHT8f+lDtMhCgNeFLNuLTAxgRQ8PMhHzVwC2J9msQH5tKAzH3o9RXcNXkjjEbL6RgsbBWilktZkpqpL6SxVawG3qa4WkwI4QvzvAf6p6tpBWmzoTazdEb5WjOMihMr4Bnkb9XNT+S10X3Y1VRoOA5E7c1v08Y+IM+otn++d4IaVlAEP8EMCNpHnS+344jTcKOQeMg2cJNc84XRo0h0s5/u8YRtWVCWtwA0iQP1dCZQW9f/p17YLSIPybIQCqydJ5A9Az4PIkT+f0FcX08v3DJtLARbQCACw5ytIz3InDfW8OiHjPbQp1hvB+yk+odSYohSkuuaug/mwEK+Fji8YmN0KM5Xp7TEbGDoZYLtOt/Ndk6BwKBDhpIe9Uhw0NVfruZ4v/wE+MOaz6O4JNOojEk9rAYR5VIz9hClh+bBRVGSVb/wDwLp8WMBmKMJFlK47bFXTBRvWMMoOEoHzYwtNWgaNU10Y7nllCE8cHzCl+s1sUotQhqDNvzblrclBOXrSF3uP0NcmBAGUDdAfcXhcpEtCvL8qud7MkIHh8rjh0qhG9hRJelr4kfsM/dPxLcE+ZFGi8znSnxvqpLLh3oNTKzIA="
-    file: /home/travis/build/pfnet-research/menoh/build/menoh/libmenoh.so
-    skip_cleanup: true
-    on:
-        tags: true
-        condition: $TRAVIS_OS_NAME = linux
-  - provider: releases
-    api_key:
-        secure: "Ji7bCcKD6J5ptB6uaiBRGZc7SvNX+TJs+ODm5YnF1Q9lkbv+0J14g8RednSC6IdEef7ENYmDICw4slasOc+6hHT8f+lDtMhCgNeFLNuLTAxgRQ8PMhHzVwC2J9msQH5tKAzH3o9RXcNXkjjEbL6RgsbBWilktZkpqpL6SxVawG3qa4WkwI4QvzvAf6p6tpBWmzoTazdEb5WjOMihMr4Bnkb9XNT+S10X3Y1VRoOA5E7c1v08Y+IM+otn++d4IaVlAEP8EMCNpHnS+344jTcKOQeMg2cJNc84XRo0h0s5/u8YRtWVCWtwA0iQP1dCZQW9f/p17YLSIPybIQCqydJ5A9Az4PIkT+f0FcX08v3DJtLARbQCACw5ytIz3InDfW8OiHjPbQp1hvB+yk+odSYohSkuuaug/mwEK+Fji8YmN0KM5Xp7TEbGDoZYLtOt/Ndk6BwKBDhpIe9Uhw0NVfruZ4v/wE+MOaz6O4JNOojEk9rAYR5VIz9hClh+bBRVGSVb/wDwLp8WMBmKMJFlK47bFXTBRvWMMoOEoHzYwtNWgaNU10Y7nllCE8cHzCl+s1sUotQhqDNvzblrclBOXrSF3uP0NcmBAGUDdAfcXhcpEtCvL8qud7MkIHh8rjh0qhG9hRJelr4kfsM/dPxLcE+ZFGi8znSnxvqpLLh3oNTKzIA="
-    file: /home/travis/build/pfnet-research/menoh/build/menoh/libmenoh.dylib
-    skip_cleanup: true
-    on:
-        tags: true
-        condition: $TRAVIS_OS_NAME = osx
+    - provider: releases
+      api_key:
+          secure: "Ji7bCcKD6J5ptB6uaiBRGZc7SvNX+TJs+ODm5YnF1Q9lkbv+0J14g8RednSC6IdEef7ENYmDICw4slasOc+6hHT8f+lDtMhCgNeFLNuLTAxgRQ8PMhHzVwC2J9msQH5tKAzH3o9RXcNXkjjEbL6RgsbBWilktZkpqpL6SxVawG3qa4WkwI4QvzvAf6p6tpBWmzoTazdEb5WjOMihMr4Bnkb9XNT+S10X3Y1VRoOA5E7c1v08Y+IM+otn++d4IaVlAEP8EMCNpHnS+344jTcKOQeMg2cJNc84XRo0h0s5/u8YRtWVCWtwA0iQP1dCZQW9f/p17YLSIPybIQCqydJ5A9Az4PIkT+f0FcX08v3DJtLARbQCACw5ytIz3InDfW8OiHjPbQp1hvB+yk+odSYohSkuuaug/mwEK+Fji8YmN0KM5Xp7TEbGDoZYLtOt/Ndk6BwKBDhpIe9Uhw0NVfruZ4v/wE+MOaz6O4JNOojEk9rAYR5VIz9hClh+bBRVGSVb/wDwLp8WMBmKMJFlK47bFXTBRvWMMoOEoHzYwtNWgaNU10Y7nllCE8cHzCl+s1sUotQhqDNvzblrclBOXrSF3uP0NcmBAGUDdAfcXhcpEtCvL8qud7MkIHh8rjh0qhG9hRJelr4kfsM/dPxLcE+ZFGi8znSnxvqpLLh3oNTKzIA="
+      file: /home/travis/build/pfnet-research/menoh/build/menoh/libmenoh.so
+      skip_cleanup: true
+      on:
+          tags: true
+          condition: $TRAVIS_OS_NAME = linux
+    - provider: releases
+      api_key:
+          secure: "Ji7bCcKD6J5ptB6uaiBRGZc7SvNX+TJs+ODm5YnF1Q9lkbv+0J14g8RednSC6IdEef7ENYmDICw4slasOc+6hHT8f+lDtMhCgNeFLNuLTAxgRQ8PMhHzVwC2J9msQH5tKAzH3o9RXcNXkjjEbL6RgsbBWilktZkpqpL6SxVawG3qa4WkwI4QvzvAf6p6tpBWmzoTazdEb5WjOMihMr4Bnkb9XNT+S10X3Y1VRoOA5E7c1v08Y+IM+otn++d4IaVlAEP8EMCNpHnS+344jTcKOQeMg2cJNc84XRo0h0s5/u8YRtWVCWtwA0iQP1dCZQW9f/p17YLSIPybIQCqydJ5A9Az4PIkT+f0FcX08v3DJtLARbQCACw5ytIz3InDfW8OiHjPbQp1hvB+yk+odSYohSkuuaug/mwEK+Fji8YmN0KM5Xp7TEbGDoZYLtOt/Ndk6BwKBDhpIe9Uhw0NVfruZ4v/wE+MOaz6O4JNOojEk9rAYR5VIz9hClh+bBRVGSVb/wDwLp8WMBmKMJFlK47bFXTBRvWMMoOEoHzYwtNWgaNU10Y7nllCE8cHzCl+s1sUotQhqDNvzblrclBOXrSF3uP0NcmBAGUDdAfcXhcpEtCvL8qud7MkIHh8rjh0qhG9hRJelr4kfsM/dPxLcE+ZFGi8znSnxvqpLLh3oNTKzIA="
+      file: /Users/travis/build/pfnet-research/menoh/build/menoh/libmenoh.dylib
+      skip_cleanup: true
+      on:
+          tags: true
+          condition: $TRAVIS_OS_NAME = osx
