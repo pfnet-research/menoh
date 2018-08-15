@@ -7,11 +7,14 @@ set(MENOH_MINOR_VERSION 0)
 set(MENOH_PATCH_VERSION 2)
 
 # Options
+option(ENABLE_MKLDNN "Use MKLDNN" OFF)
+option(ENABLE_ARMNN  "Use ARM NN" ON)
+
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
-option(ENABLE_TEST "Build test" OFF)
-option(ENABLE_BENCHMARK "Build benchmark" ON)
-option(ENABLE_EXAMPLE "Build example" ON)
-option(ENABLE_TOOL "Build tool" ON)
+option(ENABLE_TEST       "Build test"        OFF)
+option(ENABLE_BENCHMARK  "Build benchmark"   OFF)
+option(ENABLE_EXAMPLE    "Build example"     OFF)
+option(ENABLE_TOOL       "Build tool"        OFF)
 
 # C++ setup
 set(CMAKE_CXX_STANDARD 14)
@@ -27,7 +30,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -march=native")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
-    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra -DARM_DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DNDEBUG -march=native")
 endif()
 
@@ -49,33 +52,62 @@ set(ONNX_PROTO_SRC ${ONNX_DIR}/onnx/onnx.pb.cc)
 include_directories(${EXTERNAL_DIR})
 include_directories(${ONNX_DIR})
 
-# MKLDNN setup
-find_package(MKLDNN "0.14")
-if (NOT MKLDNN_FOUND)
-    message(FATAL_ERROR "MKLDNN is not found")
+if (ENABLE_MKLDNN)
+    # MKLDNN setup
+
+    find_package(MKLDNN "0.14")
+    if (NOT MKLDNN_FOUND)
+        message(FATAL_ERROR "MKLDNN is not found")
+    endif()
+
+    add_definitions(-DENABLE_MKLDNN)
+    include_directories("${MKLDNN_INCLUDE_DIR}")
+
+    if(ENABLE_TEST)
+        enable_testing()
+        # GTest setup
+        set(GTEST_DIR test/lib/googletest)
+        execute_process(COMMAND git submodule update --init -- ${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        add_subdirectory(${GTEST_DIR})
+        add_subdirectory(test)
+    endif()
+
+    if(ENABLE_BENCHMARK)
+        add_subdirectory(benchmark)
+    endif()
+
+    if(ENABLE_EXAMPLE)
+        add_subdirectory(example)
+    endif()
+
+    if(ENABLE_TOOL)
+        add_subdirectory(tool)
+    endif()
 endif()
 
-include_directories("${MKLDNN_INCLUDE_DIR}")
+if(ENABLE_ARMNN)
+    # ARM NN setup
+    set(ARM_HOME   ~/ARM_HOME)
 
-if(${ENABLE_TEST})
-    enable_testing()
-    # GTest setup
-    set(GTEST_DIR test/lib/googletest)
-    execute_process(COMMAND git submodule update --init -- ${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    add_subdirectory(${GTEST_DIR})
-    add_subdirectory(test)
-endif()
+    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.05)
+    set(ARMNN_HOME ${ARM_HOME}/armnn)
 
-if(${ENABLE_BENCHMARK})
-    add_subdirectory(benchmark)
-endif()
+    add_definitions(-DENABLE_ARMNN)
 
-if(${ENABLE_EXAMPLE})
-    add_subdirectory(example)
-endif()
+    include_directories("${ACL_HOME}/arm_compute")
+    include_directories("${ARMNN_HOME}/include")
+    include_directories("${ARMNN_HOME}/src")
+    
+    set(ACL_LIBRARY_DIR ${ACL_HOME}/build)
+    set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build)
 
-if(${ENABLE_TOOL})
-    add_subdirectory(tool)
+    link_directories(${ACL_LIBRARY_DIR})
+    link_directories(${ARMNN_LIBRARY_DIR})
+
+    set(ARMNN_LIBRARY armnn)
+    set(ACL_LIBRARY   arm_compute-static arm_compute_core-static arm_compute_graph-static)
+
+    add_subdirectory(example_arm)
 endif()
 
 add_subdirectory(menoh)
