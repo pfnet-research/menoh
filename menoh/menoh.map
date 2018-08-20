@@ -1,0 +1,12 @@
+{
+  global:
+    extern "C" {
+      menoh_*;
+    };
+    extern "C++" {
+      menoh::*; menoh_impl::*; onnx::*;
+    };
+
+  local:
+    *;
+};
