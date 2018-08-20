@@ -4,10 +4,8 @@ target_link_libraries(menoh ${MKLDNN_LIBRARY} ${PROTOBUF_LIBRARY})
 set_source_files_properties(${ONNX_PROTO_SRC} PROPERTIES GENERATED TRUE)
 set_source_files_properties(${ONNX_PROTO_HEADER} PROPERTIES GENERATED TRUE)
 
-if(UNIX)
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set (CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
-    endif ()
+if(NOT APPLE)
+    set (CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif ()
 
 install(TARGETS menoh
