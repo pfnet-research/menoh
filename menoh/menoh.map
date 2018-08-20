@@ -4,7 +4,11 @@
       menoh_*;
     };
     extern "C++" {
-      menoh::*; menoh_impl::*; onnx::*;
+      menoh::*;
+      menoh_impl::*;
+      typeinfo*for?menoh_impl::*;
+      vtable*for?menoh_impl::*;
+      onnx::*;
     };
 
   local:
