@@ -97,7 +97,6 @@ namespace menoh_impl {
 #endif
                 m_Output[name] = arr;
             }	    
-
             std::vector<std::string> output_name_sorted_list;
             {
                 std::transform(output_table.begin(), output_table.end(),
@@ -106,13 +105,12 @@ namespace menoh_impl {
                 std::sort(output_name_sorted_list.begin(),
                           output_name_sorted_list.end());
             }
-
 	    std::vector<std::string> requestedOutputs{ output_name_sorted_list };
 
             auto graph = make_graph(all_nodes);	    
-            armnn::INetworkPtr network{nullptr, [](armnn::INetwork *){}};
+	    armnn::INetworkPtr network{nullptr, [](armnn::INetwork *){}};
             {
-                auto parameter_table = std::unordered_map<std::string, array>(
+	        auto parameter_table = std::unordered_map<std::string, array>(
                                                          model_data.parameter_name_and_array_list.begin(),
                                                          model_data.parameter_name_and_array_list.end());
  	        network = m_Parser.CreateNetworkFromGraph( graph, parameter_table, inputShapes, requestedOutputs );
@@ -122,9 +120,11 @@ namespace menoh_impl {
 	    m_OutputBindingInfo = m_Parser.GetNetworkOutputBindingInfo(requestedOutputs.at(0));
             armnn::IOptimizedNetworkPtr optNet{nullptr, [](armnn::IOptimizedNetwork *){}};
             {
-                optNet = armnn::Optimize(*network, m_Runtime->GetDeviceSpec());
+	      std::cout << "armnn::Optimize" << std::endl;
+	      optNet = armnn::Optimize(*network, m_Runtime->GetDeviceSpec());
             }
-	    armnn::Status ret = m_Runtime->LoadNetwork(m_NetworkIdentifier, std::move(optNet));
+	      std::cout << "armnn::LoadNetwork" << std::endl;
+	      armnn::Status ret = m_Runtime->LoadNetwork(m_NetworkIdentifier, std::move(optNet));
             if (ret == armnn::Status::Failure)
             {
                 throw armnn::Exception("IRuntime::LoadNetwork failed");
