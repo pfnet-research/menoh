@@ -60,8 +60,7 @@ before_script:
     - |
       echo 'Checking tools and libraries version:'
       if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-        gcc-7 --version
-        g++-7 --version
+        apt list --installed
         ldconfig -p
       fi
       if [ "$TRAVIS_OS_NAME" = "osx" ]; then

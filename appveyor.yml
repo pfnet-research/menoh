@@ -45,13 +45,10 @@ install:
   )
 
 before_build:
-  - if [%TARGET%]==[msvc] (
-      echo TODO
-    )
   - if [%TARGET%]==[mingw] (
-      gcc --version
-      g++ --version
-      cmake --version
+      echo 'Checking tools and libraries version:' &&
+      pacman -Q &&
+      cmake --version &&
       make --version
     )
 
