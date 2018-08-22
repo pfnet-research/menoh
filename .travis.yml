@@ -58,7 +58,7 @@ install:
     - python gen_test_data.py
 before_script:
     - |
-      echo 'Checking library versions:'
+      echo 'Checking tools and libraries version:'
       if [ "$TRAVIS_OS_NAME" = "linux" ]; then
         gcc-7 --version
         g++-7 --version
