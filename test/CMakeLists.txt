@@ -11,5 +11,5 @@ add_executable(menoh_test
     #vgg16.cpp
 
 )
-target_link_libraries(menoh_test gtest_main menoh)
+target_link_libraries(menoh_test gtest_main mkldnn menoh)
 add_test(NAME menoh_test COMMAND menoh_test)
