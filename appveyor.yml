@@ -44,6 +44,14 @@ install:
     python gen_test_data.py
   )
 
+before_build:
+  - if [%TARGET%]==[mingw] (
+      echo 'Checking tools and libraries version:' &&
+      pacman -Q &&
+      cmake --version &&
+      make --version
+    )
+
 build_script:
 - mkdir build
 - cd build

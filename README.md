@@ -27,6 +27,7 @@ This codebase contains C API and C++ API.
 - Go wrapper : [go-menoh](https://github.com/pfnet-research/go-menoh)
   - (unofficial wrapper [gomenoh](https://github.com/kou-m/gomenoh) by kou-m san has been merged)
 - Haskell wrapper : [menoh-haskell](https://github.com/pfnet-research/menoh-haskell)
+- Node.js wrapper : [node-menoh](https://github.com/pfnet-research/node-menoh)
 - Ruby wrapper : [menoh-ruby](https://github.com/pfnet-research/menoh-ruby)
 - Rust wrapper : [menoh-rs](https://github.com/pfnet-research/menoh-rs)
   - There is also [unofficial Rust wrapper by Y-Nak san](https://github.com/Y-Nak/menoh-rs)
