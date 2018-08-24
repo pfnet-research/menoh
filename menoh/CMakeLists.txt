@@ -27,7 +27,10 @@ endif()
 if(LINK_STATIC_LIBSTDCXX)
     target_link_libraries(menoh PRIVATE -static-libstdc++)
 endif()
-target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES} ${Protobuf_LIBRARIES})
+# PUBLIC will add transitive dependencies (`mklml_intel` and `iomp5`) to the link interface
+# Note: change it to PRIVATE after building mkldnn itself
+target_link_libraries(menoh PUBLIC ${MKLDNN_LIBRARIES})
+target_link_libraries(menoh PRIVATE ${Protobuf_LIBRARIES})
 
 set_source_files_properties(${ONNX_PROTO_SRC} PROPERTIES GENERATED TRUE)
 set_source_files_properties(${ONNX_PROTO_HEADER} PROPERTIES GENERATED TRUE)

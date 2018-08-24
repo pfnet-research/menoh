@@ -17,6 +17,8 @@ option(ENABLE_BENCHMARK "Build benchmark" ON)
 option(ENABLE_EXAMPLE "Build example" ON)
 option(ENABLE_TOOL "Build tool" ON)
 
+option(SHOW_ALL_VARIABLES "Debug: show all variables" OFF)
+
 # C++ setup
 set(CMAKE_CXX_STANDARD 14)
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -45,7 +47,7 @@ include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(EXTERNAL_DIR ${CMAKE_SOURCE_DIR}/external)
-set(DOWNLOAD_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/downloads CACHE PATH "")
+set(DOWNLOAD_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/downloads CACHE PATH "A directory to save the downloaded files.")
 mark_as_advanced(DOWNLOAD_LOCATION)
 
 # Enable ExternalProject_Add
@@ -104,3 +106,11 @@ add_subdirectory(menoh)
 
 message(STATUS "# add_subdirectory\(include\)")
 add_subdirectory(include)
+
+if(SHOW_ALL_VARIABLES)
+    get_cmake_property(_variableNames VARIABLES)
+    list(SORT _variableNames)
+    foreach(_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+endif()
