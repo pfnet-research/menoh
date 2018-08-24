@@ -53,10 +53,10 @@ mark_as_advanced(DOWNLOAD_LOCATION)
 # Enable ExternalProject_Add
 include(ExternalProject)
 
-# protobuf setup
+# Setup protobuf
 include(SetupProtobuf)
 
-# ONNX setup
+# Generate source codes from ONNX protobuf schema
 set(ONNX_DIR ${EXTERNAL_DIR}/onnx)
 execute_process(COMMAND git submodule update --init -- ${ONNX_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} -I=${ONNX_DIR} --cpp_out=${ONNX_DIR} ${ONNX_DIR}/onnx/onnx.proto WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -64,10 +64,9 @@ execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} -I=${ONNX_DIR} --cpp_out=$
 set(ONNX_PROTO_HEADER ${ONNX_DIR}/onnx/onnx.pb.h)
 set(ONNX_PROTO_SRC ${ONNX_DIR}/onnx/onnx.pb.cc)
 
-include_directories(${EXTERNAL_DIR})
-include_directories(${ONNX_DIR})
+include_directories(${ONNX_DIR}) # for ONNX_PROTO_HEADER
 
-# MKLDNN setup
+# Setup MKLDNN
 find_package(MKLDNN "0.14")
 if (NOT MKLDNN_FOUND)
     message(FATAL_ERROR "MKLDNN is not found")
