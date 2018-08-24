@@ -1,8 +1,9 @@
-if(NOT DEFINED Protobuf_LIBRARY)
-    message(FATAL_ERROR "Protobuf_LIBRARY is not found")
+# Note: The library can be static (.a) or shared (.so)
+if(NOT DEFINED Protobuf_LIBRARIES)
+    message(FATAL_ERROR "Protobuf_LIBRARIES is not found")
 endif()
 
 add_executable(onnx_viewer onnx_viewer.cpp)
-target_link_libraries(onnx_viewer ${Protobuf_LIBRARY} menoh)
+target_link_libraries(onnx_viewer PRIVATE ${Protobuf_LIBRARIES} menoh)
 set_target_properties(onnx_viewer PROPERTIES OUTPUT_NAME "menoh_onnx_viewer")
 install(TARGETS onnx_viewer RUNTIME DESTINATION bin)

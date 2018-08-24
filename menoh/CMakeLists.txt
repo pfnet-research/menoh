@@ -10,27 +10,24 @@ if(NOT DEFINED ONNX_PROTO_HEADER)
 endif()
 
 # Note: The libraries can be static (.a) or shared (.so)
-if(NOT DEFINED MKLDNN_LIBRARY)
-    message(FATAL_ERROR "MKLDNN_LIBRARY is not found")
+if(NOT DEFINED MKLDNN_LIBRARIES)
+    message(FATAL_ERROR "MKLDNN_LIBRARIES is not found")
 endif()
-if(NOT DEFINED Protobuf_LIBRARY)
-    message(FATAL_ERROR "Protobuf_LIBRARY is not found")
+if(NOT DEFINED Protobuf_LIBRARIES)
+    message(FATAL_ERROR "Protobuf_LIBRARIES is not found")
 endif()
 
 file(GLOB_RECURSE SOURCES "." "*.cpp")
 add_library(menoh SHARED ${SOURCES} ${ONNX_PROTO_SRC} ${ONNX_PROTO_HEADER})
 
-# configure MENOH_LINK_LIBRARIES
+# Link libraries to menoh
 if(LINK_STATIC_LIBGCC)
-    set(MENOH_LINK_LIBRARIES ${MENOH_LINK_LIBRARIES} -static-libgcc)
+    target_link_libraries(menoh PRIVATE -static-libgcc)
 endif()
 if(LINK_STATIC_LIBSTDCXX)
-    set(MENOH_LINK_LIBRARIES ${MENOH_LINK_LIBRARIES} -static-libstdc++)
+    target_link_libraries(menoh PRIVATE -static-libstdc++)
 endif()
-set(MENOH_LINK_LIBRARIES ${MENOH_LINK_LIBRARIES} ${MKLDNN_LIBRARY} ${Protobuf_LIBRARY})
-
-message(STATUS "MENOH_LINK_LIBRARIES: ${MENOH_LINK_LIBRARIES}")
-target_link_libraries(menoh PRIVATE ${MENOH_LINK_LIBRARIES})
+target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES} ${Protobuf_LIBRARIES})
 
 set_source_files_properties(${ONNX_PROTO_SRC} PROPERTIES GENERATED TRUE)
 set_source_files_properties(${ONNX_PROTO_HEADER} PROPERTIES GENERATED TRUE)
