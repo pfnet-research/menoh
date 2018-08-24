@@ -13,8 +13,8 @@ endif()
 if(NOT DEFINED MKLDNN_LIBRARIES)
     message(FATAL_ERROR "MKLDNN_LIBRARIES is not found")
 endif()
-if(NOT DEFINED Protobuf_LIBRARIES)
-    message(FATAL_ERROR "Protobuf_LIBRARIES is not found")
+if(NOT DEFINED PROTOBUF_LIBRARIES)
+    message(FATAL_ERROR "PROTOBUF_LIBRARIES is not found")
 endif()
 
 file(GLOB_RECURSE SOURCES "." "*.cpp")
@@ -30,7 +30,7 @@ endif()
 # PUBLIC will add transitive dependencies (`mklml_intel` and `iomp5`) to the link interface
 # Note: change it to PRIVATE after building mkldnn itself
 target_link_libraries(menoh PUBLIC ${MKLDNN_LIBRARIES})
-target_link_libraries(menoh PRIVATE ${Protobuf_LIBRARIES})
+target_link_libraries(menoh PRIVATE ${PROTOBUF_LIBRARIES})
 
 set_source_files_properties(${ONNX_PROTO_SRC} PROPERTIES GENERATED TRUE)
 set_source_files_properties(${ONNX_PROTO_HEADER} PROPERTIES GENERATED TRUE)

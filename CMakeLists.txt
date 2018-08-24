@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.1)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -59,7 +59,7 @@ include(SetupProtobuf)
 # Generate source codes from ONNX protobuf schema
 set(ONNX_DIR ${EXTERNAL_DIR}/onnx)
 execute_process(COMMAND git submodule update --init -- ${ONNX_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} -I=${ONNX_DIR} --cpp_out=${ONNX_DIR} ${ONNX_DIR}/onnx/onnx.proto WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} -I=${ONNX_DIR} --cpp_out=${ONNX_DIR} ${ONNX_DIR}/onnx/onnx.proto WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 set(ONNX_PROTO_HEADER ${ONNX_DIR}/onnx/onnx.pb.h)
 set(ONNX_PROTO_SRC ${ONNX_DIR}/onnx/onnx.pb.cc)

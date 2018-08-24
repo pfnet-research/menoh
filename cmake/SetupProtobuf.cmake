@@ -1,6 +1,10 @@
 set(PROTOBUF_VERSION "2.6.1")
 
 if(UNIX AND LINK_STATIC_LIBPROTOBUF)
+    # Note: We can't use `set(PROTOBUF_BUILD_SHARED_LIBS OFF)` in `FindProtobuf` module
+    # because `libprotobuf.a` produced by the package manager is not PIC. So we need to
+    # build it ourselves.
+
     set(PROTOBUF_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf-${PROTOBUF_VERSION})
     set(PROTOBUF_URL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz")
     set(PROTOBUF_HASH MD5=f3916ce13b7fcb3072a1fa8cf02b2423)
@@ -23,24 +27,25 @@ if(UNIX AND LINK_STATIC_LIBPROTOBUF)
         INSTALL_COMMAND make install
     )
 
-    set(Protobuf_LIBRARY_STATIC ${PROTOBUF_DIR}/lib/libprotobuf.a)
-    set(Protobuf_LIBRARY_SHARED ${PROTOBUF_DIR}/lib/libprotobuf.so)
+    set(PROTOBUF_LIBRARY_STATIC ${PROTOBUF_DIR}/lib/libprotobuf.a)
+    set(PROTOBUF_LIBRARY_SHARED ${PROTOBUF_DIR}/lib/libprotobuf.so)
 
     add_library(protobuf::libprotobuf.a STATIC IMPORTED)
     # Note: INTERFACE_INCLUDE_DIRECTORIES can't set in this place because include/ is
     # not installed during executing `cmake`
     set_target_properties(protobuf::libprotobuf.a PROPERTIES
-        IMPORTED_LOCATION "${Protobuf_LIBRARY_STATIC}")
+        IMPORTED_LOCATION "${PROTOBUF_LIBRARY_STATIC}")
 
-    # mimic the behavior of FindProtobuf module
-    set(Protobuf_INCLUDE_DIR ${PROTOBUF_DIR}/include)
-    set(Protobuf_LIBRARY protobuf::libprotobuf.a) # use the static library
-    set(Protobuf_LIBRARIES ${Protobuf_LIBRARY})
-    set(Protobuf_PROTOC_EXECUTABLE ${PROTOBUF_DIR}/bin/protoc)
-    set(Protobuf_FOUND TRUE)
+    # Mimic the behavior of `FindProtobuf` module
+    # Use the old variable names to ensure backward compatibility
+    set(PROTOBUF_INCLUDE_DIR ${PROTOBUF_DIR}/include)
+    set(PROTOBUF_LIBRARY protobuf::libprotobuf.a) # use the static library
+    set(PROTOBUF_LIBRARIES ${PROTOBUF_LIBRARY})
+    set(PROTOBUF_PROTOC_EXECUTABLE ${PROTOBUF_DIR}/bin/protoc)
+    set(PROTOBUF_FOUND TRUE)
 else()
     include(FindProtobuf)
     find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)
 endif()
 
-include_directories(${Protobuf_INCLUDE_DIR})
+include_directories(${PROTOBUF_INCLUDE_DIR})
