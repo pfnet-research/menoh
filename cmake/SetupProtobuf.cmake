@@ -30,19 +30,19 @@ if(UNIX AND LINK_STATIC_LIBPROTOBUF)
     set(PROTOBUF_LIBRARY_STATIC ${PROTOBUF_DIR}/lib/libprotobuf.a)
     set(PROTOBUF_LIBRARY_SHARED ${PROTOBUF_DIR}/lib/libprotobuf.so)
 
-    add_library(protobuf::libprotobuf.a STATIC IMPORTED)
-    # Note: INTERFACE_INCLUDE_DIRECTORIES can't set in this place because include/ is
-    # not installed during executing `cmake`
-    set_target_properties(protobuf::libprotobuf.a PROPERTIES
-        IMPORTED_LOCATION "${PROTOBUF_LIBRARY_STATIC}")
-
     # Mimic the behavior of `FindProtobuf` module
     # Use the old variable names to ensure backward compatibility
     set(PROTOBUF_INCLUDE_DIR ${PROTOBUF_DIR}/include)
-    set(PROTOBUF_LIBRARY protobuf::libprotobuf.a) # use the static library
+    set(PROTOBUF_LIBRARY ${PROTOBUF_LIBRARY_STATIC}) # use the static library
     set(PROTOBUF_LIBRARIES ${PROTOBUF_LIBRARY})
     set(PROTOBUF_PROTOC_EXECUTABLE ${PROTOBUF_DIR}/bin/protoc)
     set(PROTOBUF_FOUND TRUE)
+
+    add_library(protobuf::libprotobuf UNKNOWN IMPORTED)
+    # Note: INTERFACE_INCLUDE_DIRECTORIES can't set in this place because include/ is
+    # not installed during executing `cmake`
+    set_target_properties(protobuf::libprotobuf PROPERTIES
+        IMPORTED_LOCATION "${PROTOBUF_LIBRARY_STATIC}")
 else()
     include(FindProtobuf)
     find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)

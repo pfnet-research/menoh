@@ -1,7 +1,12 @@
-# Note: The libraries can be static (.a) or shared (.so)
-if(NOT DEFINED PROTOBUF_LIBRARIES)
-    message(FATAL_ERROR "PROTOBUF_LIBRARIES is not found")
-endif()
+option(LINK_STATIC_LIBPROTOBUF "Link static libprotobuf to libmenoh" OFF)
 
 add_executable(vgg16_benchmark vgg16_benchmark.cpp)
-target_link_libraries(vgg16_benchmark ${PROTOBUF_LIBRARIES} menoh)
+target_link_libraries(vgg16_benchmark menoh)
+
+if(NOT LINK_STATIC_LIBPROTOBUF)
+    if(DEFINED PROTOBUF_LIBRARIES)
+        target_link_libraries(vgg16_benchmark ${PROTOBUF_LIBRARIES})
+    else()
+        message(FATAL_ERROR "PROTOBUF_LIBRARIES is not found")
+    endif()
+endif()

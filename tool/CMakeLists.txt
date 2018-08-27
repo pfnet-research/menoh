@@ -4,6 +4,10 @@ if(NOT DEFINED PROTOBUF_LIBRARIES)
 endif()
 
 add_executable(onnx_viewer onnx_viewer.cpp)
+
+# onnx_viewer requires a explicit dependency to protobuf regardless of whether it is shared and static
+# because it has a reference to google::protobuf::internal::NameOfEnum abi:cxx11](google::protobuf::EnumDescriptor const*, int)
 target_link_libraries(onnx_viewer ${PROTOBUF_LIBRARIES} menoh)
+
 set_target_properties(onnx_viewer PROPERTIES OUTPUT_NAME "menoh_onnx_viewer")
 install(TARGETS onnx_viewer RUNTIME DESTINATION bin)
