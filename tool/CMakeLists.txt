@@ -3,7 +3,7 @@ if(NOT DEFINED PROTOBUF_LIBRARIES)
     message(FATAL_ERROR "PROTOBUF_LIBRARIES is not found")
 endif()
 
-add_executable(onnx_viewer ${ONNX_PROTO_SRC} onnx_viewer.cpp)
+add_executable(onnx_viewer onnx_viewer.cpp)
 
 # ONNX requires protobuf regardless of whether it is static and shared
 target_link_libraries(onnx_viewer ${PROTOBUF_LIBRARIES} menoh)
