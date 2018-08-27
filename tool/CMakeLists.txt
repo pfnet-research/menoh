@@ -3,10 +3,9 @@ if(NOT DEFINED PROTOBUF_LIBRARIES)
     message(FATAL_ERROR "PROTOBUF_LIBRARIES is not found")
 endif()
 
-add_executable(onnx_viewer onnx_viewer.cpp)
+add_executable(onnx_viewer ${ONNX_PROTO_SRC} onnx_viewer.cpp)
 
-# onnx_viewer requires a explicit dependency to protobuf regardless of whether it is shared and static
-# because it has a reference to google::protobuf::internal::NameOfEnum abi:cxx11](google::protobuf::EnumDescriptor const*, int)
+# ONNX requires protobuf regardless of whether it is static and shared
 target_link_libraries(onnx_viewer ${PROTOBUF_LIBRARIES} menoh)
 
 set_target_properties(onnx_viewer PROPERTIES OUTPUT_NAME "menoh_onnx_viewer")
