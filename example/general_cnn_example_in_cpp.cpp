@@ -15,15 +15,9 @@
 
 #include "../external/cmdline.h"
 
-auto crop_and_resize(cv::Mat mat, cv::Size const& size) {
-    auto short_edge = std::min(mat.size().width, mat.size().height);
-    cv::Rect roi;
-    roi.x = (mat.size().width - short_edge) / 2;
-    roi.y = (mat.size().height - short_edge) / 2;
-    roi.width = roi.height = short_edge;
-    cv::Mat cropped = mat(roi);
+auto resize(cv::Mat const& mat, cv::Size const& size) {
     cv::Mat resized;
-    cv::resize(cropped, resized, size);
+    cv::resize(mat, resized, size);
     return resized;
 }
 
@@ -115,7 +109,7 @@ int main(int argc, char** argv) {
                                  input_image_path);
     }
     auto reverse_scale = a.get<float>("reverse_scale");
-    image_mat = crop_and_resize(std::move(image_mat), cv::Size(width, height));
+    image_mat = resize(std::move(image_mat), cv::Size(width, height));
     bool is_subtract_imagenet_average =
       a.get<int>("is_subtract_imagenet_average");
     auto image_data = reorder_to_nchw_and_subtract_imagenet_average(

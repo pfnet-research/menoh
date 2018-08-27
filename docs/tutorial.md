@@ -17,18 +17,11 @@ int main(int argc, char** argv) {
 ## Preprocessing input
 
 First of all, preprocessing input is required. `data/VGG16.onnx` takes 3 channels 224 x 224 sized image but input image
-is not always sized 224x224. So we define *crop_and_resize* function using OpenCV :
+is not always sized 224x224. So we define *resize* function using OpenCV :
 
 ```cpp
-auto crop_and_resize(cv::Mat mat, cv::Size const&size) {
-    auto short_edge = std::min(mat.size().width, mat.size().height);
-    cv::Rect roi;
-    roi.x = (mat.size().width - short_edge) / 2;
-    roi.y = (mat.size().height - short_edge) / 2;
-    roi.width = roi.height = short_edge;
-    cv::Mat cropped = mat(roi);
-    cv::Mat resized;
-    cv::resize(cropped, resized, size);
+auto resize(cv::Mat mat, cv::Size const&size) {
+    cv::resize(mat, resized, size);
     return resized;
 }
 ```
@@ -93,7 +86,7 @@ const int  width = 224;
 // Preprocessing input image
 cv::Mat image_mat = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
 image_mat =
-  crop_and_resize(std::move(image_mat), cv::Size(width, height));
+  resize(std::move(image_mat), cv::Size(width, height));
 std::vector<float> image_data = reorder_to_chw_and_subtract_imagenet_average(image_mat, scale);
 ```
 
