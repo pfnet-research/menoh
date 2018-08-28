@@ -15,23 +15,14 @@
 
 #include "../external/cmdline.h"
 
-auto resize(cv::Mat const& mat, cv::Size const& size) {
-    cv::Mat resized;
-    cv::resize(mat, resized, size);
-    return resized;
-}
-
-auto reorder_to_chw_and_subtract_imagenet_average(cv::Mat const& mat) {
+auto reorder_to_chw(cv::Mat const& mat) {
     assert(mat.channels() == 3);
     std::vector<float> data(mat.channels() * mat.rows * mat.cols);
-    constexpr std::array<float, 3> imagenet_average{{123.68, 116.779, 103.939}};
     for(int y = 0; y < mat.rows; ++y) {
         for(int x = 0; x < mat.cols; ++x) {
             for(int c = 0; c < mat.channels(); ++c) {
                 data[c * (mat.rows * mat.cols) + y * mat.cols + x] =
-                  static_cast<float>(
-                    mat.data[y * mat.step + x * mat.elemSize() + c]) -
-                  imagenet_average[c];
+                  mat.at<cv::Vec3f>(y, x)[c];
             }
         }
     }
@@ -103,8 +94,12 @@ int main(int argc, char** argv) {
         throw std::runtime_error("Invalid input image path: " +
                                  input_image_path);
     }
-    image_mat = resize(std::move(image_mat), cv::Size(width, height));
-    auto image_data = reorder_to_chw_and_subtract_imagenet_average(image_mat);
+
+    // Preprocess
+    cv::resize(image_mat, image_mat, cv::Size(width, height));
+    image_mat.convertTo(image_mat, CV_32FC3);
+    image_mat -= cv::Scalar(123.68, 116.779, 103.939);
+    auto image_data = reorder_to_chw(image_mat);
 
     // Load ONNX model data
     auto model_data = menoh::make_model_data_from_onnx(onnx_model_path);

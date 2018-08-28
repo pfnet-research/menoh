@@ -17,56 +17,32 @@ int main(int argc, char** argv) {
 ## Preprocessing input
 
 First of all, preprocessing input is required. `data/VGG16.onnx` takes 3 channels 224 x 224 sized image but input image
-is not always sized 224x224. So we define *resize* function using OpenCV :
+is not always sized 224x224. So we use `resize()` function in OpenCV :
 
 ```cpp
-auto resize(cv::Mat mat, cv::Size const&size) {
-    cv::resize(mat, resized, size);
-    return resized;
-}
+cv::resize(image_mat, image_mat, cv::Size(224, 224));
+```
+
+VGG16 supposes that the input image is subtracted the average values of imagenet.
+
+```cpp
+image_mat.convertTo(image_mat, CV_32FC3); // change data type to float
+image_mat -= cv::Scalar(123.68, 116.779, 103.939);
 ```
 
 Menoh takes images as NCHW format(N x Channels x Height x Width), but `Mat` of OpenCV holds image as HWC format(Height x Width x Channels).
 
-In addition, VGG16 supposes that the input image is subtracted the average values of imagenet.
-
-So next we define *reorder_to_chw_and_subtract_imagenet_average*.
+So next we define *reorder_to_chw*.
 
 ```cpp
-auto reorder_to_chw_and_subtract_imagenet_average(cv::Mat const&mat) {
+auto reorder_to_chw(cv::Mat const&mat) {
     assert(mat.channels() == 3);
     std::vector<float> data(mat.channels() * mat.rows * mat.cols);
-    constexpr std::array<float, 3> imagenet_average{{123.68, 116.779, 103.939}};
     for(int y = 0; y < mat.rows; ++y) {
         for(int x = 0; x < mat.cols; ++x) {
             for(int c = 0; c < mat.channels(); ++c) {
                 data[c * (mat.rows * mat.cols) + y * mat.cols + x] =
-                  static_cast<float>(
-                    mat.data[y * mat.step + x * mat.elemSize() + c]) -
-                  imagenet_average[c];
-            }
-        }
-    }
-    return data;
-}
-```
-
-In current case, the range of pixel value `data/VGG16.onnx` taking is \f$[0, 256)\f$ and it matches the range of `Mat`. So we have not to scale the values now.
-
-However, sometimes model takes values scaled in range \f$[0.0, 1.0]\f$ or something. In that case, we can scale values here:
-
-```cpp
-auto reorder_to_chw_and_subtract_imagenet_average(cv::Mat const& mat) {
-    assert(mat.channels() == 3);
-    std::vector<float> data(mat.channels() * mat.rows * mat.cols);
-    constexpr std::array<float, 3> imagenet_average{{123.68, 116.779, 103.939}};
-    for(int y = 0; y < mat.rows; ++y) {
-        for(int x = 0; x < mat.cols; ++x) {
-            for(int c = 0; c < mat.channels(); ++c) {
-                data[c * (mat.rows * mat.cols) + y * mat.cols + x] =
-                  (static_cast<float>(
-                    mat.data[y * mat.step + x * mat.elemSize() + c]) -
-                  imagenet_average[c]) / 255.f;
+                  mat.at<cv::Vec3f>(y, x)[c];
             }
         }
     }
@@ -84,10 +60,10 @@ const int height = 224;
 const int  width = 224;
 
 // Preprocessing input image
-cv::Mat image_mat = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-image_mat =
-  resize(std::move(image_mat), cv::Size(width, height));
-std::vector<float> image_data = reorder_to_chw_and_subtract_imagenet_average(image_mat, scale);
+cv::resize(image_mat, image_mat, cv::Size(width, height));
+image_mat.convertTo(image_mat, CV_32FC3);
+image_mat -= cv::Scalar(123.68, 116.779, 103.939);
+auto image_data = reorder_to_chw(image_mat);
 ```
 
 ## Setup model
