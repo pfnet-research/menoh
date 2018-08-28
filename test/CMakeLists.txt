@@ -13,7 +13,7 @@ add_executable(menoh_test
     #vgg16.cpp
 
 )
-target_link_libraries(menoh_test gtest_main menoh)
+target_link_libraries(menoh_test gtest_main menoh_test_target)
 
 if(NOT LINK_STATIC_LIBPROTOBUF)
     if(DEFINED PROTOBUF_LIBRARIES)

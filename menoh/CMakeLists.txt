@@ -18,29 +18,28 @@ if(NOT DEFINED PROTOBUF_LIBRARIES)
 endif()
 
 file(GLOB_RECURSE SOURCES "." "*.cpp")
-add_library(menoh SHARED ${SOURCES} ${ONNX_PROTO_SRC} ${ONNX_PROTO_HEADER})
 
-# Link libraries to menoh
-if(LINK_STATIC_LIBGCC)
-    target_link_libraries(menoh PRIVATE -static-libgcc)
-endif()
-if(LINK_STATIC_LIBSTDCXX)
-    target_link_libraries(menoh PRIVATE -static-libstdc++)
-endif()
-# PUBLIC will add transitive dependencies (`mklml_intel` and `iomp5`) to the link interface
-# Note: change it to PRIVATE after building mkldnn itself
-target_link_libraries(menoh PUBLIC ${MKLDNN_LIBRARIES})
-target_link_libraries(menoh PRIVATE ${PROTOBUF_LIBRARIES})
+add_library(menoh_objlib OBJECT ${SOURCES} ${ONNX_PROTO_SRC} ${ONNX_PROTO_HEADER})
+set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-set_source_files_properties(${ONNX_PROTO_SRC} PROPERTIES GENERATED TRUE)
-set_source_files_properties(${ONNX_PROTO_HEADER} PROPERTIES GENERATED TRUE)
-
-# remove private symbols
+add_library(menoh SHARED $<TARGET_OBJECTS:menoh_objlib>)
 if(NOT APPLE)
+    # Remove private symbols
     set_property(
         TARGET menoh APPEND_STRING PROPERTY
             LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif()
+
+# Used in test/ subdirectory
+add_library(menoh_test_target SHARED $<TARGET_OBJECTS:menoh_objlib>)
+
+include(ConfigureMenoh)
+
+menoh_link_libraries(menoh PRIVATE)
+menoh_link_libraries(menoh_test_target PRIVATE)
+
+set_source_files_properties(${ONNX_PROTO_SRC} PROPERTIES GENERATED TRUE)
+set_source_files_properties(${ONNX_PROTO_HEADER} PROPERTIES GENERATED TRUE)
 
 install(TARGETS menoh
     RUNTIME DESTINATION "bin"
