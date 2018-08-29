@@ -57,6 +57,8 @@ cmake ..
 make
 ```
 
+See [BUILDING.md](BUILDING.md) for details.
+
 ## Installation
 
 Execute below command in build directory created at Build section.
