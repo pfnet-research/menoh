@@ -23,11 +23,11 @@ is not always sized 224x224. So we use `resize()` function in OpenCV :
 cv::resize(image_mat, image_mat, cv::Size(224, 224));
 ```
 
-VGG16 supposes that the input image is subtracted the average values of imagenet.
+VGG16 supposes that the input image is subtracted the mean values of images included in imagenet.
 
 ```cpp
 image_mat.convertTo(image_mat, CV_32FC3); // change data type to float
-image_mat -= cv::Scalar(123.68, 116.779, 103.939);
+image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
 ```
 
 Menoh takes images as NCHW format(N x Channels x Height x Width), but `Mat` of OpenCV holds image as HWC format(Height x Width x Channels).

@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
     cv::resize(image_mat, image_mat, cv::Size(width, height));
     image_mat.convertTo(image_mat, CV_32FC3);
     if(is_subtract_imagenet_average) {
-        image_mat -= cv::Scalar(123.68, 116.779, 103.939);
+        image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
     }
     image_mat /= reverse_scale;
     auto image_data = reorder_to_chw(image_mat);
