@@ -11,7 +11,8 @@ macOS (OSX):
 - TODO
 
 Windows:
-- TODO
+- git
+- Visual Studio 2015
 
 You also need to install the dependent libraries on your system:
 
@@ -41,7 +42,8 @@ brew install protobuf mkl-dnn
 ```
 
 ### Windows
-TODO
+
+None
 
 ## Building
 
@@ -105,4 +107,46 @@ cmake -DUSE_OLD_GLIBCXX_ABI=ON -DLINK_STATIC_LIBPROTOBUF=ON ..
 TODO
 
 ### Windows
-TODO
+
+Please specify your directory into (CMake_Install_Dir).
+
+#### mkl-dnn
+
+```
+git clone https://github.com/intel/mkl-dnn.git
+cd mkl-dnn/scripts
+.\prepare_mkl.bat
+cd ..
+mdir build
+cd build
+cmake .. -G "Visual Studio 14 Win64"  -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
+cmake --build . --config Debug --target install
+cmake --build . --config Release --target install
+cd ../..
+```
+
+#### protobuf
+
+Download and unzip https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protobuf-cpp-3.6.1.zip
+
+```
+cd protobuf-3.6.1/cmake
+mdir build
+cd build
+cmake .. -G "Visual Studio 14" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
+cmake --build . --config Debug --target install
+cmake --build . --config Release --target install
+cd ../../..
+```
+
+#### menoh
+
+```
+git clone https://github.com/pfnet-research/menoh.git
+cd menoh
+mdir build
+cd build
+cmake .. -G "Visual Studio 14 Win64" -DCMAKE_PREFIX_PATH=CMake_Install_Dir) -DCMAKE_INSTALL_PREFIX=CMake_Install_Dir) -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF
+cmake --build . --config Debug --target install
+cmake --build . --config Release --target install
+```
