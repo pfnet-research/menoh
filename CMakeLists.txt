@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(MENOH_MAJOR_VERSION 1)
 set(MENOH_MINOR_VERSION 0)
-set(MENOH_PATCH_VERSION 2)
+set(MENOH_PATCH_VERSION 3)
 
 # Options
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
@@ -15,7 +15,6 @@ option(LINK_STATIC_LIBPROTOBUF "Link static libprotobuf to libmenoh" OFF)
 option(ENABLE_TEST "Build test" OFF)
 option(ENABLE_BENCHMARK "Build benchmark" ON)
 option(ENABLE_EXAMPLE "Build example" ON)
-option(ENABLE_TOOL "Build tool" ON)
 
 option(SHOW_ALL_VARIABLES "Debug: show all variables" OFF)
 
@@ -93,11 +92,6 @@ endif()
 if(${ENABLE_EXAMPLE})
     message(STATUS "# add_subdirectory\(example\)")
     add_subdirectory(example)
-endif()
-
-if(${ENABLE_TOOL})
-    message(STATUS "# add_subdirectory\(tool\)")
-    add_subdirectory(tool)
 endif()
 
 message(STATUS "# add_subdirectory\(menoh\)")
