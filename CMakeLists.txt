@@ -11,7 +11,6 @@ option(BUILD_SHARED_LIBS "Build shared libs" ON)
 option(ENABLE_TEST "Build test" OFF)
 option(ENABLE_BENCHMARK "Build benchmark" ON)
 option(ENABLE_EXAMPLE "Build example" ON)
-option(ENABLE_TOOL "Build tool" ON)
 
 # C++ setup
 set(CMAKE_CXX_STANDARD 14)
@@ -72,10 +71,6 @@ endif()
 
 if(${ENABLE_EXAMPLE})
     add_subdirectory(example)
-endif()
-
-if(${ENABLE_TOOL})
-    add_subdirectory(tool)
 endif()
 
 add_subdirectory(menoh)

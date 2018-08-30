@@ -100,67 +100,15 @@ std::vector<float> image_data = reorder_to_chw_and_subtract_imagenet_average(ima
 ## Setup model
 ONNX model has some named variables. To build model, we have to set names of input variables and output variables.
 
-We can checks them with `tool/menoh_onnx_viewer`. At `menoh/build`:
+We can checks them with [Netron](https://github.com/lutzroeder/Netron):
 
 ```
-tool/menoh_onnx_viewer ../data/VGG16.onnx
+netron ../data/VGG16.onnx
 ```
 
-That emits:
+Then you can see the content by accessing *localhost:8080* with browser like below.
 
-```
-ONNX version is 1
-domain is 
-model version is 0
-producer name is Chainer
-producer version is 3.1.0
-parameter list
-name: /conv5_3/b dims: 512  values: min_value: -0.500367 max_value: 9.43155 
-name: /conv5_3/W dims: 512 512 3 3  values: min_value: -0.0928848 max_value: 0.286997 
-
-...
-
-node list
-node num is 40
-0:Conv
-	input0: 140326425860192
-	input1: /conv1_1/W
-	input2: /conv1_1/b
-	output0: 140326201104648
-	attribute0: dilations ints: 1 1 
-	attribute1: kernel_shape ints: 3 3 
-	attribute2: pads ints: 1 1 1 1 
-	attribute3: strides ints: 1 1 
-1:Relu
-	input0: 140326201104648
-	output0: 140326201105432
-2:Conv
-	input0: 140326201105432
-	input1: /conv1_2/W
-	input2: /conv1_2/b
-	output0: 140326201105544
-	attribute0: dilations ints: 1 1 
-	attribute1: kernel_shape ints: 3 3 
-	attribute2: pads ints: 1 1 1 1 
-	attribute3: strides ints: 1 1 
-
-...
-
-32:FC
-	input0: 140326200777360
-	input1: /fc6/W
-	input2: /fc6/b
-	output0: 140326200777584
-	attribute0: axis int: 1
-	attribute1: axis_w int: 1
-
-...
-
-39:Softmax
-	input0: 140326200803456
-	output0: 140326200803680
-	attribute0: axis int: 1
-```
+\image html vgg16_view.png
 
 VGG16 has one input and one output. So now we can check that the input name is *140326425860192* (input of 0:Conv) and the output name is *140326200803680* (output of 39:Softmax).
 
