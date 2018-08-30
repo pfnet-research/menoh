@@ -8,7 +8,6 @@
       menoh_impl::*;
       typeinfo*for?menoh_impl::*;
       vtable*for?menoh_impl::*;
-      onnx::*;
     };
 
   local:
