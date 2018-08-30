@@ -80,7 +80,8 @@ int main(int argc, char** argv) {
     std::cout << "vgg16 example" << std::endl;
 
     // Aliases to onnx's node input and output tensor name
-    // Please use `/tool/onnx_viewer`
+    // Please use [Netron](https://github.com/lutzroeder/Netron)
+    // See Menoh tutorial for more information.
     const std::string conv1_1_in_name = "140326425860192";
     const std::string fc6_out_name = "140326200777584";
     const std::string softmax_out_name = "140326200803680";
