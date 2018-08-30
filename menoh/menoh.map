@@ -1,0 +1,15 @@
+{
+  global:
+    extern "C" {
+      menoh_*;
+    };
+    # TODO: Make `menoh_impl` private by removing dependencies from other modules
+    extern "C++" {
+      menoh_impl::*;
+      typeinfo*for?menoh_impl::*;
+      vtable*for?menoh_impl::*;
+    };
+
+  local:
+    *;
+};
