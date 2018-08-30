@@ -4,8 +4,8 @@
 To build Menoh, you require the following toolchains:
 
 Unix:
-- CMake (3.1 or later)
-- GCC (4.9 or later)
+- CMake 3.1 or later
+- GCC 4.9 or later
 
 macOS (OSX):
 - TODO
@@ -22,7 +22,7 @@ You also need to install the dependent libraries on your system:
 
 You can install `protobuf` through the package manager instead of building it yourself. `mkl-dnn` package, unfortunatelly, is not available in many environments at the moment (except for `brew` in macOS).
 
-### on Debian/Ubuntu
+### Debian/Ubuntu
 ```
 apt-get install gcc g++ cmake-data cmake libopencv-dev libprotobuf-dev protobuf-compiler
 
@@ -69,16 +69,16 @@ python retrieve_data.py
 ```
 
 #### Static linking
-Menoh depends on several other libraries like `protobuf`. There is a chance to fail if the dependent libraries installed on the target system are not compatible with the built Menoh binary.
+Menoh depends on several other libraries like `protobuf`. In Unix like systems, there is a chance to fail if you take the binary you built to other system because sometimes the dependent libraries installed on the system are not compatible with it.
 
-To improve the portability, you can statically link Menoh with the dependent libraries. There is the following options for `cmake` command:
+To improve the portability, you can statically link Menoh with its dependencies. There is the following options for `cmake` command:
 
 - `LINK_STATIC_LIBGCC` for `libgcc`
 - `LINK_STATIC_LIBSTDCXX` for `libstdc++`
 - `LINK_STATIC_LIBPROTOBUF` for `libprotobuf`
 - `LINK_STATIC_MKLDNN` for `libmkldnn` (NOT supported in this version)
 
-`LINK_STATIC_LIBPROTOBUF` and `LINK_STATIC_MKLDNN` options does not require to the libraries installed in your system because it builds static libraries from the source.
+If you use `LINK_STATIC_LIBPROTOBUF` and `LINK_STATIC_MKLDNN`, you don't need to install the libraries on your system because they build static library from the source.
 
 All options are disabled by default, and you can turn them on as below:
 

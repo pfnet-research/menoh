@@ -23,8 +23,8 @@ add_library(menoh_objlib OBJECT ${SOURCES} ${ONNX_PROTO_SRC} ${ONNX_PROTO_HEADER
 set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(menoh SHARED $<TARGET_OBJECTS:menoh_objlib>)
-if(NOT APPLE)
-    # Remove private symbols
+if(NOT APPLE AND NOT MSVC)
+    # Remove private symbols (Note: it works in MINGW but not in MSVC)
     set_property(
         TARGET menoh APPEND_STRING PROPERTY
             LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
