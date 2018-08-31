@@ -57,6 +57,17 @@ install:
     - python retrieve_data.py
     - python gen_test_data.py
 before_script:
+    - |
+      echo 'Checking tools and libraries version:'
+      if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+        apt list --installed
+        ldconfig -p
+      fi
+      if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+        brew list --versions
+      fi
+      cmake --version
+      make --version
     - ls -R $HOME/mkl-dnn
 script:
     #- if [ -f cov-int/build-log.txt ]; then cat cov-int/build-log.txt; fi

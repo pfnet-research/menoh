@@ -47,6 +47,11 @@ namespace menoh_impl {
                         std::unordered_map<std::string, std::vector<int>> const&
                           variable_dims_table);
 
+    std::vector<int>
+    calc_2d_output_dims_for_conv_transpose(menoh_impl::node const& node, int output_channel_num,
+                        std::unordered_map<std::string, std::vector<int>> const&
+                          variable_dims_table);
+                          
 } // namespace menoh_impl
 
 #endif // MENOH_NODE_HPP

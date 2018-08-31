@@ -279,6 +279,30 @@ namespace menoh_impl {
                 }
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
+            } else if(node.op_type == "ConvTranspose") {
+                auto weight_name = node.input_name_list.at(1);
+                auto output_channel_num =
+                  get_output_channel_num_from_parameter_dims(
+                    find_value(parameter_table, weight_name).dims());
+                auto output_dims = calc_2d_output_dims_for_conv_transpose(node,
+                          output_channel_num, variable_dims_table);
+                auto dilations =
+                  optional_attribute_ints(node, "dilations", {1, 1});
+                if(dilations != std::vector<int>({1, 1})) {
+                    auto actual = "(" + std::to_string(dilations.at(0)) + ", " +
+                                  std::to_string(dilations.at(1)) + ")";
+                    throw unsupported_operator_attribute(
+                      node.op_type, node.output_name_list.front(), "dilations",
+                      actual, "(1, 1)");
+                }
+                auto group = optional_attribute_int(node, "group", 1);
+                if(group != 1) {
+                    throw unsupported_operator_attribute(
+                      node.op_type, node.output_name_list.front(), "group",
+                      std::to_string(group), "1");
+                }
+                variable_dims_table.insert(
+                  {node.output_name_list.at(0), output_dims});
             } else if(node.op_type == "MaxPool" ||
                       node.op_type == "AveragePool") {
                 auto input_name = node.input_name_list.at(0);

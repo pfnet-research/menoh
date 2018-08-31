@@ -58,13 +58,15 @@ namespace menoh_impl {
                 std::string name;
                 array arr;
                 std::tie(name, arr) = name_and_arr_pair;
-                mkldnn::memory::format format;
+                mkldnn::memory::format format =
+                  mkldnn::memory::format::format_undef;
                 if(arr.dims().size() == 2) {
                     format = mkldnn::memory::format::nc;
                 } else if(arr.dims().size() == 4) {
                     format = mkldnn::memory::format::nchw;
                 } else {
-                    assert("invalid input dims size");
+                    throw unsupported_input_dims(
+                      name, std::to_string(arr.dims().size()));
                 }
                 auto mem = array_to_memory(arr, format, engine);
                 variable_memory_table.insert({name, mem});

@@ -24,12 +24,11 @@ install:
 
 - if [%TARGET%]==[mingw] (
     pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-opencv mingw-w64-x86_64-protobuf mingw-w64-x86_64-python3 mingw-w64-x86_64-python3-pip mingw-w64-x86_64-python3-numpy mingw-w64-x86_64-hdf5 mingw-w64-x86_64-ca-certificates &&
-    curl -omingw-w64-x86_64-mkl-dnn-0.14-3-x86_64.pkg.tar.xz -L https://preferredjp.box.com/shared/static/eb90vngoz8zngp6yy69x91q0swp11ha1.xz &&
-    pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.14-3-x86_64.pkg.tar.xz
+    curl -omingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz -L https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz &&
+    pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
   ) else (
-    curl -omkl-dnn-0.14-win64.7z -L --insecure https://preferredjp.box.com/shared/static/njn6vrjt8zaslk82yjw7j1pczkcp3c0f.7z &&
-    mkdir mkl-dnn-0.14-win64 &&
-    7z x -omkl-dnn-0.14-win64 mkl-dnn-0.14-win64.7z &&
+    curl -omkl-dnn-0.15-win64.zip -L --insecure https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mkl-dnn-0.15-win64.zip &&
+    7z x mkl-dnn-0.15-win64.zip &&
     call appveyor\install_protoc_msvc.bat
   )
 
@@ -45,10 +44,18 @@ install:
     python gen_test_data.py
   )
 
+before_build:
+  - if [%TARGET%]==[mingw] (
+      echo 'Checking tools and libraries version:' &&
+      pacman -Q &&
+      cmake --version &&
+      make --version
+    )
+
 build_script:
 - mkdir build
 - cd build
-- if [%TARGET%]==[msvc] set PATH=%PATH%;c:\protobuf-3.6.0-msvc\bin;c:\protobuf-3.6.0-msvc\include;c:\protobuf-3.6.0-msvc\lib;c:\projects\menoh\mkl-dnn-0.14-win64\bin;c:\projects\menoh\mkl-dnn-0.14-win64\include;c:\projects\menoh\mkl-dnn-0.14-win64\lib
+- if [%TARGET%]==[msvc] set PATH=%PATH%;c:\protobuf-3.6.0-msvc\bin;c:\protobuf-3.6.0-msvc\include;c:\protobuf-3.6.0-msvc\lib;c:\projects\menoh\mkl-dnn-0.15-win64\bin;c:\projects\menoh\mkl-dnn-0.15-win64\include;c:\projects\menoh\mkl-dnn-0.15-win64\lib
 - if [%TARGET%]==[mingw] (
     cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 .. &&
     make

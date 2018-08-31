@@ -27,16 +27,27 @@ auto crop_and_resize(cv::Mat mat, cv::Size const& size) {
     return resized;
 }
 
-auto reorder_to_nchw(cv::Mat const& mat) {
+auto reorder_to_nchw_and_subtract_imagenet_average(
+  cv::Mat const& mat, float reverse_scale, bool subtract_imagenet_average) {
     assert(mat.channels() == 3);
     std::vector<float> data(mat.channels() * mat.rows * mat.cols);
+    constexpr std::array<float, 3> imagenet_average{{123.68, 116.779, 103.939}};
     for(int y = 0; y < mat.rows; ++y) {
         for(int x = 0; x < mat.cols; ++x) {
             // INFO cv::imread loads image BGR
             for(int c = 0; c < mat.channels(); ++c) {
-                data[c * (mat.rows * mat.cols) + y * mat.cols + x] =
-                  static_cast<float>(
-                    mat.data[y * mat.step + x * mat.elemSize() + c]);
+                if(subtract_imagenet_average) {
+                    data[c * (mat.rows * mat.cols) + y * mat.cols + x] =
+                      (static_cast<float>(
+                         mat.data[y * mat.step + x * mat.elemSize() + c]) -
+                       imagenet_average[c]) /
+                      reverse_scale;
+                } else {
+                    data[c * (mat.rows * mat.cols) + y * mat.cols + x] =
+                      static_cast<float>(
+                        mat.data[y * mat.step + x * mat.elemSize() + c]) /
+                      reverse_scale;
+                }
             }
         }
     }
@@ -85,9 +96,10 @@ int main(int argc, char** argv) {
     a.add<std::string>("input_image", '\0', "input image path");
     a.add<int>("image_size", '\0', "input image width and height size");
     a.add<std::string>("model", '\0', "onnx model path");
-    a.add<float>("scale", '\0', "input scale");
+    a.add<float>("reverse_scale", '\0', "input reverse scale");
     a.add<std::string>("input_variable_name", '\0', "output variable name");
     a.add<std::string>("output_variable_name", '\0', "output variable name");
+    a.add<int>("is_subtract_imagenet_average", '\0', "output variable name");
     a.parse_check(argc, argv);
 
     auto height = a.get<int>("image_size");
@@ -102,9 +114,12 @@ int main(int argc, char** argv) {
         throw std::runtime_error("Invalid input image path: " +
                                  input_image_path);
     }
-    auto scale = a.get<float>("scale");
+    auto reverse_scale = a.get<float>("reverse_scale");
     image_mat = crop_and_resize(std::move(image_mat), cv::Size(width, height));
-    auto image_data = reorder_to_nchw(image_mat);
+    bool is_subtract_imagenet_average =
+      a.get<int>("is_subtract_imagenet_average");
+    auto image_data = reorder_to_nchw_and_subtract_imagenet_average(
+      image_mat, reverse_scale, is_subtract_imagenet_average);
 
     // Aliases to onnx's node input and output tensor name
     auto conv1_1_in_name = a.get<std::string>("input_variable_name");
