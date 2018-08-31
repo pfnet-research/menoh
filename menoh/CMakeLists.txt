@@ -19,9 +19,17 @@ endif()
 
 file(GLOB_RECURSE SOURCES "." "*.cpp")
 
-add_library(menoh_objlib OBJECT ${SOURCES} ${ONNX_PROTO_SRC} ${ONNX_PROTO_HEADER})
+# Create a object library for generating shared library
+add_library(menoh_objlib OBJECT ${SOURCES})
+
+add_dependencies(menoh_objlib gen_onnx_outputs)
+target_sources(menoh_objlib PRIVATE ${ONNX_PROTO_SRC})
+
 set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+include(ConfigureMenoh)
+
+# menoh
 add_library(menoh SHARED $<TARGET_OBJECTS:menoh_objlib>)
 if(NOT APPLE AND NOT MSVC)
     # Remove private symbols (Note: it works in MINGW but not in MSVC)
@@ -29,13 +37,10 @@ if(NOT APPLE AND NOT MSVC)
         TARGET menoh APPEND_STRING PROPERTY
             LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif()
-
-# Used in test/ subdirectory
-add_library(menoh_test_target SHARED $<TARGET_OBJECTS:menoh_objlib>)
-
-include(ConfigureMenoh)
-
 menoh_link_libraries(menoh PRIVATE)
+
+# menoh_test_target: only used in `test` subdirectory
+add_library(menoh_test_target SHARED $<TARGET_OBJECTS:menoh_objlib>)
 menoh_link_libraries(menoh_test_target PRIVATE)
 
 set_source_files_properties(${ONNX_PROTO_SRC} PROPERTIES GENERATED TRUE)
