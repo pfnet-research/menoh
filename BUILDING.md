@@ -1,4 +1,5 @@
 # Building Menoh
+You need to install [prerequisites](#prerequisites) for your platform before [building](#building) Menoh.
 
 ## Prerequisites
 To build Menoh, you require the following toolchains:
@@ -11,17 +12,16 @@ macOS (OSX):
 - TODO
 
 Windows:
-- git
 - Visual Studio 2015
 
 You also need to install the dependent libraries on your system:
 
-- [Protocol Buffers](https://developers.google.com/protocol-buffers/) 2.6.1 or later
-    - Building instructions are [here](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md)
-- [MKL-DNN](https://github.com/intel/mkl-dnn) 0.14 or later (for `mkldnn` backend)
-    - Building instructions are [here](https://github.com/intel/mkl-dnn/blob/master/README.md#installation)
+- [Protocol Buffers](https://developers.google.com/protocol-buffers/) 2.6.1 or later (building instructions are [here](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md))
+- [MKL-DNN](https://github.com/intel/mkl-dnn) 0.14 or later (for `mkldnn` backend) (building instructions are [here](https://github.com/intel/mkl-dnn/blob/master/README.md#installation))
 
-You can install `protobuf` through the package manager instead of building it yourself. `mkl-dnn` package, unfortunatelly, is not available in many environments at the moment (except for `brew` in macOS).
+`protobuf` can be installed through most package managers instead of building it yourself. `mkl-dnn` package, unfortunatelly, is not available in many environments at the moment (except for `brew` in macOS).
+
+Note that you can use ProtoBuf either version 2 or 3, but, for example, if you build Menoh with `protoc` ver 3 you should use the binary with runtime ver 3.
 
 ### Debian/Ubuntu
 ```
@@ -42,8 +42,34 @@ brew install protobuf mkl-dnn
 ```
 
 ### Windows
+Please replace `(CMake_Install_Dir)` in the following with your working directory.
 
-None
+#### ProtoBuf
+Download and unzip https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protobuf-cpp-3.6.1.zip
+
+```
+cd protobuf-3.6.1/cmake
+mdir build
+cd build
+cmake .. -G "Visual Studio 14" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
+cmake --build . --config Debug --target install
+cmake --build . --config Release --target install
+cd ../../..
+```
+
+#### MKL-DNN
+```
+git clone https://github.com/intel/mkl-dnn.git
+cd mkl-dnn/scripts
+.\prepare_mkl.bat
+cd ..
+mdir build
+cd build
+cmake .. -G "Visual Studio 14 Win64"  -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
+cmake --build . --config Debug --target install
+cmake --build . --config Release --target install
+cd ../..
+```
 
 ## Building
 
@@ -107,39 +133,7 @@ cmake -DUSE_OLD_GLIBCXX_ABI=ON -DLINK_STATIC_LIBPROTOBUF=ON ..
 TODO
 
 ### Windows
-
-Please specify your directory into (CMake_Install_Dir).
-
-#### mkl-dnn
-
-```
-git clone https://github.com/intel/mkl-dnn.git
-cd mkl-dnn/scripts
-.\prepare_mkl.bat
-cd ..
-mdir build
-cd build
-cmake .. -G "Visual Studio 14 Win64"  -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
-cmake --build . --config Debug --target install
-cmake --build . --config Release --target install
-cd ../..
-```
-
-#### protobuf
-
-Download and unzip https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protobuf-cpp-3.6.1.zip
-
-```
-cd protobuf-3.6.1/cmake
-mdir build
-cd build
-cmake .. -G "Visual Studio 14" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
-cmake --build . --config Debug --target install
-cmake --build . --config Release --target install
-cd ../../..
-```
-
-#### menoh
+Please replace `(CMake_Install_Dir)` in the following with your working directory.
 
 ```
 git clone https://github.com/pfnet-research/menoh.git
