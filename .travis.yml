@@ -35,15 +35,12 @@ matrix:
               apt:
                   sources:
                       - ubuntu-toolchain-r-test
-                      - sourceline: 'ppa:maarten-fonville/protobuf'
                   packages:
                       - gcc-7
                       - g++-7
                       - cmake-data
                       - cmake
                       - libopencv-dev
-                      - libprotobuf-dev
-                      - protobuf-compiler
 env:
     global:
         # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
@@ -64,7 +61,8 @@ install:
         brew upgrade python
         export PATH=/usr/local/opt/python/libexec/bin:$PATH
         brew install numpy || true
-        brew install opencv mkl-dnn protobuf
+        brew install opencv mkl-dnn
+        if [ -z "$STATIC" ]; then brew install protobuf; fi
       else
         pyenv local 3.6
       fi
