@@ -1,9 +1,12 @@
 dist: trusty
 sudo: required
 language: cpp
+addons:
 matrix:
     include:
         - os: osx
+        - os: osx
+          env: STATIC=1
         - os: linux
           addons:
               apt:
@@ -26,6 +29,21 @@ matrix:
                   build_command_prepend: cov-configure --compiler /usr/bin/g++-7 --comptype g++ -- -march=native -fPIC -std=gnu++14 && cmake -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn/include" -DMKLDNN_LIBRARY="$HOME/mkl-dnn/lib/libmkldnn.so" .
                   build_command: make
                   branch_pattern: coverity_scan
+        - os: linux
+          env: STATIC=1
+          addons:
+              apt:
+                  sources:
+                      - ubuntu-toolchain-r-test
+                      - sourceline: 'ppa:maarten-fonville/protobuf'
+                  packages:
+                      - gcc-7
+                      - g++-7
+                      - cmake-data
+                      - cmake
+                      - libopencv-dev
+                      - libprotobuf-dev
+                      - protobuf-compiler
 env:
     global:
         # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
@@ -73,16 +91,28 @@ script:
     #- if [ -f cov-int/build-log.txt ]; then cat cov-int/build-log.txt; fi
     # CMakeCache.txt generated for coverity_scan build hinders out-of-source build
     - if [ -f CMakeCache.txt ]; then rm CMakeCache.txt; fi
+    - |
+      if [ -n "$STATIC" ]; then
+        if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+          STATIC_OPTION="-DLINK_STATIC_LIBPROTOBUF=ON"
+        else
+          STATIC_OPTION="-DLINK_STATIC_LIBPROTOBUF=ON -DLINK_STATIC_LIBSTDCXX=ON -DLINK_STATIC_LIBGCC=ON"
+        fi
+      else
+        STATIC_OPTION=""
+      fi
     - mkdir build
     - cd build
     - |
       if [ "$TRAVIS_OS_NAME" == "osx" ]; then
         cmake -DENABLE_TEST=ON \
+        $STATIC_OPTION \
         ..
       else
         cmake -DENABLE_TEST=ON \
         -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn/include" \
         -DMKLDNN_LIBRARY="$HOME/mkl-dnn/lib/libmkldnn.so" \
+        $STATIC_OPTION \
         ..
       fi
     - make
