@@ -115,3 +115,9 @@ script:
       fi
     - make
     - ./test/menoh_test
+    - |
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+        otool -L menoh/libmenoh.dylib
+      else
+        ldd menoh/libmenoh.so
+      fi
