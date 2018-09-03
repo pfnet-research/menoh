@@ -5,7 +5,7 @@ if(LINK_STATIC_LIBPROTOBUF)
     # because `libprotobuf.a` produced by the package manager is not PIC. So we need to
     # build it by ourselves.
 
-    if(UNIX)
+    if(UNIX OR MINGW)
         set(PROTOBUF_VERSION_STATIC "3.6.1")
         set(PROTOBUF_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf-${PROTOBUF_VERSION_STATIC})
         set(PROTOBUF_URL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION_STATIC}/protobuf-cpp-${PROTOBUF_VERSION_STATIC}.tar.gz")

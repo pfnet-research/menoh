@@ -10,6 +10,8 @@ image:
 environment:
   matrix:
     - TARGET: mingw
+    - TARGET: mingw
+      STATIC: 1
     - TARGET: msvc
 
 install:
@@ -57,7 +59,14 @@ build_script:
 - cd build
 - if [%TARGET%]==[msvc] set PATH=%PATH%;c:\protobuf-3.6.0-msvc\bin;c:\protobuf-3.6.0-msvc\include;c:\protobuf-3.6.0-msvc\lib;c:\projects\menoh\mkl-dnn-0.15-win64\bin;c:\projects\menoh\mkl-dnn-0.15-win64\include;c:\projects\menoh\mkl-dnn-0.15-win64\lib
 - if [%TARGET%]==[mingw] (
-    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DCMAKE_INSTALL_PREFIX=/mingw64 .. &&
+    if [%STATIC%]==[1] (
+      set STATIC_OPTION="-DLINK_STATIC_LIBPROTOBUF=ON -DLINK_STATIC_LIBSTDCXX=ON -DLINK_STATIC_LIBGCC=ON"
+    ) else (
+      set STATIC_OPTION=""
+    )
+  )
+- if [%TARGET%]==[mingw] (
+    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DLINK_STATIC_LIBPROTOBUF=ON -DCMAKE_INSTALL_PREFIX=/mingw64 .. &&
     make
   ) else (
     cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
