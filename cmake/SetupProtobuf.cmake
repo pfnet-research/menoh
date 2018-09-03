@@ -6,9 +6,10 @@ if(LINK_STATIC_LIBPROTOBUF)
     # build it by ourselves.
 
     if(UNIX)
-        set(PROTOBUF_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf-${PROTOBUF_VERSION})
-        set(PROTOBUF_URL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz")
-        set(PROTOBUF_HASH MD5=f3916ce13b7fcb3072a1fa8cf02b2423)
+        set(PROTOBUF_VERSION_STATIC "3.6.1")
+        set(PROTOBUF_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf-${PROTOBUF_VERSION_STATIC})
+        set(PROTOBUF_URL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION_STATIC}/protobuf-cpp-${PROTOBUF_VERSION_STATIC}.tar.gz")
+        set(PROTOBUF_HASH MD5=406d5b8636576b1c86730ca5cbd1e576)
 
         # Requires `-fPIC` for linking with a shared library
         set(PROTOBUF_CFLAGS -fPIC)
