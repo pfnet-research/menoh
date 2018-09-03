@@ -27,13 +27,17 @@ namespace menoh_impl {
 
         struct Params
         {
-            armnn::Compute m_ComputeDevice;
+ 	    armnn::IRuntime::CreationOptions options; // default options
+            std::vector<armnn::Compute> m_ComputeDevice;
+            bool m_EnableFp16TurboMode;
 	    std::unordered_map<std::string, array> const* input_table_;
  	    std::unordered_map<std::string, array> const* output_table_;
             menoh_impl::model_data const* model_data_;
 
             Params()
-                : m_ComputeDevice(armnn::Compute::CpuRef)
+		: options()
+	        , m_ComputeDevice{armnn::Compute::CpuRef}
+                , m_EnableFp16TurboMode(false)
 	        , input_table_(nullptr)
 	        , output_table_(nullptr)
 	        , model_data_(nullptr) {}
@@ -41,8 +45,12 @@ namespace menoh_impl {
             Params(
 		std::unordered_map<std::string, array> const* input_table,
 		std::unordered_map<std::string, array> const* output_table,
-                menoh_impl::model_data const* model_data )
-                : m_ComputeDevice(armnn::Compute::CpuRef)
+                menoh_impl::model_data const* model_data,
+                std::vector<armnn::Compute>& ComputeDevice,
+		bool EnableFp16TurboMode = false )
+		: options()
+	        , m_ComputeDevice(ComputeDevice)
+                , m_EnableFp16TurboMode(true)
 	        , input_table_(input_table)
 		, output_table_(output_table)
 	        , model_data_(model_data) {}
@@ -97,6 +105,7 @@ namespace menoh_impl {
 	        return MakeOutputTensors(m_OutputBindingInfo, outputTensorData.begin()->second);
             }
 
+            std::vector<armnn::Compute> m_ComputeDevice;
             MenohParser         m_Parser;
 	    armnn::IRuntimePtr 	m_Runtime;
 	    armnn::NetworkId    m_NetworkIdentifier;

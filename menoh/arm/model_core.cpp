@@ -11,8 +11,11 @@ namespace menoh_impl {
         model_core::model_core(
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
-	  menoh_impl::model_data const& model_data, armnn::Compute compute)
-          : m_inference(Params(&input_table, &output_table, &model_data)) {}
+	  menoh_impl::model_data const& model_data,
+          std::vector<armnn::Compute>& ComputeDevice,
+	  bool EnableFp16TurboMode )
+          : m_inference(Params(&input_table, &output_table, &model_data,
+			       ComputeDevice, EnableFp16TurboMode)) {}
 
         void model_core::do_run() {
 	    m_inference.Run();
@@ -32,21 +35,21 @@ namespace menoh_impl {
                     }
                 }
 
-                armnn::Compute compute = Compute::CpuRef;
+		std::vector<armnn::Compute> compute{armnn::Compute::CpuRef};
                 if( device == 0 )
-                    compute = armnn::Compute::CpuRef;
-                else if( device == 1 )
-                    compute = armnn::Compute::CpuAcc;
+		    ; // compute.push_back(armnn::Compute::CpuAcc);
+		else if( device == 1 )
+		    compute.push_back(armnn::Compute::CpuAcc);
                 else if( device == 2 )
-                    compute = armnn::Compute::GpuAcc;
-                else 
+		    compute.push_back(armnn::Compute::CpuAcc);
+		else 
                     throw json_parse_error("Device Error");
                 if( device != 0 && device != 1 && device != 2 )
                     throw json_parse_error("Device Error");
 
 	        boost::ignore_unused(compute);
 	    
-                return model_core(input_table, output_table, model_data, compute);
+                return model_core(input_table, output_table, model_data, compute, false /*true*/);
             } catch(nlohmann::json::parse_error const& e) {
                 throw json_parse_error(e.what());
             }

@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
 #endif    
     // Build model
     //    auto model = model_builder.build_model(model_data, "mkldnn");
-    auto model = model_builder.build_model(model_data, "arm");
+    auto model = model_builder.build_model(model_data, "armnn");
     model_data
        .reset(); // you can delete model_data explicitly after model building
 

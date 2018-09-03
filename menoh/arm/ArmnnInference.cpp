@@ -23,8 +23,9 @@ namespace menoh_impl {
     namespace armnn_backend {
 
         ArmnnInference::ArmnnInference( const Params& params )
-	  : m_Parser(),
-	    m_Runtime(armnn::IRuntime::Create(params.m_ComputeDevice))
+	  : m_ComputeDevice(params.m_ComputeDevice)
+	  , m_Parser()
+          , m_Runtime(armnn::IRuntime::Create(params.options))
 	{
 	    menoh_impl::model_data const& model_data = *(params.model_data_);
 
@@ -120,11 +121,17 @@ namespace menoh_impl {
 	    m_OutputBindingInfo = m_Parser.GetNetworkOutputBindingInfo(requestedOutputs.at(0));
             armnn::IOptimizedNetworkPtr optNet{nullptr, [](armnn::IOptimizedNetwork *){}};
             {
+#ifdef ARM_DEBUG
 	      std::cout << "armnn::Optimize" << std::endl;
-	      optNet = armnn::Optimize(*network, m_Runtime->GetDeviceSpec());
+#endif
+              armnn::OptimizerOptions options;
+	      options.m_ReduceFp32ToFp16 = params.m_EnableFp16TurboMode;
+	      optNet = armnn::Optimize(*network, m_ComputeDevice, m_Runtime->GetDeviceSpec(), options);
             }
-	      std::cout << "armnn::LoadNetwork" << std::endl;
-	      armnn::Status ret = m_Runtime->LoadNetwork(m_NetworkIdentifier, std::move(optNet));
+#ifdef ARM_DEBUG
+	    std::cout << "armnn::LoadNetwork" << std::endl;
+#endif
+	    armnn::Status ret = m_Runtime->LoadNetwork(m_NetworkIdentifier, std::move(optNet));
             if (ret == armnn::Status::Failure)
             {
                 throw armnn::Exception("IRuntime::LoadNetwork failed");

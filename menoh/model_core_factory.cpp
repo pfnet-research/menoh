@@ -27,7 +27,7 @@ namespace menoh_impl {
 #endif
 
 #if ENABLE_ARMNN
-        if(backend_name == "arm") {
+        if(backend_name == "armnn") {
             return std::make_unique<armnn_backend::model_core>(
               armnn_backend::make_model_core(input_table, output_table,
                                               model_data, config));

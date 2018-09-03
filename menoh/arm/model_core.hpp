@@ -13,8 +13,10 @@ namespace menoh_impl {
             model_core(
               std::unordered_map<std::string, array> const& input_table,
               std::unordered_map<std::string, array> const& output_table,
-	      menoh_impl::model_data const& model_data, armnn::Compute compute);
-
+	      menoh_impl::model_data const& model_data,
+              std::vector<armnn::Compute>& ComputeDevice,
+              bool EnableFp16TurboMode = false );
+ 
         private:
             virtual void do_run() override;
 

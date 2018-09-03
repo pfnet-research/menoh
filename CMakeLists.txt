@@ -12,7 +12,7 @@ option(ENABLE_ARMNN  "Use ARM NN" ON)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
 option(ENABLE_TEST       "Build test"        OFF)
-option(ENABLE_BENCHMARK  "Build benchmark"   OFF)
+option(ENABLE_BENCHMARK  "Build benchmark"   ON)
 option(ENABLE_EXAMPLE    "Build example"     OFF)
 option(ENABLE_TOOL       "Build tool"        OFF)
 
@@ -89,8 +89,10 @@ if(ENABLE_ARMNN)
     # ARM NN setup
     set(ARM_HOME   ~/ARM_HOME)
 
-    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.05)
-    set(ARMNN_HOME ${ARM_HOME}/armnn)
+#    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.05)
+    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.08)
+#    set(ARMNN_HOME ${ARM_HOME}/armnn/v18.05)
+    set(ARMNN_HOME ${ARM_HOME}/armnn/v18.08)
 
     add_definitions(-DENABLE_ARMNN)
 
@@ -106,6 +108,10 @@ if(ENABLE_ARMNN)
 
     set(ARMNN_LIBRARY armnn)
     set(ACL_LIBRARY   arm_compute-static arm_compute_core-static arm_compute_graph-static)
+
+    if(ENABLE_BENCHMARK)
+        add_subdirectory(benchmark)
+    endif()
 
     add_subdirectory(example_arm)
 endif()
