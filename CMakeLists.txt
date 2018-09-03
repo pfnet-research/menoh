@@ -7,14 +7,16 @@ set(MENOH_MINOR_VERSION 0)
 set(MENOH_PATCH_VERSION 2)
 
 # Options
-option(ENABLE_MKLDNN "Use MKLDNN" OFF)
-option(ENABLE_ARMNN  "Use ARM NN" ON)
+option(ENABLE_MKLDNN          "Use MKLDNN"           OFF)
+option(ENABLE_ARMNN           "Use ARM NN"           ON)
+option(ENABLE_ARMNN_X86_64    "Use ARM NN on X64_64" ON)
+option(ENABLE_ANDROID_AARCH64 "Make Android AArch64" OFF)
 
-option(BUILD_SHARED_LIBS "Build shared libs" ON)
-option(ENABLE_TEST       "Build test"        OFF)
-option(ENABLE_BENCHMARK  "Build benchmark"   ON)
-option(ENABLE_EXAMPLE    "Build example"     OFF)
-option(ENABLE_TOOL       "Build tool"        OFF)
+option(BUILD_SHARED_LIBS      "Build shared libs" ON)
+option(ENABLE_TEST            "Build test"        OFF)
+option(ENABLE_BENCHMARK       "Build benchmark"   ON)
+option(ENABLE_EXAMPLE         "Build example"     ON)
+option(ENABLE_TOOL            "Build tool"        OFF)
 
 # C++ setup
 set(CMAKE_CXX_STANDARD 14)
@@ -27,7 +29,11 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     # using Clang
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -march=native")
+    if (ENABLE_ANDROID_AARCH64)
+      set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+    else()
+      set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -march=native")
+    endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra -DARM_DEBUG")
@@ -39,12 +45,29 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(EXTERNAL_DIR ${CMAKE_SOURCE_DIR}/external)
 
+# for ARM Environment
+if (ENABLE_ARMNN)
+    set(ARM_HOME   ~/ARM_HOME)
+    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.08)
+    set(ARMNN_HOME ${ARM_HOME}/armnn/v18.08)
+endif()
+
+# for protobuf
+if (ENABLE_ANDROID_AARCH64)
+    message("-- Build for Android AArch64")
+    include_directories(${ARM_HOME}/armnn/google/arm64_pb_install/include)
+    link_directories(${ARM_HOME}/armnn/google/arm64_pb_install/lib)
+    set(PROTOBUF_LIBRARY protobuf)
+else()
+    set(Protobuf_PROTOC_EXECUTABLE protoc CACHE STRING "protoc path")
+    include(FindProtobuf)
+    find_package(Protobuf 2.6.1 REQUIRED)
+    include_directories(${PROTOBUF_INCLUDE_DIR})
+endif()
+
 # ONNX setup
 set(ONNX_DIR ${EXTERNAL_DIR}/onnx)
-set(Protobuf_PROTOC_EXECUTABLE protoc CACHE STRING "protoc path")
-include(FindProtobuf)
-find_package(Protobuf 2.6.1 REQUIRED)
-include_directories(${PROTOBUF_INCLUDE_DIR})
+
 execute_process(COMMAND git submodule update --init -- ${ONNX_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} -I=${ONNX_DIR} --cpp_out=${ONNX_DIR} ${ONNX_DIR}/onnx/onnx.proto WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 set(ONNX_PROTO_HEADER ${ONNX_DIR}/onnx/onnx.pb.h)
@@ -85,23 +108,37 @@ if (ENABLE_MKLDNN)
     endif()
 endif()
 
-if(ENABLE_ARMNN)
-    # ARM NN setup
-    set(ARM_HOME   ~/ARM_HOME)
-
-#    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.05)
-    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.08)
-#    set(ARMNN_HOME ${ARM_HOME}/armnn/v18.05)
-    set(ARMNN_HOME ${ARM_HOME}/armnn/v18.08)
+if (ENABLE_ARMNN)
 
     add_definitions(-DENABLE_ARMNN)
 
-    include_directories("${ACL_HOME}/arm_compute")
-    include_directories("${ARMNN_HOME}/include")
-    include_directories("${ARMNN_HOME}/src")
+    include_directories(${Boost_INCLUDE_DIR})
+    link_directories(${Boost_LIBRARY_DIR})
     
-    set(ACL_LIBRARY_DIR ${ACL_HOME}/build)
-    set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build)
+    include_directories(${ACL_HOME}/arm_compute)
+    include_directories(${ARMNN_HOME}/include)
+    include_directories(${ARMNN_HOME}/src)
+    
+    if(ENABLE_ANDROID_AARCH64)
+        include_directories(${ARM_HOME}/armnn/boost/install/include)
+        link_directories(${ARM_HOME}/armnn/boost/install/lib)
+	
+        set(ACL_LIBRARY_DIR ${ACL_HOME}/build_android_aarch64)
+        set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build_android_aarch64)
+    else()
+        find_package(Boost 1.60 REQUIRED)
+        if (NOT Boost_FOUND)
+            message(FATAL_ERROR "Boost is not found")
+        endif()
+
+        if (ENABLE_ARMNN_X86_64) 
+            set(ACL_LIBRARY_DIR ${ACL_HOME}/build_x86_64)
+            set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build_x86_64)
+        else()
+            set(ACL_LIBRARY_DIR ${ACL_HOME}/build)
+            set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build)
+        endif()
+    endif()
 
     link_directories(${ACL_LIBRARY_DIR})
     link_directories(${ARMNN_LIBRARY_DIR})
@@ -113,7 +150,9 @@ if(ENABLE_ARMNN)
         add_subdirectory(benchmark)
     endif()
 
-    add_subdirectory(example_arm)
+    if(ENABLE_EXAMPLE AND !ENABLE_ANDROID_AARCH64)
+        add_subdirectory(example_arm)
+    endif()
 endif()
 
 add_subdirectory(menoh)
