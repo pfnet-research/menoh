@@ -37,7 +37,7 @@ namespace menoh_impl {
             Params()
 		: options()
 	        , m_ComputeDevice{armnn::Compute::CpuRef}
-                , m_EnableFp16TurboMode(false)
+	        , m_EnableFp16TurboMode(false)
 	        , input_table_(nullptr)
 	        , output_table_(nullptr)
 	        , model_data_(nullptr) {}
@@ -50,7 +50,7 @@ namespace menoh_impl {
 		bool EnableFp16TurboMode = false )
 		: options()
 	        , m_ComputeDevice(ComputeDevice)
-                , m_EnableFp16TurboMode(true)
+	        , m_EnableFp16TurboMode(EnableFp16TurboMode)
 	        , input_table_(input_table)
 		, output_table_(output_table)
 	        , model_data_(model_data) {}
