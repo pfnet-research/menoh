@@ -14,6 +14,9 @@ macOS (OSX):
 Windows:
 - Visual Studio 2015
 
+Windows (MINGW):
+- [MSYS2](http://www.msys2.org/)
+
 You also need to install the dependent libraries on your system:
 
 - [Protocol Buffers](https://developers.google.com/protocol-buffers/) 2.6.1 or later (building instructions are [here](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md))
@@ -69,6 +72,33 @@ cmake .. -G "Visual Studio 14 Win64"  -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
 cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
 cd ../..
+```
+
+### Windows (MINGW)
+```
+pacman -S mingw-w64-x86_64-toolchain
+pacman -S git
+pacman -S mingw-w64-x86_64-cmake
+pacman -S mingw-w64-x86_64-protobuf mingw-w64-x86_64-protobuf-c
+```
+
+#### Installing MKL-DNN from binary package
+```
+curl -omingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz -L https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
+pacman -S --noconfirm mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
+```
+
+#### Installing MKL-DNN from source
+```
+git clone https://github.com/intel/mkl-dnn.git
+cd mkl-dnn
+cd scripts && ./prepare_mkl.sh && cd ..
+mkdir -p build
+cd build
+MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
+  cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64
+make
+make install
 ```
 
 ## Building
@@ -143,4 +173,15 @@ cd build
 cmake .. -G "Visual Studio 14 Win64" -DCMAKE_PREFIX_PATH=CMake_Install_Dir) -DCMAKE_INSTALL_PREFIX=CMake_Install_Dir) -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF
 cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
+```
+
+### Windows (MINGW)
+
+```
+git clone https://github.com/pfnet-research/menoh.git
+cd menoh
+mkdir -p build && cd build
+MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
+  cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64
+make
 ```
