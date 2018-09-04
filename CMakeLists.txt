@@ -30,7 +30,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     # using Clang
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
     if (ENABLE_ANDROID_AARCH64)
-      set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+      set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fPIE -fPIC")
+      set(CMAKE_EXE_LINKER_FLAGS "-pie -llog")
     else()
       set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -march=native")
     endif()
@@ -151,6 +152,7 @@ if (ENABLE_ARMNN)
     endif()
 
     if(ENABLE_EXAMPLE AND !ENABLE_ANDROID_AARCH64)
+#    if(ENABLE_EXAMPLE)
         add_subdirectory(example_arm)
     endif()
 endif()
