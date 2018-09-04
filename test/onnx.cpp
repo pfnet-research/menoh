@@ -7,6 +7,7 @@
 
 #include <menoh/model_data.hpp>
 #include <menoh/onnx.hpp>
+
 #include "common.hpp"
 
 namespace menoh_impl {
@@ -52,7 +53,7 @@ namespace menoh_impl {
         }
 
         TEST_F(ONNXTest, make_model_data_from_onnx_data_on_memory) {
-            std::fstream input(model_filename, std::ios::in | std::ios::binary);
+            std::ifstream input(model_filename, std::ios::binary);
             std::istreambuf_iterator<char> begin(input);
             std::istreambuf_iterator<char> end;
             std::vector<char> buffer(begin, end);
