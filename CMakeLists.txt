@@ -30,7 +30,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     # using Clang
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
     if (ENABLE_ANDROID_AARCH64)
-      set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fPIE -fPIC")
+      set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fPIE -fPIC -DANDROID_ARM")
       set(CMAKE_EXE_LINKER_FLAGS "-pie -llog")
     else()
       set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -march=native")

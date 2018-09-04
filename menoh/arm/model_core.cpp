@@ -35,13 +35,20 @@ namespace menoh_impl {
                     }
                 }
 
+#ifdef ANDROID_ARM
+		std::vector<armnn::Compute> compute{armnn::Compute::CpuAcc};
+		std::cout << "armnn::Compute::CpuAcc" << std::endl; 
+#else
 		std::vector<armnn::Compute> compute{armnn::Compute::CpuRef};
+		std::cout << "armnn::Compute::CpuRef" << std::endl;
+#endif
+
                 if( device == 0 )
-		    ; // compute.push_back(armnn::Compute::CpuAcc);
+		    ; 
 		else if( device == 1 )
 		    compute.push_back(armnn::Compute::CpuAcc);
                 else if( device == 2 )
-		    compute.push_back(armnn::Compute::CpuAcc);
+		    compute.push_back(armnn::Compute::GpuAcc);
 		else 
                     throw json_parse_error("Device Error");
                 if( device != 0 && device != 1 && device != 2 )

@@ -40,7 +40,11 @@ int main(int argc, char** argv) {
 
     // Build model
     menoh::model_builder model_builder(vpt);
+#ifdef ANDROID_ARM
+    auto model = model_builder.build_model(model_data, "armnn");
+#else
     auto model = model_builder.build_model(model_data, "mkldnn");
+#endif
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
