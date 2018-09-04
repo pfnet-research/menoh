@@ -36,7 +36,9 @@ namespace menoh_impl {
             auto cont =
               std::copy(prefix, prefix + std::char_traits<char>::length(prefix),
                         arr.begin());
-            std::copy(message, message + (static_cast<size_t>(arr.end() - cont) - 1), cont);
+            std::copy(message,
+                      message + (static_cast<size_t>(arr.end() - cont) - 1),
+                      cont);
 
         } else {
             std::copy(message, message + message_size, arr.data());
@@ -81,8 +83,21 @@ menoh_error_code
 menoh_make_model_data_from_onnx(const char* onnx_filename,
                                 menoh_model_data_handle* dst_handle) {
     return check_error([&]() {
+        *dst_handle =
+          std::make_unique<menoh_model_data>(
+            menoh_model_data{
+              menoh_impl::make_model_data_from_onnx_file(onnx_filename)})
+            .release();
+        return menoh_error_code_success;
+    });
+}
+menoh_error_code menoh_make_model_data_from_onnx_data_on_memory(
+  const uint8_t* onnx_data, int32_t size, menoh_model_data_handle* dst_handle) {
+    return check_error([&]() {
         *dst_handle = std::make_unique<menoh_model_data>(
-                        menoh_model_data{menoh_impl::load_onnx(onnx_filename)})
+                        menoh_model_data{
+                          menoh_impl::make_model_data_from_onnx_data_on_memory(
+                            onnx_data, size)})
                         .release();
         return menoh_error_code_success;
     });
