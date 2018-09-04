@@ -9,7 +9,8 @@ Unix:
 - GCC 4.9 or later
 
 macOS (OSX):
-- TODO
+- XCode
+- [Homebrew](https://brew.sh/)
 
 Windows:
 - Visual Studio 2015
@@ -160,7 +161,15 @@ cmake -DUSE_OLD_GLIBCXX_ABI=ON -DLINK_STATIC_LIBPROTOBUF=ON ..
 ```
 
 ### macOS (OS X)
-TODO
+
+```
+git clone https://github.com/pfnet-research/menoh.git
+cd menoh
+mkdir -p build && cd build
+cmake ..
+make
+make install
+```
 
 ### Windows
 Please replace `(CMake_Install_Dir)` in the following with your working directory.
