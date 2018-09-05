@@ -20,7 +20,6 @@ namespace menoh_impl {
     };
 
     bool operator==(node const& a, node const& b);
-    inline bool operator!=(node const& a, node const& b) { return !(a == b); }
     bool operator<(node const& a, node const& b);
 
     int optional_attribute_int(node const& n, std::string const& attr_name,
