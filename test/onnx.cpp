@@ -85,9 +85,13 @@ namespace menoh_impl {
                   model_data_from_file.parameter_name_and_array_list.begin(),
                   model_data_from_file.parameter_name_and_array_list.end(),
                   [&p](auto e) { return e.first == p.first; });
+
+                // check if param which has same name is found
                 ASSERT_NE(
                   param_iter,
                   model_data_from_file.parameter_name_and_array_list.end());
+
+                // check if parameter has same values
                 ASSERT_TRUE(is_near_array(p.second, param_iter->second));
             }
         }
