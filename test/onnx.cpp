@@ -61,6 +61,7 @@ namespace menoh_impl {
               make_model_data_from_onnx_data_on_memory(
                 static_cast<uint8_t*>(static_cast<void*>(buffer.data())),
                 buffer.size());
+            buffer.clear(); // buffer can be cleared here
 
             auto model_data_from_file =
               menoh_impl::make_model_data_from_onnx_file(model_filename);
