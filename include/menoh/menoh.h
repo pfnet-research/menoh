@@ -24,12 +24,10 @@
 
 #ifdef __cplusplus
 #define MENOH_DEPRECATED_ATTRIBUTE( message ) [[deprecated( message )]]
-#else
-#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
+#elif (defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
 #define MENOH_DEPRECATED_ATTRIBUTE( message ) __declspec(deprecated( message ))
 #else
 #define MENOH_DEPRECATED_ATTRIBUTE( message ) __attribute__((deprecated( message )))
-#endif
 #endif
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
