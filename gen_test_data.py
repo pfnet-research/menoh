@@ -1,3 +1,6 @@
+import errno
+import os
+import os.path
 import sys
 import subprocess
 
@@ -11,6 +14,16 @@ def call(cmd):
     ret = p.wait()
     print('')
 
+
+try:
+    os.mkdir('data')
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        traceback.print_exc()
+        sys.exit(1)
+    if not os.path.isdir('data'):
+        sys.stderr.write('Failed to create data directory. Is there a regular file named `data`?\n')
+        sys.exit(1)
 
 pyexe = sys.executable
 
