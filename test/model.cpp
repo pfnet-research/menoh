@@ -28,7 +28,7 @@ namespace menoh_impl {
 
             // Load ONNX model data
             auto model_data = std::make_unique<menoh_impl::model_data>(
-              menoh_impl::load_onnx("../data/VGG16.onnx"));
+              menoh_impl::make_model_data_from_onnx_file("../data/VGG16.onnx"));
 
             // Construct computation primitive list and memories
             auto model = menoh_impl::model(

@@ -21,7 +21,8 @@ namespace menoh_impl {
 
         TEST_F(MKLDNNTest, run_onnx_model) {
             static mkldnn::engine engine(mkldnn::engine::cpu, 0);
-            auto model_data = load_onnx("../data/VGG16.onnx");
+            auto model_data =
+              make_model_data_from_onnx_file("../data/VGG16.onnx");
             // model_data = trim_redundant_nodes(model_data);
 
             auto input_name_list = extract_model_input_name_list(model_data);
@@ -78,7 +79,8 @@ namespace menoh_impl {
             std::vector<int> input_dims{batch_size, channel_num, height, width};
 
             // Load ONNX model data
-            auto model_data = menoh_impl::load_onnx("../data/VGG16.onnx");
+            auto model_data =
+              menoh_impl::make_model_data_from_onnx_file("../data/VGG16.onnx");
 
             auto cpu_count =
               mkldnn::engine::get_count(mkldnn::engine::kind::cpu);

@@ -88,6 +88,12 @@ typedef struct menoh_model_data* menoh_model_data_handle;
  */
 menoh_error_code MENOH_API menoh_make_model_data_from_onnx(
   const char* onnx_filename, menoh_model_data_handle* dst_handle);
+/*! \brief make model_data from onnx binary data on memory
+ *
+ * \note Users can free onnx_data buffer after calling menoh_make_model_data_from_onnx().
+ */
+menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
+  const uint8_t* onnx_data, int32_t size, menoh_model_data_handle* dst_handle);
 /*! \brief Model_data delete function
  *
  * Users must call to release memory resources allocated for

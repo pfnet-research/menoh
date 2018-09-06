@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.1)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(MENOH_MAJOR_VERSION 1)
-set(MENOH_MINOR_VERSION 0)
-set(MENOH_PATCH_VERSION 3)
+set(MENOH_MINOR_VERSION 1)
+set(MENOH_PATCH_VERSION 0)
 
 # Options
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
