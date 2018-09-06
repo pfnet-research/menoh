@@ -22,12 +22,14 @@
 #define MENOH_ERROR_MESSAGE_MAX_LENGTH 1024
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && __cplusplus >= 201402L
 #define MENOH_DEPRECATED_ATTRIBUTE(message) [[deprecated(message)]]
 #elif(defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
 #define MENOH_DEPRECATED_ATTRIBUTE(message) __declspec(deprecated(message))
-#else
+#elif defined(__GNUC__)
 #define MENOH_DEPRECATED_ATTRIBUTE(message) __attribute__((deprecated(message)))
+#else
+#define MENOH_DEPRECATED_ATTRIBUTE(message)
 #endif
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
