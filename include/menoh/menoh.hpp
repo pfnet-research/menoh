@@ -164,11 +164,11 @@ namespace menoh {
                 value.data()));
         }
 
-        void add_initializer(std::string const& initializer_name, dtype_t dtype,
+        void add_parameter(std::string const& parameter_name, dtype_t dtype,
                              std::vector<int> const& dims,
                              void* buffer_handle) {
-            MENOH_CPP_API_ERROR_CHECK(menoh_model_data_add_initializer(
-              impl_.get(), initializer_name.c_str(),
+            MENOH_CPP_API_ERROR_CHECK(menoh_model_data_add_parameter(
+              impl_.get(), parameter_name.c_str(),
               static_cast<menoh_dtype>(dtype), dims.size(), dims.data(),
               buffer_handle));
         }

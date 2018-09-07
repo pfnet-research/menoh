@@ -176,12 +176,12 @@ menoh_model_data_add_attribute_floats_to_current_node(
     });
 }
 
-menoh_error_code MENOH_API menoh_model_data_add_initializer(
-  menoh_model_data* model_data, const char* initializer_name, menoh_dtype dtype,
+menoh_error_code MENOH_API menoh_model_data_add_parameter(
+  menoh_model_data* model_data, const char* parameter_name, menoh_dtype dtype,
   int32_t dims_size, const int32_t* dims, void* buffer_handle) {
     return check_error([&]() {
         model_data->model_data.parameter_name_and_array_list.push_back(
-          {std::string(initializer_name),
+          {std::string(parameter_name),
            menoh_impl::array(static_cast<menoh_impl::dtype_t>(dtype),
                              std::vector<int32_t>(dims, dims + dims_size),
                              buffer_handle)});

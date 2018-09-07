@@ -142,8 +142,8 @@ menoh_model_data_add_attribute_floats_to_current_node(
 /*! \brief //TODO
  *
  */
-menoh_error_code MENOH_API menoh_model_data_add_initializer(
-  menoh_model_data_handle model_data, const char* initializer_name,
+menoh_error_code MENOH_API menoh_model_data_add_parameter(
+  menoh_model_data_handle model_data, const char* parameter_name,
   menoh_dtype dtype, int32_t dims_size, const int32_t* dims, void* buffer_handle);
 /*! \brief Model_data delete function
  *
