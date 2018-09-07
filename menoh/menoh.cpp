@@ -79,6 +79,10 @@ struct menoh_model_data {
     menoh_impl::model_data model_data;
 };
 
+void menoh_delete_model_data(menoh_model_data_handle model_data) {
+    delete model_data;
+}
+
 menoh_error_code
 menoh_make_model_data_from_onnx(const char* onnx_filename,
                                 menoh_model_data_handle* dst_handle) {
@@ -91,6 +95,7 @@ menoh_make_model_data_from_onnx(const char* onnx_filename,
         return menoh_error_code_success;
     });
 }
+
 menoh_error_code menoh_make_model_data_from_onnx_data_on_memory(
   const uint8_t* onnx_data, int32_t size, menoh_model_data_handle* dst_handle) {
     return check_error([&]() {
@@ -102,12 +107,14 @@ menoh_error_code menoh_make_model_data_from_onnx_data_on_memory(
         return menoh_error_code_success;
     });
 }
+
 menoh_error_code menoh_make_model_data(menoh_model_data_handle* dst_handle) {
     return check_error([&]() {
         *dst_handle = std::make_unique<menoh_model_data>().release();
         return menoh_error_code_success;
     });
 }
+
 menoh_error_code MENOH_API menoh_model_data_add_new_node(
   menoh_model_data* model_data, const char* op_type) {
     return check_error([&]() {
@@ -196,9 +203,6 @@ menoh_error_code MENOH_API menoh_model_data_add_parameter(
                              buffer_handle)});
         return menoh_error_code_success;
     });
-}
-void menoh_delete_model_data(menoh_model_data_handle model_data) {
-    delete model_data;
 }
 
 /*

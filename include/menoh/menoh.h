@@ -5,7 +5,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
+#if(defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
 #define MENOH_API __declspec(dllexport)
 #else
 #define MENOH_API
@@ -84,14 +84,23 @@ MENOH_API const char* menoh_get_last_error_message();
  */
 struct menoh_model_data;
 typedef struct menoh_model_data* menoh_model_data_handle;
-
+/*! \brief Model_data delete function
+ *
+ * Users must call to release memory resources allocated for
+ * model_data.
+ *
+ * \note This function can be called after menoh_build_model() function
+ * call.
+ */
+void MENOH_API menoh_delete_model_data(menoh_model_data_handle model_data);
 /*! \brief Load onnx file and make model_data
  */
 menoh_error_code MENOH_API menoh_make_model_data_from_onnx(
   const char* onnx_filename, menoh_model_data_handle* dst_handle);
 /*! \brief make model_data from onnx binary data on memory
  *
- * \note Users can free onnx_data buffer after calling menoh_make_model_data_from_onnx().
+ * \note Users can free onnx_data buffer after calling
+ * menoh_make_model_data_from_onnx().
  */
 menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
   const uint8_t* onnx_data, int32_t size, menoh_model_data_handle* dst_handle);
@@ -129,8 +138,7 @@ menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
 /*! \brief //TODO
  *
  */
-menoh_error_code MENOH_API
-menoh_model_data_add_attribute_ints_to_current_node(
+menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
   const int* value);
 /*! \brief //TODO
@@ -145,16 +153,8 @@ menoh_model_data_add_attribute_floats_to_current_node(
  */
 menoh_error_code MENOH_API menoh_model_data_add_parameter(
   menoh_model_data_handle model_data, const char* parameter_name,
-  menoh_dtype dtype, int32_t dims_size, const int32_t* dims, void* buffer_handle);
-/*! \brief Model_data delete function
- *
- * Users must call to release memory resources allocated for
- * model_data.
- *
- * \note This function can be called after menoh_build_model() function
- * call.
- */
-void MENOH_API menoh_delete_model_data(menoh_model_data_handle model_data);
+  menoh_dtype dtype, int32_t dims_size, const int32_t* dims,
+  void* buffer_handle);
 /** @} */
 
 /*! @addtogroup vpt Variable profile table types and operations
