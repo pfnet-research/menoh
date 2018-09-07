@@ -24,13 +24,16 @@ install:
 - if [%TARGET%]==[mingw] set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
 - if [%TARGET%]==[msvc] set PATH=C:\Miniconda3-x64;C:\Miniconda3-x64\Scripts;C:\Miniconda3-x64\Library\bin;%PATH%
 
+- set MKL_DNN_VER=0.16
+- set MINGW_MKL_DNN_PKG_REL=1
+
 - if [%TARGET%]==[mingw] (
     pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-opencv mingw-w64-x86_64-protobuf mingw-w64-x86_64-python3 mingw-w64-x86_64-python3-pip mingw-w64-x86_64-python3-numpy mingw-w64-x86_64-hdf5 mingw-w64-x86_64-ca-certificates &&
-    curl -omingw-w64-x86_64-mkl-dnn-0.16-1-x86_64.pkg.tar.xz -L https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mingw-w64-x86_64-mkl-dnn-0.16-1-x86_64.pkg.tar.xz &&
-    pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.16-1-x86_64.pkg.tar.xz
+    curl -omingw-w64-x86_64-mkl-dnn-%MKL_DNN_VER%-%MINGW_MKL_DNN_PKG_REL%-x86_64.pkg.tar.xz -L https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mingw-w64-x86_64-mkl-dnn-%MKL_DNN_VER%-%MINGW_MKL_DNN_PKG_REL%-x86_64.pkg.tar.xz &&
+    pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-%MKL_DNN_VER%-%MINGW_MKL_DNN_PKG_REL%-x86_64.pkg.tar.xz
   ) else (
-    curl -omkl-dnn-0.16-win64.zip -L --insecure https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mkl-dnn-0.16-win64.zip &&
-    7z x mkl-dnn-0.16-win64.zip &&
+    curl -omkl-dnn-%MKL_DNN_VER%-win64.zip -L --insecure https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mkl-dnn-%MKL_DNN_VER%-win64.zip &&
+    7z x mkl-dnn-%MKL_DNN_VER%-win64.zip &&
     call appveyor\install_protoc_msvc.bat
   )
 
@@ -57,7 +60,7 @@ before_build:
 build_script:
 - mkdir build
 - cd build
-- if [%TARGET%]==[msvc] set PATH=%PATH%;c:\protobuf-3.6.0-msvc\bin;c:\protobuf-3.6.0-msvc\include;c:\protobuf-3.6.0-msvc\lib;c:\projects\menoh\mkl-dnn-0.16-win64\bin;c:\projects\menoh\mkl-dnn-0.16-win64\include;c:\projects\menoh\mkl-dnn-0.16-win64\lib
+- if [%TARGET%]==[msvc] set PATH=%PATH%;c:\protobuf-3.6.0-msvc\bin;c:\protobuf-3.6.0-msvc\include;c:\protobuf-3.6.0-msvc\lib;c:\projects\menoh\mkl-dnn-%MKL_DNN_VER%-win64\bin;c:\projects\menoh\mkl-dnn-%MKL_DNN_VER%-win64\include;c:\projects\menoh\mkl-dnn-%MKL_DNN_VER%-win64\lib
 - if [%TARGET%]==[mingw] (
     if [%STATIC%]==[1] (
       set STATIC_OPTION="-DLINK_STATIC_LIBPROTOBUF=ON -DLINK_STATIC_LIBSTDCXX=ON -DLINK_STATIC_LIBGCC=ON"
