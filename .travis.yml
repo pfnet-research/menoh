@@ -86,7 +86,6 @@ before_script:
       fi
       cmake --version
       make --version
-    - ls -R $HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}
 script:
     #- if [ -f cov-int/build-log.txt ]; then cat cov-int/build-log.txt; fi
     # CMakeCache.txt generated for coverity_scan build hinders out-of-source build
