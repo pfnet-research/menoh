@@ -109,8 +109,6 @@ script:
         ..
       else
         cmake -DENABLE_TEST=ON \
-        -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}/include" \
-        -DMKLDNN_LIBRARY="$HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}/lib/libmkldnn.so" \
         $STATIC_OPTION \
         ..
       fi
