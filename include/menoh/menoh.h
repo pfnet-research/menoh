@@ -66,6 +66,7 @@ enum menoh_error_code_constant {
     menoh_error_code_backend_error,
     menoh_error_code_same_named_variable_already_exist,
     menoh_error_code_unsupported_input_dims,
+    menoh_error_code_same_named_parameter_already_exist,
 };
 typedef int32_t menoh_error_code;
 /*! \brief Users can get detailed message about last error.
