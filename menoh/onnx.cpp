@@ -232,8 +232,11 @@ namespace menoh_impl {
     model_data make_model_data_from_onnx_data_on_memory(const uint8_t* onnx_data, int32_t size) {
         namespace gpio = ::google::protobuf::io;
         gpio::ArrayInputStream ais(onnx_data, size);
+        gpio::CodedInputStream cis(&ais);
+        cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
+                               std::numeric_limits<int>::max());
         onnx::ModelProto onnx_model;
-        if(!onnx_model.ParseFromZeroCopyStream(&ais)) {
+        if(!onnx_model.ParseFromCodedStream(&cis) || !cis.ConsumedEntireMessage()) {
             throw onnx_parse_error("parse binary onnx data on memory");
         }
         return make_model_from_onnx(onnx_model);
