@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.1)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(MENOH_MAJOR_VERSION 1)
-set(MENOH_MINOR_VERSION 0)
-set(MENOH_PATCH_VERSION 3)
+set(MENOH_MINOR_VERSION 1)
+set(MENOH_PATCH_VERSION 0)
 
 # Options
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
@@ -56,14 +56,7 @@ include(ExternalProject)
 include(SetupProtobuf)
 
 # Generate source codes from ONNX protobuf schema
-set(ONNX_DIR ${EXTERNAL_DIR}/onnx)
-execute_process(COMMAND git submodule update --init -- ${ONNX_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} -I=${ONNX_DIR} --cpp_out=${ONNX_DIR} ${ONNX_DIR}/onnx/onnx.proto WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-set(ONNX_PROTO_HEADER ${ONNX_DIR}/onnx/onnx.pb.h)
-set(ONNX_PROTO_SRC ${ONNX_DIR}/onnx/onnx.pb.cc)
-
-include_directories(${ONNX_DIR}) # for ONNX_PROTO_HEADER
+include(GenerateOnnxSrc)
 
 # Setup MKLDNN
 find_package(MKLDNN "0.14")

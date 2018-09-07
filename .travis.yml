@@ -1,9 +1,12 @@
 dist: trusty
 sudo: required
 language: cpp
+addons:
 matrix:
     include:
         - os: osx
+        - os: osx
+          env: STATIC=1
         - os: linux
           addons:
               apt:
@@ -23,17 +26,31 @@ matrix:
                       name: "pfnet-research/menoh"
                       description: "Menoh: DNN inference library"
                   notification_email: menoh-oss@preferred.jp
-                  build_command_prepend: cov-configure --compiler /usr/bin/g++-7 --comptype g++ -- -march=native -fPIC -std=gnu++14 && cmake -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn/include" -DMKLDNN_LIBRARY="$HOME/mkl-dnn/lib/libmkldnn.so" .
+                  build_command_prepend: cov-configure --compiler /usr/bin/g++-7 --comptype g++ -- -march=native -fPIC -std=gnu++14 && cmake -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}/include" -DMKLDNN_LIBRARY="$HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}/lib/libmkldnn.so" .
                   build_command: make
                   branch_pattern: coverity_scan
+        - os: linux
+          env: STATIC=1
+          addons:
+              apt:
+                  sources:
+                      - ubuntu-toolchain-r-test
+                  packages:
+                      - gcc-7
+                      - g++-7
+                      - cmake-data
+                      - cmake
+                      - libopencv-dev
 env:
     global:
+        - MKL_DNN_REV: v0.15
+        - MKL_DNN_INSTALL_SUFFIX: -0.15
         # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
         #   via the "travis encrypt" command using the project repo's public key
         - secure: "q1I4YsB5VcNaF9Unmm6T92ht9/KwOGbxZVCpXIp5XUVulpaZq7sTd3rL1v3r1mUCYaabkcy9N4UPQjJZsuOlU4jc8zPzPxPir7hOER5umlkfSMuc1RhmShT8cK9naznqv7FLSTIjTZIao85Lrgxgw0B6xzcWc0kSeJPJVAmS5kwmC/FCQS2MPQpyhfE5JjpUrePOT+lRTB6Psm5bWyEww8bPsatO2k5b8DDdmUJIxmuJ1UTCx5rj/ZcTJLWAsj8D7u9aUfCmOhV5+hqHBvJd/06FLt254SNmvzmVLW9CVU/aZvuTtRECgBYCVndR7NxWpRHo1SBKqgLu+cNOFoFyt++1V+FAbpxj9JMktZNyxWp22c/FvBBdHynOsxBxVFdGIzhcwhQMiHFLOK3pnyiByabtINhERqrszkbpztOepBE3o8PGpjOz8iIx1TtLgmWwAw5D6WXx8FeP5FMkJwpXckCMI5tX5wPoU8cpZIwPjCxG3Z+ojHw+80pQWCrMZnEDfcf9zskJNsmv/GbiWGEvI8xVG0gst5VmjaAXK7JhC0cKvPOEmCFRGY+BWdjD3dkYIIElUmBRfTRDpcDJV6j5r1xMv7QKRFDfAjnC33KLJo2aALZTrkRPveIP2h2jU13ZbemN8GKWwEWNzidmwtCbH4rpe80rFqASWkyfii7HrEI="
 cache:
     directories:
-        - $HOME/mkl-dnn
+        - $HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}
 before_install:
     - |
       if [ "$TRAVIS_OS_NAME" = "linux" ]; then
@@ -46,7 +63,8 @@ install:
         brew upgrade python
         export PATH=/usr/local/opt/python/libexec/bin:$PATH
         brew install numpy || true
-        brew install opencv mkl-dnn protobuf
+        brew install opencv mkl-dnn
+        if [ -z "$STATIC" ]; then brew install protobuf; fi
       else
         pyenv local 3.6
       fi
@@ -68,22 +86,40 @@ before_script:
       fi
       cmake --version
       make --version
-    - ls -R $HOME/mkl-dnn
+    - ls -R $HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}
 script:
     #- if [ -f cov-int/build-log.txt ]; then cat cov-int/build-log.txt; fi
     # CMakeCache.txt generated for coverity_scan build hinders out-of-source build
     - if [ -f CMakeCache.txt ]; then rm CMakeCache.txt; fi
+    - |
+      if [ -n "$STATIC" ]; then
+        if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+          STATIC_OPTION="-DLINK_STATIC_LIBPROTOBUF=ON"
+        else
+          STATIC_OPTION="-DLINK_STATIC_LIBPROTOBUF=ON -DLINK_STATIC_LIBSTDCXX=ON -DLINK_STATIC_LIBGCC=ON"
+        fi
+      else
+        STATIC_OPTION=""
+      fi
     - mkdir build
     - cd build
     - |
       if [ "$TRAVIS_OS_NAME" == "osx" ]; then
         cmake -DENABLE_TEST=ON \
+        $STATIC_OPTION \
         ..
       else
         cmake -DENABLE_TEST=ON \
-        -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn/include" \
-        -DMKLDNN_LIBRARY="$HOME/mkl-dnn/lib/libmkldnn.so" \
+        -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}/include" \
+        -DMKLDNN_LIBRARY="$HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}/lib/libmkldnn.so" \
+        $STATIC_OPTION \
         ..
       fi
     - make
     - ./test/menoh_test
+    - |
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+        otool -L menoh/libmenoh.dylib
+      else
+        ldd menoh/libmenoh.so
+      fi

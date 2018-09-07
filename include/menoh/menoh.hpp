@@ -118,6 +118,15 @@ namespace menoh {
           menoh_make_model_data_from_onnx(onnx_filename.c_str(), &h));
         return model_data(h);
     }
+    //! Make model_data from onnx binary data on memory
+    inline model_data
+    make_model_data_from_onnx_data_on_memory(const uint8_t* onnx_data,
+                                             uint32_t size) {
+        menoh_model_data_handle h;
+        MENOH_CPP_API_ERROR_CHECK(
+          menoh_make_model_data_from_onnx_data_on_memory(onnx_data, size, &h));
+        return model_data(h);
+    }
     /** @} */
 
     /** @addtogroup cpp_vpt Veriable profile table
