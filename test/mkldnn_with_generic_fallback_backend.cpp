@@ -3,30 +3,30 @@
 #include "backend.hpp"
 
 namespace menoh {
-    class MultiContextBackendTest : public ::testing::Test {
+    class MkldnnWithGenericFallbackBackendTest : public ::testing::Test {
     protected:
-        MultiContextBackendTest() = default;
+        MkldnnWithGenericFallbackBackendTest() = default;
         virtual void SetUp() {}
     };
 
-    TEST_F(MultiContextBackendTest, gemm_1d_test) {
+    TEST_F(MkldnnWithGenericFallbackBackendTest, gemm_1d_test) {
         gemm_test(
-          "mkldnn_with_generic_fallback", R"({"log_output": "file"})",
+          "mkldnn_with_generic_fallback", R"({"log_output": "stdout"})",
           "../data/random_input_3_4096.txt",
           "../data/random_weight_256_4096.txt", "../data/random_bias_256.txt",
           "../data/linear_1d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
     }
-    TEST_F(MultiContextBackendTest, gemm_2d_test) {
-        gemm_test("mkldnn_with_generic_fallback", "",
+    TEST_F(MkldnnWithGenericFallbackBackendTest, gemm_2d_test) {
+        gemm_test("mkldnn_with_generic_fallback", R"({"log_output": "stdout"})",
                   "../data/random_input_3_4_32_32.txt",
                   "../data/random_weight_256_4096.txt",
                   "../data/random_bias_256.txt",
                   "../data/linear_2d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
     }
 
-    TEST_F(MultiContextBackendTest, gemm_1d_relu_test) {
+    TEST_F(MkldnnWithGenericFallbackBackendTest, gemm_1d_relu_test) {
         std::string backend_name = "mkldnn_with_generic_fallback";
-        std::string backend_config = R"({"log_output": "file"})";
+        std::string backend_config = R"({"log_output": "stdout"})";
         menoh::model_data model_data;
         menoh::variable_profile_table_builder vpt_builder;
         std::pair<std::string, std::string> gemm_true_output_filename = {
@@ -122,8 +122,8 @@ namespace menoh {
         }
     }
 
-    TEST_F(MultiContextBackendTest, relu_1d_test) {
-        relu_test("mkldnn_with_generic_fallback", "",
+    TEST_F(MkldnnWithGenericFallbackBackendTest, relu_1d_test) {
+        relu_test("mkldnn_with_generic_fallback", R"({"log_output": "stdout"})",
                   "../data/random_input_3_4096.txt", "../data/relu_1d.txt");
     }
 } // namespace menoh
