@@ -9,9 +9,12 @@
 
 #include <menoh/mkldnn/utility.hpp>
 
+#include <menoh/exception.hpp>
+#include <menoh/json.hpp>
 #include <menoh/optional.hpp>
 #include <menoh/utility.hpp>
 
+#include <fstream>
 #include <iostream>
 
 namespace menoh_impl {
@@ -22,27 +25,45 @@ namespace menoh_impl {
             context_list,
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
-          menoh_impl::model_data const& model_data)
+          menoh_impl::model_data const& model_data,
+          backend_config const& config)
           : menoh_impl::model_core(),
             common_parameter_table_(
               model_data.parameter_name_and_array_list.begin(),
               model_data.parameter_name_and_array_list.end()),
             common_input_table_(input_table.begin(), input_table.end()),
             required_output_table_(output_table.begin(), output_table.end()),
-            context_list_(std::move(context_list)) {
+            context_list_(std::move(context_list)),
+            logger_(std::make_unique<std::ostream>(nullptr)) {
+            if(!config.empty()) {
+                auto c = nlohmann::json::parse(config);
+                if(c.find("log_output") != c.end()) {
+                    auto log_output = c["log_output"].get<std::string>();
+                    if(log_output == "stdout") {
+                        logger_->rdbuf(std::cout.rdbuf());
+                    } else if(log_output == "file") {
+                        logger_.reset(new std::ofstream(
+                          "mkldnn_with_generic_fallback_backend_log.txt"));
+                    } else {
+                        throw invalid_backend_config_error(
+                          "invalid value of \"log_output\": " + log_output);
+                    }
+                    *logger_ << "mkldnn_with_generic_fallback_backend log"
+                             << std::endl;
+                }
+            }
 
             auto graph = make_graph(model_data.node_list);
 
             for(decltype(graph.node_list().size()) current_index = 0;
                 current_index < graph.node_list().size();) {
                 auto const& node = graph.node_list().at(current_index);
-                std::cout << "node: " << node.op_type << std::endl;
-                std::cout << context_list_.size() << std::endl;
+                *logger_ << "node: " << node.op_type << std::endl;
 
                 // for each backend
                 bool is_found = false;
                 for(auto const& context_pair : context_list_) {
-                    std::cout << "context: " << context_pair.first << std::endl;
+                    *logger_ << "context: " << context_pair.first << std::endl;
                     auto const& context_name = context_pair.first;
                     auto context = context_pair.second.get();
 
@@ -51,19 +72,17 @@ namespace menoh_impl {
                       context->process_node_list(
                         context_name, current_index, graph.node_list(),
                         common_parameter_table_, common_input_table_,
-                        required_output_table_, context_list_);
+                        required_output_table_, context_list_, logger_.get());
 
                     // if succeeded processing, add procedures into
                     // procedure_list
                     if(result) {
-                        std::cout << "consumed "
-                                  << std::get<1>(*result) - current_index
-                                  << " nodes" << std::endl;
-                        /*
-                        std::cout << "find op "
-                                  << graph.node_list().at(current_index).op_type
-                                  << " in " << context_pair.first << std::endl;
-                        */
+                        *logger_ << "succeeded to interpret ";
+                        for(int i = current_index; i < std::get<1>(*result);
+                            ++i) {
+                            *logger_ << graph.node_list().at(i).op_type << " ";
+                        }
+                        *logger_ << std::endl;
                         std::vector<procedure> additional_procedure_list;
                         std::tie(additional_procedure_list, current_index) =
                           *result;
@@ -76,18 +95,21 @@ namespace menoh_impl {
                         is_found = true;
                         break;
                     } else {
-                        std::cout << "failed to find op "
-                                  << graph.node_list().at(current_index).op_type
-                                  << " in " << context_pair.first << std::endl;
+                        *logger_ << "failed to interpret "
+                                 << graph.node_list().at(current_index).op_type
+                                 << std::endl;
                     }
                 }
                 // if any context can not process the node
                 if(!is_found) {
+                    *logger_ << "failed to interpret"
+                             << graph.node_list().at(current_index).op_type
+                             << "with all context";
                     throw unsupported_operator(node.op_type);
                 }
             }
 
-            // erase useless procedures
+            // delete useless procedures
             auto end_iter = std::remove_if(
               procedure_list_.begin(), procedure_list_.end(),
               [](auto const& e) { return !static_cast<bool>(e); });

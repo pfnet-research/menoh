@@ -8,24 +8,25 @@ namespace menoh {
         MultiContextBackendTest() = default;
         virtual void SetUp() {}
     };
-    /*
+
     TEST_F(MultiContextBackendTest, gemm_1d_test) {
-        gemm_test("mkldnn_with_fallback", "", "../data/random_input_3_4096.txt",
-                  "../data/random_weight_256_4096.txt",
-                  "../data/random_bias_256.txt",
-                  "../data/linear_1d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
+        gemm_test(
+          "mkldnn_with_generic_fallback", R"({"log_output": "file"})",
+          "../data/random_input_3_4096.txt",
+          "../data/random_weight_256_4096.txt", "../data/random_bias_256.txt",
+          "../data/linear_1d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
     }
     TEST_F(MultiContextBackendTest, gemm_2d_test) {
-        gemm_test(
-          "mkldnn_with_fallback", "", "../data/random_input_3_4_32_32.txt",
-          "../data/random_weight_256_4096.txt", "../data/random_bias_256.txt",
-          "../data/linear_2d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
+        gemm_test("mkldnn_with_generic_fallback", "",
+                  "../data/random_input_3_4_32_32.txt",
+                  "../data/random_weight_256_4096.txt",
+                  "../data/random_bias_256.txt",
+                  "../data/linear_2d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
     }
-    */
 
     TEST_F(MultiContextBackendTest, gemm_1d_relu_test) {
-        std::string backend_name = "mkldnn_with_fallback";
-        std::string backend_config = "";
+        std::string backend_name = "mkldnn_with_generic_fallback";
+        std::string backend_config = R"({"log_output": "file"})";
         menoh::model_data model_data;
         menoh::variable_profile_table_builder vpt_builder;
         std::pair<std::string, std::string> gemm_true_output_filename = {
@@ -56,13 +57,17 @@ namespace menoh {
                   menoh_impl::load_np_array(input_filename);
                 input_table.emplace(input_name, input_data);
                 dtype_t dtype = dtype_t::float_; // TODO other dtype
-                model_data.add_initializer(input_name, dtype, input_dims,
-                                           input_table.at(input_name).data());
+                model_data.add_parameter(input_name, dtype, input_dims,
+                                         input_table.at(input_name).data());
+                if(input_name !=
+                   "bias") { // FIXME bias is 1d so vpt_builder can't take it.
+                    vpt_builder.add_input_profile(input_name, dtype,
+                                                  input_dims);
+                }
             }
 
             std::string output_name;
-            std::string output_filename;
-            std::tie(output_name, output_filename) = gemm_true_output_filename;
+            std::tie(output_name, std::ignore) = gemm_true_output_filename;
             model_data.add_output_name_to_current_node(output_name);
             dtype_t dtype = dtype_t::float_; // TODO other dtype
             vpt_builder.add_output_profile(output_name, dtype);
@@ -83,11 +88,15 @@ namespace menoh {
 
         {
             auto output_var = model.get_variable("gemm_out");
-            std::cout << "gemm out " << *static_cast<float*>(output_var.buffer_handle) << std::endl;
+            std::cout << "gemm out "
+                      << *static_cast<float*>(output_var.buffer_handle)
+                      << std::endl;
         }
         {
             auto output_var = model.get_variable("relu_out");
-            std::cout << "relu out " << *static_cast<float*>(output_var.buffer_handle) << std::endl;
+            std::cout << "relu out "
+                      << *static_cast<float*>(output_var.buffer_handle)
+                      << std::endl;
         }
 
         std::unordered_map<std::string, std::string> true_output_filename_table{
@@ -112,11 +121,9 @@ namespace menoh {
               true_output_data.begin(), true_output_data.end(), eps);
         }
     }
-    /*
+
     TEST_F(MultiContextBackendTest, relu_1d_test) {
-        relu_test("mkldnn_with_fallback", "",
-    "../data/random_input_3_4096.txt",
-                  "../data/relu_1d.txt");
+        relu_test("mkldnn_with_generic_fallback", "",
+                  "../data/random_input_3_4096.txt", "../data/relu_1d.txt");
     }
-    */
 } // namespace menoh
