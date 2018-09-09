@@ -2,6 +2,10 @@
 #include <menoh/model_core_factory.hpp>
 
 #include <menoh/mkldnn/model_core.hpp>
+#include <menoh/mkldnn_with_generic_fallback/model_core.hpp>
+
+#include <menoh/mkldnn_with_generic_fallback/backend/generic/generic_context.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/mkldnn_context.hpp>
 
 namespace menoh_impl {
 
@@ -15,7 +19,19 @@ namespace menoh_impl {
             return std::make_unique<mkldnn_backend::model_core>(
               mkldnn_backend::make_model_core(input_table, output_table,
                                               model_data, config));
+        } else if(backend_name == "mkldnn_with_generic_fallback") {
+            using namespace mkldnn_with_generic_fallback_backend;
+            std::vector<std::pair<std::string, std::unique_ptr<context>>>
+              context_list;
+            context_list.emplace_back("mkldnn",
+                                      std::make_unique<mkldnn_context>());
+            context_list.emplace_back("generic",
+                                      std::make_unique<generic_context>());
+            return std::make_unique<
+              mkldnn_with_generic_fallback_backend::model_core>(
+              std::move(context_list), input_table, output_table, model_data, config);
         }
+
         throw invalid_backend_name(backend_name);
     }
 
