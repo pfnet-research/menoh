@@ -8,6 +8,7 @@ add_executable(menoh_test
 
     operator.cpp
     model.cpp
+    model_data.cpp
     #vgg16.cpp
 
 )
