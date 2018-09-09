@@ -22,6 +22,15 @@ namespace menoh_impl {
             throw invalid_dtype(std::to_string(static_cast<int>(dtype)));
         }
 
+        dtype_t mkldnn_memory_data_type_to_dtype(
+          mkldnn::memory::data_type mem_data_type) {
+            if(mem_data_type == mkldnn::memory::data_type::f32) {
+                return dtype_t::float_;
+            }
+            throw invalid_dtype(
+              std::to_string(static_cast<int>(mem_data_type)));
+        }
+
         mkldnn::memory array_to_memory(array const& arr,
                                        std::vector<int> const& dims,
                                        mkldnn::memory::format format,
@@ -36,6 +45,13 @@ namespace menoh_impl {
                                        mkldnn::memory::format format,
                                        mkldnn::engine const& engine) {
             return array_to_memory(arr, arr.dims(), format, engine);
+        }
+
+        array memory_to_array(mkldnn::memory const& mem) {
+            return array(mkldnn_memory_data_type_to_dtype(
+                           static_cast<mkldnn::memory::data_type>(
+                             mem.get_primitive_desc().desc().data.data_type)),
+                         extract_dims(mem), mem.get_data_handle());
         }
 
     } // namespace mkldnn_backend
