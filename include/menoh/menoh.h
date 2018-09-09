@@ -105,57 +105,58 @@ menoh_error_code MENOH_API menoh_make_model_data_from_onnx(
  */
 menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
   const uint8_t* onnx_data, int32_t size, menoh_model_data_handle* dst_handle);
-/*! \brief //TODO
- *
+/*! \brief Make empty model_data
  */
 menoh_error_code MENOH_API
 menoh_make_model_data(menoh_model_data_handle* dst_handle);
-/*! \brief //TODO
+/*! \brief Add a new parameter in model_data
  *
- */
-menoh_error_code MENOH_API menoh_model_data_add_new_node(
-  menoh_model_data_handle model_data, const char* op_type);
-/*! \brief //TODO
- *
- */
-menoh_error_code MENOH_API menoh_model_data_add_input_name_to_current_node(
-  menoh_model_data_handle model_data, const char* input_name);
-/*! \brief //TODO
- *
- */
-menoh_error_code MENOH_API menoh_model_data_add_output_name_to_current_node(
-  menoh_model_data_handle model_data, const char* output_name);
-/*! \brief //TODO
- *
- */
-menoh_error_code MENOH_API menoh_model_data_add_attribute_int_to_current_node(
-  menoh_model_data_handle model_data, const char* attribute_name,
-  int32_t value);
-/*! \brief //TODO
- *
- */
-menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
-  menoh_model_data_handle model_data, const char* attribute_name, float value);
-/*! \brief //TODO
- *
- */
-menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
-  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
-  const int* value);
-/*! \brief //TODO
- *
- */
-menoh_error_code MENOH_API
-menoh_model_data_add_attribute_floats_to_current_node(
-  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
-  const float* value);
-/*! \brief //TODO
- *
+ * \note Duplication of parameter_name is not allowed and it throws error.
  */
 menoh_error_code MENOH_API menoh_model_data_add_parameter(
   menoh_model_data_handle model_data, const char* parameter_name,
   menoh_dtype dtype, int32_t dims_size, const int32_t* dims,
   void* buffer_handle);
+/*! \brief Add a new node to model_data
+ */
+menoh_error_code MENOH_API menoh_model_data_add_new_node(
+  menoh_model_data_handle model_data, const char* op_type);
+/*! \brief Add a new input name to latest added node in model_data
+ */
+menoh_error_code MENOH_API menoh_model_data_add_input_name_to_current_node(
+  menoh_model_data_handle model_data, const char* input_name);
+/*! \brief Add a new output name to latest added node in model_data
+ */
+menoh_error_code MENOH_API menoh_model_data_add_output_name_to_current_node(
+  menoh_model_data_handle model_data, const char* output_name);
+/*! \brief Add a new int attribute to latest added node in model_data
+ *
+ * \note Duplication of attribute_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API menoh_model_data_add_attribute_int_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name,
+  int32_t value);
+/*! \brief Add a new float attribute to latest added node in model_data
+ *
+ * \note Duplication of attribute_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, float value);
+/*! \brief Add a new int array attribute to latest added node in model_data
+ *
+ * \note Duplication of attribute_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
+  const int* value);
+/*! \brief Add a new float array attribute to latest added node in model_data
+ *
+ * \note Duplication of attribute_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API
+menoh_model_data_add_attribute_floats_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
+  const float* value);
 /** @} */
 
 /*! @addtogroup vpt Variable profile table types and operations
