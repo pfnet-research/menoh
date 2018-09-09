@@ -32,7 +32,8 @@ namespace menoh_impl {
                                  generic_backend::generic_context>());
             return std::make_unique<
               mkldnn_with_generic_fallback_backend::model_core>(
-              std::move(context_list), input_table, output_table, model_data, config);
+              std::move(context_list), input_table, output_table, model_data,
+              config);
         }
 
         throw invalid_backend_name(backend_name);
