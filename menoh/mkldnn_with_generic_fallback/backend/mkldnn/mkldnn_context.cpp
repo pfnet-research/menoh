@@ -1,5 +1,5 @@
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/mkldnn_context.hpp>
-#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/operator/gemm.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/operator.hpp>
 
 #include <menoh/mkldnn/utility.hpp>
 

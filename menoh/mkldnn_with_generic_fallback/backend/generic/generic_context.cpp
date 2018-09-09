@@ -1,5 +1,5 @@
 #include <menoh/mkldnn_with_generic_fallback/backend/generic/generic_context.hpp>
-#include <menoh/mkldnn_with_generic_fallback/backend/generic/operator/relu.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/generic/operator.hpp>
 
 namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
