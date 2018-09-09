@@ -141,21 +141,46 @@ menoh_error_code MENOH_API menoh_model_data_add_output_name_to_current_node(
     });
 }
 
-menoh_error_code MENOH_API menoh_model_data_add_attribute_int_to_current_node(
+template <typename T>
+menoh_error_code menoh_model_data_add_attribute_scalar_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name,
-  int32_t value) {
+  T const& value) {
     return check_error([&]() {
-        model_data->model_data.node_list.back().attribute_table.insert(
-          {std::string(attribute_name), value});
+        auto& attribute_table =
+          model_data->model_data.node_list.back().attribute_table;
+        if(attribute_table.find(attribute_name) != attribute_table.end()) {
+            return menoh_error_code_same_named_attribute_already_exist;
+        }
+        attribute_table.insert({std::string(attribute_name), value});
         return menoh_error_code_success;
     });
 }
 
+menoh_error_code MENOH_API menoh_model_data_add_attribute_int_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name,
+  int32_t value) {
+    return menoh_model_data_add_attribute_scalar_to_current_node(
+      model_data, attribute_name, value);
+}
+
 menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name, float value) {
+    return menoh_model_data_add_attribute_scalar_to_current_node(
+      model_data, attribute_name, value);
+}
+
+template <typename T>
+menoh_error_code menoh_model_data_add_attribute_array_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
+  const T* value) {
     return check_error([&]() {
-        model_data->model_data.node_list.back().attribute_table.insert(
-          {std::string(attribute_name), value});
+        auto& attribute_table =
+          model_data->model_data.node_list.back().attribute_table;
+        if(attribute_table.find(attribute_name) != attribute_table.end()) {
+            return menoh_error_code_same_named_attribute_already_exist;
+        }
+        attribute_table.insert(
+          {std::string(attribute_name), std::vector<T>(value, value + size)});
         return menoh_error_code_success;
     });
 }
@@ -163,24 +188,16 @@ menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
 menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
   const int* value) {
-    return check_error([&]() {
-        model_data->model_data.node_list.back().attribute_table.insert(
-          {std::string(attribute_name),
-           std::vector<int32_t>(value, value + size)});
-        return menoh_error_code_success;
-    });
+    return menoh_model_data_add_attribute_array_to_current_node(
+      model_data, attribute_name, size, value);
 }
 
 menoh_error_code MENOH_API
 menoh_model_data_add_attribute_floats_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
   const float* value) {
-    return check_error([&]() {
-        model_data->model_data.node_list.back().attribute_table.insert(
-          {std::string(attribute_name),
-           std::vector<float>(value, value + size)});
-        return menoh_error_code_success;
-    });
+    return menoh_model_data_add_attribute_array_to_current_node(
+      model_data, attribute_name, size, value);
 }
 
 menoh_error_code MENOH_API menoh_model_data_add_parameter(
