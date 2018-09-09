@@ -4,9 +4,10 @@
 #include <vector>
 
 // mkldnn.hpp requires including <string>
-// c.f. https://stackoverflow.com/questions/19456626/compile-cln-with-clang-and-libc
-#include <string>
+// c.f.
+// https://stackoverflow.com/questions/19456626/compile-cln-with-clang-and-libc
 #include <mkldnn.hpp>
+#include <string>
 
 #include <menoh/dtype.hpp>
 
