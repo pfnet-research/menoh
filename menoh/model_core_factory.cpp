@@ -23,10 +23,13 @@ namespace menoh_impl {
             using namespace mkldnn_with_generic_fallback_backend;
             std::vector<std::pair<std::string, std::unique_ptr<context>>>
               context_list;
-            context_list.emplace_back("mkldnn",
-                                      std::make_unique<mkldnn_context>());
-            context_list.emplace_back("generic",
-                                      std::make_unique<generic_context>());
+            context_list.emplace_back(
+              "mkldnn", std::make_unique<mkldnn_with_generic_fallback_backend::
+                                           mkldnn_backend::mkldnn_context>());
+            context_list.emplace_back(
+              "generic",
+              std::make_unique<mkldnn_with_generic_fallback_backend::
+                                 generic_backend::generic_context>());
             return std::make_unique<
               mkldnn_with_generic_fallback_backend::model_core>(
               std::move(context_list), input_table, output_table, model_data, config);
