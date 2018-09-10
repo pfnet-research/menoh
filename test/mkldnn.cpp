@@ -88,13 +88,15 @@ namespace menoh_impl {
             // Construct computation primitive list and memories
             ASSERT_THROW(
               menoh_impl::model(
-                {{conv1_1_in_name, menoh_impl::dtype_t::float_, input_dims,
-                  nullptr}}, // table of input_name, dtype, input_dims and
+                {std::make_tuple(
+                  conv1_1_in_name, menoh_impl::dtype_t::float_, input_dims,
+                  nullptr)}, // table of input_name, dtype, input_dims and
                              // data_handle
-                {{softmax_out_name, menoh_impl::dtype_t::float_,
-                  nullptr}}, // list of output names, dtypes and data_handles
-                model_data, "mkldnn",
-                "{\"cpu_id\":" + std::to_string(cpu_count + 2) + "}"),
+                {std::make_tuple(
+                  softmax_out_name, menoh_impl::dtype_t::float_,
+                  nullptr)}, // list of output names, dtypes and data_handles
+                model_data,
+                "mkldnn", "{\"cpu_id\":" + std::to_string(cpu_count + 2) + "}"),
               menoh_impl::backend_error);
         }
 

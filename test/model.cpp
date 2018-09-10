@@ -32,9 +32,10 @@ namespace menoh_impl {
 
             // Construct computation primitive list and memories
             auto model = menoh_impl::model(
-              {{conv1_1_in_name, dtype_t::float_, input_dims, nullptr}},
-              {{softmax_out_name, dtype_t::float_, nullptr}}, *model_data,
-              "mkldnn");
+              {std::make_tuple(conv1_1_in_name, dtype_t::float_, input_dims,
+                               nullptr)},
+              {std::make_tuple(softmax_out_name, dtype_t::float_, nullptr)},
+              *model_data, "mkldnn");
             model_data.reset(); // delete model_data
 
             model.run();
