@@ -245,6 +245,17 @@ void menoh_delete_variable_profile_table_builder(
     delete builder;
 }
 
+menoh_error_code menoh_variable_profile_table_builder_add_input_profile(
+  menoh_variable_profile_table_builder_handle builder, const char* name,
+  menoh_dtype dtype, int32_t dims_size, const int32_t* dims) {
+    return check_error([&]() {
+        builder->input_name_and_dtype_and_dims_list.push_back(
+          std::make_tuple(std::string(name), dtype,
+                          std::vector<int32_t>(dims, dims + dims_size)));
+        return menoh_error_code_success;
+    });
+}
+
 menoh_error_code menoh_variable_profile_table_builder_add_input_profile_dims_2(
   menoh_variable_profile_table_builder_handle builder, const char* name,
   menoh_dtype dtype, int32_t num, int32_t size) {

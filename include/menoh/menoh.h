@@ -22,6 +22,16 @@
 #define MENOH_ERROR_MESSAGE_MAX_LENGTH 1024
 #endif
 
+#if defined(__cplusplus) && __cplusplus >= 201402L
+#define MENOH_DEPRECATED_ATTRIBUTE(message) [[deprecated(message)]]
+#elif(defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
+#define MENOH_DEPRECATED_ATTRIBUTE(message) __declspec(deprecated(message))
+#elif defined(__GNUC__)
+#define MENOH_DEPRECATED_ATTRIBUTE(message) __attribute__((deprecated(message)))
+#else
+#define MENOH_DEPRECATED_ATTRIBUTE(message)
+#endif
+
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef __cplusplus
@@ -168,8 +178,7 @@ menoh_model_data_add_attribute_floats_to_current_node(
  * This struct configure profiles of variables.
  *
  * See
- *  - menoh_variable_profile_table_builder_add_input_profile_dims_2()
- *  - menoh_variable_profile_table_builder_add_input_profile_dims_4()
+ *  - menoh_variable_profile_table_builder_add_input_profile()
  *  - menoh_variable_profile_table_builder_add_output_profile().
  */
 struct menoh_variable_profile_table_builder;
@@ -188,11 +197,22 @@ menoh_error_code MENOH_API menoh_make_variable_profile_table_builder(
 void MENOH_API menoh_delete_variable_profile_table_builder(
   menoh_variable_profile_table_builder_handle builder);
 
+/*! \brief Add input profile
+ *
+ * Input profile contains name, dtype and dims.
+ */
+menoh_error_code MENOH_API
+menoh_variable_profile_table_builder_add_input_profile(
+  menoh_variable_profile_table_builder_handle builder, const char* name,
+  menoh_dtype dtype, int32_t dims_size, const int32_t* dims);
+
 /*! \brief Add 2D input profile
  *
  * Input profile contains name, dtype and dims (num, size). This 2D input is
  * conventional batched 1D inputs.
  */
+MENOH_DEPRECATED_ATTRIBUTE(
+  "please use menoh_variable_profile_table_builder_add_input_profile() instead")
 menoh_error_code MENOH_API
 menoh_variable_profile_table_builder_add_input_profile_dims_2(
   menoh_variable_profile_table_builder_handle builder, const char* name,
@@ -204,6 +224,8 @@ menoh_variable_profile_table_builder_add_input_profile_dims_2(
  * This 4D input is conventional batched image inputs. Image input is
  * 3D(channel, height, width).
  */
+MENOH_DEPRECATED_ATTRIBUTE(
+  "please use menoh_variable_profile_table_builder_add_input_profile() instead")
 menoh_error_code MENOH_API
 menoh_variable_profile_table_builder_add_input_profile_dims_4(
   menoh_variable_profile_table_builder_handle builder, const char* name,

@@ -38,6 +38,14 @@ This codebase contains C API and C++ API.
 
 - For Windows users, prebuild libraries are available (see [release](https://github.com/pfnet-research/menoh/releases)) and [Nuget package](https://www.nuget.org/packages/Menoh/) is available.
 - For macOS user, [Homebrew tap repository](https://github.com/pfnet-research/homebrew-menoh) is available.
+- For Ubuntu user, binary packages are available.
+    ```
+    $ curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.0.3/ubuntu1604_mkl-dnn_0.16-1_amd64.deb
+    $ curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.0.3/ubuntu1604_menoh_1.0.3-1_amd64.deb
+    $ curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.0.3/ubuntu1604_menoh-dev_1.0.3-1_amd64.deb
+    $ sudo apt install ./ubuntu1604_*_amd64.deb
+    ```
+    If you are using Ubuntu 18.04, please replace `1604` with `1804`.
 
 # Installation from source
 
