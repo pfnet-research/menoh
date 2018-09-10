@@ -29,11 +29,11 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     # using Clang
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -march=native")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DNDEBUG -march=native")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DNDEBUG")
 endif()
 
 # Configure to use the new `libstdc++` ABI
