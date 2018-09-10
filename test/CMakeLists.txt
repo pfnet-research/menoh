@@ -10,6 +10,7 @@ add_executable(menoh_test
     model.cpp
     #vgg16.cpp
 
+    backend.cpp
 )
 target_link_libraries(menoh_test gtest_main menoh_test_target)
 

@@ -18,6 +18,11 @@ namespace menoh_impl {
             // Below 2 lines are equal to `return std::unique_ptr<float[]>(new
             // float[total_size]);`
             auto u = std::make_unique<float[]>(total_size);
+
+            // fill uninitialized array with NaN for debug
+            std::fill(u.get(), u.get() + total_size,
+                      std::numeric_limits<float>::quiet_NaN());
+
             return std::shared_ptr<void>(u.release(), u.get_deleter());
         }
         throw invalid_dtype(std::to_string(static_cast<int>(d)));

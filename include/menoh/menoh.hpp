@@ -70,6 +70,8 @@ namespace menoh {
     };
     /** @} */
 
+    enum class dtype_t { float_ = menoh_dtype_float };
+
     class variable_profile_table;
 
     /** @addtogroup cpp_model_data Model data
@@ -77,6 +79,12 @@ namespace menoh {
     //! model data class
     class model_data {
     public:
+        model_data() : impl_(nullptr, menoh_delete_model_data) {
+            menoh_model_data_handle h;
+            MENOH_CPP_API_ERROR_CHECK(menoh_make_model_data(&h));
+            impl_.reset(h);
+        }
+
         /*! \note Normally users needn't call this constructer. Use
          * make_model_data_from_onnx() instead.
          */
@@ -105,10 +113,70 @@ namespace menoh {
          */
         void optimize(variable_profile_table const& vpt);
 
+        void add_new_node(std::string const& op_type) {
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_model_data_add_new_node(impl_.get(), op_type.c_str()));
+        }
+
+        void add_input_name_to_current_node(std::string const& input_name) {
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_model_data_add_input_name_to_current_node(
+                impl_.get(), input_name.c_str()));
+        }
+
+        void add_output_name_to_current_node(std::string const& output_name) {
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_model_data_add_output_name_to_current_node(
+                impl_.get(), output_name.c_str()));
+        }
+
+        void
+        add_attribute_int_to_current_node(std::string const& attribute_name,
+                                          int32_t value) {
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_model_data_add_attribute_int_to_current_node(
+                impl_.get(), attribute_name.c_str(), value));
+        }
+
+        void
+        add_attribute_ints_to_current_node(std::string const& attribute_name,
+                                           std::vector<int32_t> const& value) {
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_model_data_add_attribute_ints_to_current_node(
+                impl_.get(), attribute_name.c_str(), value.size(),
+                value.data()));
+        }
+
+        void
+        add_attribute_float_to_current_node(std::string const& attribute_name,
+                                            float value) {
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_model_data_add_attribute_float_to_current_node(
+                impl_.get(), attribute_name.c_str(), value));
+        }
+
+        void
+        add_attribute_floats_to_current_node(std::string const& attribute_name,
+                                             std::vector<float> const& value) {
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_model_data_add_attribute_floats_to_current_node(
+                impl_.get(), attribute_name.c_str(), value.size(),
+                value.data()));
+        }
+
+        void add_initializer(std::string const& initializer_name, dtype_t dtype,
+                             std::vector<int> const& dims,
+                             void* buffer_handle) {
+            MENOH_CPP_API_ERROR_CHECK(menoh_model_data_add_initializer(
+              impl_.get(), initializer_name.c_str(),
+              static_cast<menoh_dtype>(dtype), dims.size(), dims.data(),
+              buffer_handle));
+        }
+
     private:
         std::unique_ptr<menoh_model_data, decltype(&menoh_delete_model_data)>
           impl_;
-    };
+    }; // namespace menoh
 
     //! Load ONNX file and make model_data
     inline model_data
@@ -131,7 +199,6 @@ namespace menoh {
 
     /** @addtogroup cpp_vpt Veriable profile table
      * @{ */
-    enum class dtype_t { float_ = menoh_dtype_float };
 
     struct variable_profile {
         dtype_t dtype;
@@ -208,23 +275,10 @@ namespace menoh {
         //! Add input profile. That profile contains name, dtype and dims.
         void add_input_profile(std::string const& name, dtype_t dtype,
                                std::vector<int32_t> const& dims) {
-            if(dims.size() == 2) {
-                MENOH_CPP_API_ERROR_CHECK(
-                  menoh_variable_profile_table_builder_add_input_profile_dims_2(
-                    impl_.get(), name.c_str(), static_cast<menoh_dtype>(dtype),
-                    dims.at(0), dims.at(1)));
-            } else if(dims.size() == 4) {
-                MENOH_CPP_API_ERROR_CHECK(
-                  menoh_variable_profile_table_builder_add_input_profile_dims_4(
-                    impl_.get(), name.c_str(), static_cast<menoh_dtype>(dtype),
-                    dims.at(0), dims.at(1), dims.at(2), dims.at(3)));
-            } else {
-                throw error(error_code_t::invalid_dims_size,
-                            "menoh invalid dims size error (2 or 4 is valid): "
-                            "dims size of " +
-                              name + " is specified " +
-                              std::to_string(dims.size()));
-            }
+            MENOH_CPP_API_ERROR_CHECK(
+              menoh_variable_profile_table_builder_add_input_profile(
+                impl_.get(), name.c_str(), static_cast<menoh_dtype>(dtype),
+                dims.size(), dims.data()));
         }
 
         //! Add output profile. That profile contains name, dtype.

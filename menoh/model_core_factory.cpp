@@ -2,6 +2,7 @@
 #include <menoh/model_core_factory.hpp>
 
 #include <menoh/mkldnn/model_core.hpp>
+#include <menoh/naive/model_core.hpp>
 
 namespace menoh_impl {
 
@@ -11,7 +12,10 @@ namespace menoh_impl {
                     menoh_impl::model_data const& model_data,
                     std::string const& backend_name,
                     backend_config const& config) {
-        if(backend_name == "mkldnn") {
+        if(backend_name == "naive") {
+            return std::make_unique<naive_backend::model_core>(
+              naive_backend::model_core(input_table, output_table, model_data));
+        } else if(backend_name == "mkldnn") {
             return std::make_unique<mkldnn_backend::model_core>(
               mkldnn_backend::make_model_core(input_table, output_table,
                                               model_data, config));

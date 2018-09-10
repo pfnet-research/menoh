@@ -12,8 +12,6 @@
 #include <menoh/optional.hpp>
 #include <menoh/utility.hpp>
 
-#include <iostream>
-
 namespace menoh_impl {
 
     std::vector<node> extract_needed_node_list(
@@ -250,12 +248,27 @@ namespace menoh_impl {
         std::unordered_map<std::string, std::vector<int>> variable_dims_table(
           input_name_and_dims_pair_list.begin(),
           input_name_and_dims_pair_list.end());
+        for(auto const& p : model_data.parameter_name_and_array_list) {
+            variable_dims_table.insert({p.first, p.second.dims()});
+        }
         auto graph = make_graph(model_data.node_list);
         auto parameter_table = std::unordered_map<std::string, array>(
           model_data.parameter_name_and_array_list.begin(),
           model_data.parameter_name_and_array_list.end());
         for(auto const& node : graph.node_list()) {
-            if(node.op_type == "Conv") {
+            if(node.op_type == "Concat") {
+                auto axis = attribute_int(node, "axis");
+                int32_t concat_axis_size = 0;
+                for(auto input_name : node.input_name_list) {
+                    concat_axis_size +=
+                      find_value(variable_dims_table, input_name).at(axis);
+                }
+                auto output_dims =
+                  find_value(variable_dims_table, node.input_name_list.at(0));
+                output_dims.at(axis) = concat_axis_size;
+                variable_dims_table.insert(
+                  {node.output_name_list.at(0), output_dims});
+            } else if(node.op_type == "Conv") {
                 auto weight_name = node.input_name_list.at(1);
                 auto output_channel_num =
                   get_output_channel_num_from_parameter_dims(
@@ -393,8 +406,7 @@ namespace menoh_impl {
                 auto output_dims = find_value(variable_dims_table, input_name);
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
-            }
-            else {
+            } else {
                 throw unsupported_operator(node.op_type);
             }
         }
