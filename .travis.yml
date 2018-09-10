@@ -43,8 +43,8 @@ matrix:
                       - libopencv-dev
 env:
     global:
-        - MKL_DNN_REV: v0.15
-        - MKL_DNN_INSTALL_SUFFIX: -0.15
+        - MKL_DNN_REV: v0.16
+        - MKL_DNN_INSTALL_SUFFIX: -0.16
         # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
         #   via the "travis encrypt" command using the project repo's public key
         - secure: "q1I4YsB5VcNaF9Unmm6T92ht9/KwOGbxZVCpXIp5XUVulpaZq7sTd3rL1v3r1mUCYaabkcy9N4UPQjJZsuOlU4jc8zPzPxPir7hOER5umlkfSMuc1RhmShT8cK9naznqv7FLSTIjTZIao85Lrgxgw0B6xzcWc0kSeJPJVAmS5kwmC/FCQS2MPQpyhfE5JjpUrePOT+lRTB6Psm5bWyEww8bPsatO2k5b8DDdmUJIxmuJ1UTCx5rj/ZcTJLWAsj8D7u9aUfCmOhV5+hqHBvJd/06FLt254SNmvzmVLW9CVU/aZvuTtRECgBYCVndR7NxWpRHo1SBKqgLu+cNOFoFyt++1V+FAbpxj9JMktZNyxWp22c/FvBBdHynOsxBxVFdGIzhcwhQMiHFLOK3pnyiByabtINhERqrszkbpztOepBE3o8PGpjOz8iIx1TtLgmWwAw5D6WXx8FeP5FMkJwpXckCMI5tX5wPoU8cpZIwPjCxG3Z+ojHw+80pQWCrMZnEDfcf9zskJNsmv/GbiWGEvI8xVG0gst5VmjaAXK7JhC0cKvPOEmCFRGY+BWdjD3dkYIIElUmBRfTRDpcDJV6j5r1xMv7QKRFDfAjnC33KLJo2aALZTrkRPveIP2h2jU13ZbemN8GKWwEWNzidmwtCbH4rpe80rFqASWkyfii7HrEI="
