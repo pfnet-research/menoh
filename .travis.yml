@@ -26,7 +26,9 @@ matrix:
                       name: "pfnet-research/menoh"
                       description: "Menoh: DNN inference library"
                   notification_email: menoh-oss@preferred.jp
-                  build_command_prepend: cov-configure --compiler /usr/bin/g++-7 --comptype g++ -- -march=native -fPIC -std=gnu++14 && cmake -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}/include" -DMKLDNN_LIBRARY="$HOME/mkl-dnn${MKL_DNN_INSTALL_SUFFIX}/lib/libmkldnn.so" .
+                  build_command_prepend: >-
+                      cov-configure --compiler /usr/bin/g++-7 --comptype g++ -- -march=native -fPIC -std=gnu++14 &&
+                      cmake .
                   build_command: make
                   branch_pattern: coverity_scan
         - os: linux
