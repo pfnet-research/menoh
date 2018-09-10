@@ -9,12 +9,12 @@ macro(menoh_link_libraries TARGET_NAME SCOPE)
     endif()
 
     if(NOT ${SCOPE})
-	    # PUBLIC will add transitive dependencies (`mklml_intel` and `iomp5`) to the link interface
-	    # Note: change it to PRIVATE after building mkldnn itself
-	    target_link_libraries(${TARGET_NAME} PUBLIC ${MKLDNN_LIBRARIES})
-	else()
-	    target_link_libraries(${TARGET_NAME} ${MKLDNN_LIBRARIES})
-	endif()
+        # PUBLIC will add transitive dependencies (`mklml_intel` and `iomp5`) to the link interface
+        # Note: change it to PRIVATE after building mkldnn itself
+        target_link_libraries(${TARGET_NAME} PUBLIC ${MKLDNN_LIBRARIES})
+    else()
+        target_link_libraries(${TARGET_NAME} ${MKLDNN_LIBRARIES})
+    endif()
 
     target_link_libraries(${TARGET_NAME} ${SCOPE} ${PROTOBUF_LIBRARIES})
 endmacro()
