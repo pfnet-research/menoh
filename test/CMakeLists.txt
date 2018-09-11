@@ -12,5 +12,10 @@ add_executable(menoh_test
 
 )
 target_link_libraries(menoh_test gtest_main menoh_test_target)
+if(UNIX AND NOT APPLE)
+    set_property(
+        TARGET menoh_test APPEND_STRING PROPERTY
+            LINK_FLAGS "-Wl,--disable-new-dtags")
+endif()
 
 add_test(NAME menoh_test COMMAND menoh_test)
