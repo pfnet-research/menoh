@@ -245,7 +245,7 @@ namespace menoh_impl {
                                                           "LRN",
                                                           "MaxPool",
                                                           "Softmax",
-                                                          "Sum"}};
+                                                          "Sum",
 
         std::unordered_map<std::string, std::vector<int>> variable_dims_table(
           input_name_and_dims_pair_list.begin(),
