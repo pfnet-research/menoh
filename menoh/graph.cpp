@@ -12,8 +12,6 @@
 #include <menoh/optional.hpp>
 #include <menoh/utility.hpp>
 
-#include <iostream>
-
 namespace menoh_impl {
 
     std::vector<node> extract_needed_node_list(

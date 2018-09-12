@@ -15,7 +15,7 @@
 #include <menoh/utility.hpp>
 
 #include <fstream>
-#include <iostream>
+#include <iosfwd>
 
 namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
