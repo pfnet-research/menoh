@@ -34,7 +34,9 @@ namespace menoh_impl {
                             return output_name == required_output_name;
                         });
                   });
-                if(needed_node_iter == node_list.end()) { continue; }
+                if(needed_node_iter == node_list.end()) {
+                    continue;
+                }
                 auto is_already_added =
                   std::find(needed_node_list.begin(), needed_node_list.end(),
                             *needed_node_iter) != needed_node_list.end();
@@ -282,8 +284,8 @@ namespace menoh_impl {
                 auto output_channel_num =
                   get_output_channel_num_from_parameter_dims(
                     find_value(parameter_table, weight_name).dims());
-                auto output_dims = calc_2d_output_dims_for_conv_transpose(node,
-                          output_channel_num, variable_dims_table);
+                auto output_dims = calc_2d_output_dims_for_conv_transpose(
+                  node, output_channel_num, variable_dims_table);
                 auto dilations =
                   optional_attribute_ints(node, "dilations", {1, 1});
                 if(dilations != std::vector<int>({1, 1})) {
@@ -391,8 +393,7 @@ namespace menoh_impl {
                 auto output_dims = find_value(variable_dims_table, input_name);
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
-            }
-            else {
+            } else {
                 throw unsupported_operator(node.op_type);
             }
         }

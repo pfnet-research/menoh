@@ -10,11 +10,11 @@ namespace menoh {
     };
 
     TEST_F(MkldnnWithGenericFallbackBackendTest, gemm_1d_test) {
-        gemm_test(
-          "mkldnn_with_generic_fallback", R"({"log_output": "stdout"})",
-          "../data/random_input_3_4096.txt",
-          "../data/random_weight_256_4096.txt", "../data/random_bias_256.txt",
-          "../data/linear_1d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
+        gemm_test("mkldnn_with_generic_fallback", R"({"log_output": "stdout"})",
+                  "../data/random_input_3_4096.txt",
+                  "../data/random_weight_256_4096.txt",
+                  "../data/random_bias_256.txt",
+                  "../data/linear_1d_w256_4096_b_256.txt"); //, 1, 1, 0, 1);
     }
     TEST_F(MkldnnWithGenericFallbackBackendTest, gemm_2d_test) {
         gemm_test("mkldnn_with_generic_fallback", R"({"log_output": "stdout"})",
