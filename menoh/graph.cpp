@@ -245,7 +245,8 @@ namespace menoh_impl {
                                                           "LRN",
                                                           "MaxPool",
                                                           "Softmax",
-                                                          "Sum"}};
+                                                          "Sum",
+                                                          "Transpose"}};
 
         std::unordered_map<std::string, std::vector<int>> variable_dims_table(
           input_name_and_dims_pair_list.begin(),
@@ -383,6 +384,17 @@ namespace menoh_impl {
                       std::to_string(weight_dims[1]));
                 }
                 std::vector<int> output_dims{batch_size, weight_dims[0]};
+                variable_dims_table.insert(
+                  {node.output_name_list.at(0), output_dims});
+            } else if(node.op_type == "Transpose") {
+                auto input_name = node.input_name_list.at(0);
+                auto input_dims = find_value(variable_dims_table, input_name);
+                auto perm = attribute_ints(node, "perm");
+                std::vector<int> output_dims(input_dims.size());
+                for(decltype(output_dims.size()) i = 0; i < output_dims.size();
+                    ++i) {
+                    output_dims[i] = input_dims[perm[i]];
+                }
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
             } else if(std::find(supported_operator_list.begin(),
