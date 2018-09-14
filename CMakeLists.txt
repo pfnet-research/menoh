@@ -67,12 +67,6 @@ endif()
 include_directories("${MKLDNN_INCLUDE_DIR}")
 
 if(${ENABLE_TEST})
-    enable_testing()
-    # GTest setup
-    set(GTEST_DIR test/lib/googletest)
-    execute_process(COMMAND git submodule update --init -- ${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    message(STATUS "# add_subdirectory\(${GTEST_DIR}\)")
-    add_subdirectory(${GTEST_DIR})
     message(STATUS "# add_subdirectory\(test\)")
     add_subdirectory(test)
 endif()
