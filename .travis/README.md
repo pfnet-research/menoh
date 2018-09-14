@@ -1,7 +1,7 @@
 # Build scripts for Travis
 
 ## Prerequisites
-It requires a container image with the following softwares:
+Linux-based platforms requires a container image with the following softwares:
 
 - GCC 5.2 or later
 - CMake 3.1 or later
@@ -14,10 +14,11 @@ Currently it uses [okapies/buildenv](https://hub.docker.com/r/okapies/buildenv/)
 ## Architecture
 `.travis.yml` -> `run-build.sh` -> `build.sh` -> `install-*.sh` & `build-menoh.sh`
 
-1. `run-build.sh` starts a Docker container for building the project
+1. `run-build.sh` calls `build.sh` at once for running the actual build workflow
+    - It runs a Docker container before calling `build.sh` if it is in the Linux-based platforms
     - You can access `${HOME}` (`/home/travis`) directory from the container transparently because it maps `${HOME}` in the Travis environment to container's `/home/travis`
-2. `build.sh` runs a build workflow *in the container*
-    - (All commands are run by `docker_exec` and `docker_exec_cmd` functions)
+2. `build.sh`
+    - In Linux, the build workflow is run *in the container*. All commands are run by `docker_exec` and `docker_exec_cmd` functions
     - Install the prerequisites
     - Run a build
     - Run a test

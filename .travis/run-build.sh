@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # check if variables have values
-test -n "${PLATFORM}" || { echo "PLATFORM does not exist"; exit 1; }
+test -n "${PLATFORM}" || { echo "PLATFORM does not exist" 1>&2; exit 1; }
 
 export PLATFORM_DIR=${TRAVIS_BUILD_DIR}/.travis/${PLATFORM}
 
 # "$TRAVIS_OS_NAME" == "linux"
 if [[ "$PLATFORM" == "linux-x86" ]] || [[ "$PLATFORM" == "linux-x86_64" ]] || [[ "$PLATFORM" =~ android ]]; then
-    test -n "${BUILDENV_IMAGE}" || { echo "BUILDENV_IMAGE does not exist"; exit 1; }
+    test -n "${BUILDENV_IMAGE}" || { echo "BUILDENV_IMAGE does not exist" 1>&2; exit 1; }
 
     docker pull ${BUILDENV_IMAGE} || true
 
@@ -22,7 +22,7 @@ if [[ "$PLATFORM" == "linux-x86" ]] || [[ "$PLATFORM" == "linux-x86_64" ]] || [[
     # See https://bugzilla.redhat.com/show_bug.cgi?id=1046469 for the details.
 
     if [ -z "${DOCKER_CONTAINER_ID}" ]; then
-        echo 'Failed to run a Docker container: '${BUILDENV_IMAGE}
+        echo 'Failed to run a Docker container: '${BUILDENV_IMAGE} 1>&2
         exit 1
     fi
 

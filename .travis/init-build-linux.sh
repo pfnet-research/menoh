@@ -1,8 +1,8 @@
 # check if variables are set
-test -n "${DOCKER_CONTAINER_ID}" || { echo "DOCKER_CONTAINER_ID does not exist"; exit 1; }
-test -n "${PROTOBUF_VERSION}" || { echo "PROTOBUF_VERSION does not exist"; exit 1; }
-test -n "${MKLDNN_VERSION}" || { echo "MKLDNN_VERSION does not exist"; exit 1; }
-test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS does not exist"; exit 1; }
+test -n "${DOCKER_CONTAINER_ID}" || { echo "DOCKER_CONTAINER_ID does not exist" 1>&2; exit 1; }
+test -n "${PROTOBUF_VERSION}" || { echo "PROTOBUF_VERSION does not exist" 1>&2; exit 1; }
+test -n "${MKLDNN_VERSION}" || { echo "MKLDNN_VERSION does not exist" 1>&2; exit 1; }
+test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS does not exist" 1>&2; exit 1; }
 
 test -n "${LINK_STATIC}" || LINK_STATIC=false
 
@@ -43,19 +43,13 @@ function install_mkldnn() {
 }
 
 function prepare_menoh_data() {
-    echo -e "\e[33;1mPreparing data/ for Menoh\e[0m"
-    docker_exec "$(cat << EOS
-        cd ${PROJ_DIR} && \
-        ([ -d "data" ] || mkdir -p data) && \
-        python3 retrieve_data.py && \
-        python3 gen_test_data.py
-EOS
-)"
+    docker_exec_cmd \
+        ${PROJ_DIR}/.travis/prepare-menoh-data.sh \
+            --source-dir ${PROJ_DIR} \
+            --python-executable python3
 }
 
 function build_menoh() {
-    # CMakeCache.txt generated for coverity_scan build hinders out-of-source build
-    docker_exec "if [ -f \"CMakeCache.txt\" ]; then cd ${PROJ_DIR} && rm CMakeCache.txt; fi"
     if [ "${LINK_STATIC}" != "true" ]; then
         docker_exec_cmd \
             ${PROJ_DIR}/.travis/build-menoh.sh \

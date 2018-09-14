@@ -1,18 +1,14 @@
 # check if variables are set
-test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS does not exist"; exit 1; }
+test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS does not exist" 1>&2; exit 1; }
 
 # TODO: make them configurable for outside Travis
 export WORK_DIR=${HOME}
 export PROJ_DIR=${TRAVIS_BUILD_DIR} # = ${HOME}/build/${TRAVIS_REPO_SLUG}
 
 function prepare_menoh_data() {
-    echo -e "\e[33;1mPreparing data/ for Menoh\e[0m"
-
-    cd ${PROJ_DIR}
-    [ -d "data" ] || mkdir -p data
-
-    python retrieve_data.py
-    python gen_test_data.py
+    bash -ex ${PROJ_DIR}/.travis/prepare-menoh-data.sh \
+        --source-dir ${PROJ_DIR} \
+        --python-executable python
 }
 
 function build_menoh() {

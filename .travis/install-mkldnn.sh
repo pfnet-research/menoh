@@ -39,10 +39,10 @@ while [[ $# != 0 ]]; do
 done
 
 # validate the arguments
-test -n "${ARG_VERSION}" || { echo "--version is not specified"; exit 1; }
-test -n "${ARG_DOWNLOAD_DIR}" || { echo "--download-dir is not specified"; exit 1; }
-test -n "${ARG_BUILD_DIR}" || { echo "--build-dir is not specified"; exit 1; }
-test -n "${ARG_INSTALL_DIR}" || { echo "--install-dir is not specified"; exit 1; }
+test -n "${ARG_VERSION}" || { echo "--version is not specified" 1>&2; exit 1; }
+test -n "${ARG_DOWNLOAD_DIR}" || { echo "--download-dir is not specified" 1>&2; exit 1; }
+test -n "${ARG_BUILD_DIR}" || { echo "--build-dir is not specified" 1>&2; exit 1; }
+test -n "${ARG_INSTALL_DIR}" || { echo "--install-dir is not specified" 1>&2; exit 1; }
 test -n "${ARG_PARALLEL}" || ARG_PARALLEL=1
 
 # download (if it isn't cached)

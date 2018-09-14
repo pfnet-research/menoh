@@ -39,7 +39,7 @@ while [[ $# != 0 ]]; do
 done
 
 # validate the arguments
-test -n "${ARG_SOURCE_DIR}" || { echo "--source-dir is not specified"; exit 1; }
+test -n "${ARG_SOURCE_DIR}" || { echo "--source-dir is not specified" 1>&2; exit 1; }
 
 test -n "${ARG_LINK_STATIC_LIBGCC}" || ARG_LINK_STATIC_LIBGCC='OFF'
 test -n "${ARG_LINK_STATIC_LIBSTDCXX}" || ARG_LINK_STATIC_LIBSTDCXX='OFF'
