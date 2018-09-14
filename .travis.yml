@@ -47,4 +47,10 @@ cache:
 #        echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 #      fi
 script:
-    - bash -ex ${TRAVIS_BUILD_DIR}/.travis/run-build.sh
+    - |
+      echo "travis_fold:start:run-build.sh"
+      echo -e "\e[33;1mRunning .travis/run-build.sh\e[0m"
+
+      bash -ex ${TRAVIS_BUILD_DIR}/.travis/run-build.sh
+
+      echo "travis_fold:end:run-build.sh"

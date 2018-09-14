@@ -1,8 +1,5 @@
 #!/bin/bash
 
-echo "travis_fold:start:run-build.sh"
-echo -e "\e[33;1mRunning .travis/${PLATFORM}/run-build.sh in ${TRAVIS_REPO_SLUG}\e[0m"
-
 # check if variables have values
 test -n "${PLATFORM}" || { echo "PLATFORM does not exist"; exit 1; }
 
@@ -52,5 +49,3 @@ if [ "$TRAVIS_OS_NAME" == "osx" ]; then
         exit 1
     fi
 fi
-
-echo "travis_fold:end:run-build.sh"
