@@ -28,7 +28,7 @@ function build_menoh() {
 }
 
 function test_menoh() {
-    cd ${PROJ_DIR}/build/menoh && ./test/menoh_test
+    cd ${PROJ_DIR}/build && ./test/menoh_test
 }
 
 function check_menoh_artifact() {

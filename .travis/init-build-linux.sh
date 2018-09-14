@@ -71,7 +71,7 @@ function build_menoh() {
 }
 
 function test_menoh() {
-    docker_exec "cd ${PROJ_DIR}/build/menoh && ./test/menoh_test"
+    docker_exec "cd ${PROJ_DIR}/build && ./test/menoh_test"
 }
 
 function check_menoh_artifact() {

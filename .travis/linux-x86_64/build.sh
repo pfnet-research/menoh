@@ -22,8 +22,8 @@ docker_exec "yum list installed"
 docker_exec "pip3 list"
 
 # build and test menoh
-prepare_menoh_data
 build_menoh
+prepare_menoh_data
 test_menoh
 
 # check the artifact and release
