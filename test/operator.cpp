@@ -1,21 +1,3 @@
-/*
-#include <fstream>
-#include <iostream>
-#include <numeric>
-#include <sstream>
-#include <string>
-
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-
-#include "./common.hpp"
-#include "np_io.hpp"
-
-#include <menoh/dims.hpp>
-#include <menoh/mkldnn/operator.hpp>
-#include <menoh/mkldnn/utility.hpp>
-#include <menoh/model_core.hpp>
-*/
 #include <gtest/gtest.h>
 
 #include <fstream>
