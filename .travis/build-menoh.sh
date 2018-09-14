@@ -15,6 +15,10 @@ while [[ $# != 0 ]]; do
             ARG_INSTALL_DIR="$2"
             shift 2
             ;;
+        --mkldnn-dir)
+            ARG_MKLDNN_DIR="$2"
+            shift 2
+            ;;
         --link-static-libgcc)
             ARG_LINK_STATIC_LIBGCC="$2"
             shift 2
@@ -52,11 +56,17 @@ cd ${ARG_SOURCE_DIR}
 
 cd build
 if [ -n "${ARG_INSTALL_DIR}" ]; then
-    CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=${ARG_INSTALL_DIR}"
+    OPT_CMAKE_INSTALL_PREFIX=-DCMAKE_INSTALL_PREFIX=${ARG_INSTALL_DIR}
+fi
+if [ -n "${ARG_MKLDNN_DIR}" ]; then
+    OPT_MKLDNN_INCLUDE_DIR=-DMKLDNN_INCLUDE_DIR=${ARG_MKLDNN_DIR}/include
+    OPT_MKLDNN_LIBRARY=-DMKLDNN_LIBRARY=${ARG_MKLDNN_DIR}/lib/libmkldnn.so
 fi
 cmake \
     -DCMAKE_BUILD_TYPE=Release \
-    ${CMAKE_INSTALL_PREFIX} \
+    ${OPT_CMAKE_INSTALL_PREFIX} \
+    ${OPT_MKLDNN_INCLUDE_DIR} \
+    ${OPT_MKLDNN_LIBRARY} \
     -DLINK_STATIC_LIBGCC=${ARG_LINK_STATIC_LIBGCC} \
     -DLINK_STATIC_LIBSTDCXX=${ARG_LINK_STATIC_LIBSTDCXX} \
     -DLINK_STATIC_LIBPROTOBUF=${ARG_LINK_STATIC_LIBPROTOBUF} \

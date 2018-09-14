@@ -27,7 +27,7 @@ while [[ $# != 0 ]]; do
 done
 
 # validate the arguments
-test -n "${ARG_SOURCE_DIR}" || { echo "ARG_SOURCE_DIR does not exist" 1>&2; exit 1; }
+test -n "${ARG_SOURCE_DIR}" || { echo "ARG_SOURCE_DIR can't be empty" 1>&2; exit 1; }
 test -n "${ARG_PYTHON_EXECUTABLE}" || ARG_PYTHON_EXECUTABLE=python
 
 echo -e "\e[33;1mPreparing data/ for Menoh\e[0m"

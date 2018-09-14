@@ -1,5 +1,5 @@
 # check if variables are set
-test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS does not exist" 1>&2; exit 1; }
+test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS can't be empty" 1>&2; exit 1; }
 
 # TODO: make them configurable for outside Travis
 export WORK_DIR=${HOME}
@@ -24,7 +24,8 @@ function build_menoh() {
 }
 
 function test_menoh() {
-    cd ${PROJ_DIR}/build && ./test/menoh_test
+    cd ${PROJ_DIR}/build
+    ./test/menoh_test
 }
 
 function check_menoh_artifact() {

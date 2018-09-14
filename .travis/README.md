@@ -18,7 +18,7 @@ Currently it uses [okapies/buildenv](https://hub.docker.com/r/okapies/buildenv/)
     - It runs a Docker container before calling `build.sh` if it is in the Linux-based platforms
     - You can access `${HOME}` (`/home/travis`) directory from the container transparently because it maps `${HOME}` in the Travis environment to container's `/home/travis`
 2. `build.sh`
-    - In Linux, the build workflow is run *in the container*. All commands are run by `docker_exec` and `docker_exec_cmd` functions
+    - In Linux, the build workflow is run *in the container*. All commands are run by `docker_exec` and `docker_exec_script` functions
     - Install the prerequisites
     - Run a build
     - Run a test
