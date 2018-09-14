@@ -8,7 +8,7 @@ export PROJ_DIR=${TRAVIS_BUILD_DIR} # = ${HOME}/build/${TRAVIS_REPO_SLUG}
 function prepare_menoh_data() {
     echo -e "\e[33;1mPreparing data/ for Menoh\e[0m"
 
-    cd ${PROJ_DIR}/menoh
+    cd ${PROJ_DIR}
     [ -d "data" ] || mkdir -p data
 
     python retrieve_data.py
@@ -17,20 +17,20 @@ function prepare_menoh_data() {
 
 function build_menoh() {
     if [ "${LINK_STATIC}" != "true" ]; then
-        ${PROJ_DIR}/.travis/build-menoh.sh \
+        bash -ex ${PROJ_DIR}/.travis/build-menoh.sh \
             --source-dir ${PROJ_DIR}
     else
     	# Does not set --link-static-libgcc and --link-static-libstdcxx in macOS
-        ${PROJ_DIR}/.travis/build-menoh.sh \
+        bash -ex ${PROJ_DIR}/.travis/build-menoh.sh \
             --source-dir ${PROJ_DIR} \
             --link-static-libprotobuf ON
     fi
 }
 
 function test_menoh() {
-    cd ${PROJ_DIR}/menoh/build && ./test/menoh_test
+    cd ${PROJ_DIR}/build/menoh && ./test/menoh_test
 }
 
 function check_menoh_artifact() {
-    otool -L ${PROJ_DIR}/menoh/build/menoh/libmenoh.dylib
+    otool -L ${PROJ_DIR}/build/menoh/libmenoh.dylib
 }

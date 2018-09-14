@@ -45,7 +45,7 @@ function install_mkldnn() {
 function prepare_menoh_data() {
     echo -e "\e[33;1mPreparing data/ for Menoh\e[0m"
     docker_exec "$(cat << EOS
-        cd ${PROJ_DIR}/menoh && \
+        cd ${PROJ_DIR} && \
         ([ -d "data" ] || mkdir -p data) && \
         python3 retrieve_data.py && \
         python3 gen_test_data.py
@@ -71,9 +71,9 @@ function build_menoh() {
 }
 
 function test_menoh() {
-    docker_exec "cd ${PROJ_DIR}/menoh/build && ./test/menoh_test"
+    docker_exec "cd ${PROJ_DIR}/build/menoh && ./test/menoh_test"
 }
 
 function check_menoh_artifact() {
-    ldd ${PROJ_DIR}/menoh/build/menoh/libmenoh.so
+    ldd ${PROJ_DIR}/build/menoh/libmenoh.so
 }

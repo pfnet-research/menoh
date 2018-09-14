@@ -19,7 +19,7 @@ install_mkldnn
 docker_exec "pip3 install --user chainer" # for generating test data
 
 docker_exec "yum list installed"
-docker_exec "pip list"
+docker_exec "pip3 list"
 
 # build and test menoh
 prepare_menoh_data

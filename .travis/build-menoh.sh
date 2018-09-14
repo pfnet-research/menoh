@@ -47,7 +47,7 @@ test -n "${ARG_LINK_STATIC_LIBPROTOBUF}" || ARG_LINK_STATIC_LIBPROTOBUF='OFF'
 
 echo -e "\e[33;1mBuilding Menoh\e[0m"
 
-cd ${ARG_SOURCE_DIR}/menoh
+cd ${ARG_SOURCE_DIR}
 [ -d "build" ] || mkdir -p build
 
 cd build
