@@ -26,9 +26,36 @@ namespace menoh_impl {
                     }
                     auto dims =
                       ::menoh_impl::mkldnn_backend::extract_dims(found->second);
+                    auto variable_memory = found->second; // mutable
+                    procedure copy_proc(nullptr); // mutable
+                    if(dims.size() == 4) {
+                        auto format = static_cast<mkldnn::memory::format>(
+                          found->second.get_primitive_desc()
+                            .desc()
+                            .data.format);
+                        if(format != mkldnn::memory::nchw) {
+                            auto data_type =
+                              static_cast<mkldnn::memory::data_type>(
+                                found->second.get_primitive_desc()
+                                  .desc()
+                                  .data.data_type);
+                            variable_memory = mkldnn::memory(
+                              {{dims, data_type, mkldnn::memory::format::nchw},
+                               engine_});
+                            temp_memory_list_.push_back(variable_memory);
+                            std::vector<mkldnn::primitive> primitives(
+                              {mkldnn::reorder(found->second,
+                                               variable_memory)});
+                            copy_proc = [primitives]() {
+                                mkldnn::stream(mkldnn::stream::kind::eager)
+                                  .submit(primitives)
+                                  .wait();
+                            };
+                        }
+                    }
                     return std::make_tuple(
-                      procedure(), array(dtype_t::float_, dims,
-                                         found->second.get_data_handle()));
+                      copy_proc, array(dtype_t::float_, dims,
+                                       found->second.get_data_handle()));
                 }
 
                 virtual optional<std::tuple<std::vector<procedure>, int>>
