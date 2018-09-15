@@ -386,7 +386,8 @@ namespace menoh_impl {
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
             } else if(std::find(supported_operator_list.begin(),
-                                supported_operator_list.end(), node.op_type) !=
+                                supported_operator_list.end(),
+                                node.op_type) !=
                       supported_operator_list
                         .end()) { // check if supported operator
                 auto input_name = node.input_name_list.at(0);
