@@ -145,7 +145,7 @@ namespace menoh_impl {
                       std::make_move_iterator(new_temp_memory_list.end()));
                 }
 
-                // when any nodes are not processed
+                // when no nodes are processed
                 if(current_index == first_node_index) {
                     return nullopt;
                 }
