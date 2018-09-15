@@ -28,6 +28,7 @@ namespace menoh_impl {
               logger_handle logger) {
                 auto first_node_index = current_index;
                 std::vector<procedure> procedure_list;
+
                 std::vector<mkldnn::primitive> primitive_list;
 
                 for(; current_index < node_list.size(); ++current_index) {
@@ -145,6 +146,7 @@ namespace menoh_impl {
                 if(current_index == first_node_index) {
                     return nullopt;
                 }
+
                 procedure_list.emplace_back([this, primitive_list]() {
                     mkldnn::stream(mkldnn::stream::kind::eager)
                       .submit(primitive_list)
@@ -155,5 +157,5 @@ namespace menoh_impl {
             }
 
         } // namespace mkldnn_backend
-    }     // namespace mkldnn_with_generic_fallback_backend
+    } // namespace mkldnn_with_generic_fallback_backend
 } // namespace menoh_impl
