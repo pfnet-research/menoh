@@ -18,7 +18,8 @@
 #include "common.hpp"
 
 namespace menoh_impl {
-    dtype_t tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt);
+    inline dtype_t
+    tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt);
 }
 
 namespace {
