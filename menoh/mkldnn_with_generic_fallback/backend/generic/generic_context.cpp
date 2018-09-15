@@ -9,20 +9,6 @@ namespace menoh_impl {
                 procedure_factory_table_.emplace("Relu", make_relu);
             }
 
-            optional<std::function<void()>>
-            generic_context::try_to_get_input_from_common_table(
-              std::string const& input_name,
-              std::unordered_map<std::string, array> const& common_table) {
-                auto found = common_table.find(input_name);
-                if(found != common_table.end()) {
-                    variable_table_.emplace(input_name, found->second);
-                    return std::function<void()>([this, &input_name]() {
-                        variable_table_.erase(input_name);
-                    });
-                }
-                return nullopt;
-            }
-
             optional<std::tuple<std::vector<procedure>, int>>
             generic_context::do_process_node_list(
               std::string const& context_name, int current_index,
@@ -36,98 +22,116 @@ namespace menoh_impl {
                 std::pair<std::string, std::unique_ptr<context>>> const&
                 context_list,
               logger_handle logger) {
-                auto const& node = node_list.at(current_index);
+
+                auto first_node_index = current_index;
                 std::vector<procedure> procedure_list;
-                std::vector<array> input_list;
-                std::vector<std::function<void()>> rollback_list;
-                for(auto const& input_name : node.input_name_list) {
-                    if(variable_table_.find(input_name) !=
-                       variable_table_.end()) {
-                        *logger << input_name
-                                << " is found in self variable table"
-                                << std::endl;
-                        continue; // when found
-                    }
-                    do {
-                        {
-                            // normally, copy once array here, because
-                            // parameter is statically fixed
-                            auto rollback = try_to_get_input_from_common_table(
-                              input_name, common_parameter_table);
-                            if(rollback) {
+
+                std::vector<procedure> new_op_proc_list;
+
+                for(; current_index < node_list.size(); ++current_index) {
+                    auto const& node = node_list.at(current_index);
+                    std::vector<array> input_list;
+                    std::vector<procedure> new_copy_procedure_list;
+
+                    for(auto const& input_name : node.input_name_list) {
+                        do {
+                            // search in self variable table
+                            auto found_from_variable_table =
+                              variable_table_.find(input_name);
+                            if(found_from_variable_table !=
+                               variable_table_.end()) {
+                                *logger << input_name
+                                        << " is found in self variable table"
+                                        << std::endl;
+                                input_list.push_back(
+                                  found_from_variable_table->second);
+                                break;
+                            }
+
+                            // search in common parameter and input table
+                            auto found_from_common_table =
+                              [&](auto const& table) {
+                                  auto found = table.find(input_name);
+                                  if(found != table.end()) {
+                                      assert(found->second.dims().size() == 2 ||
+                                             found->second.dims().size() == 4);
+                                      input_list.push_back(found->second);
+                                      return true;
+                                  }
+                                  return false;
+                              };
+                            if(found_from_common_table(
+                                 common_parameter_table)) {
                                 *logger << input_name
                                         << " is found in common parameter table"
                                         << std::endl;
-                                rollback_list.emplace_back(*rollback);
                                 break;
                             }
-                        }
-                        {
-                            // normally, allocate buffer for variable and
-                            // issue copy procedure
-                            auto rollback = try_to_get_input_from_common_table(
-                              input_name, common_input_table);
-                            if(rollback) {
+                            if(found_from_common_table(common_input_table)) {
                                 *logger << input_name
                                         << " is found in common input table"
                                         << std::endl;
-                                rollback_list.emplace_back(*rollback);
                                 break;
                             }
-                        }
 
-                        // take from other context
-                        bool is_found_from_other_context = false;
-                        for(auto const& context_pair : context_list) {
-                            std::string name = context_pair.first;
-                            context* con = context_pair.second.get();
-                            if(name == context_name) {
-                                continue; // skip self
+                            // search in other contexts' variable table
+                            bool is_found_from_other_context = false;
+                            for(auto const& context_pair : context_list) {
+                                if(context_pair.first == context_name) {
+                                    continue; // skip self
+                                }
+                                auto found =
+                                  context_pair.second->try_to_get_variable(
+                                    input_name);
+                                if(found) {
+                                    *logger << input_name
+                                            << " is found in other context's "
+                                               "varibale table: "
+                                            << context_pair.first << std::endl;
+                                    procedure copy_proc;
+                                    array arr;
+                                    std::tie(copy_proc, arr) = *found;
+                                    new_copy_procedure_list.push_back(
+                                      copy_proc);
+                                    input_list.push_back(arr);
+                                    is_found_from_other_context = true;
+                                    break;
+                                }
                             }
-                            auto found = con->try_to_get_variable(input_name);
-                            if(found) {
-                                *logger << input_name
-                                        << " is found in other context's "
-                                           "varibale table: "
-                                        << context_pair.first << std::endl;
-                                procedure proc;
-                                array arr;
-                                std::tie(proc, arr) = *found;
-                                procedure_list.push_back(proc);
-                                variable_table_.emplace(input_name, arr);
-                                rollback_list.push_back([this, &input_name]() {
-                                    variable_table_.erase(input_name);
-                                });
-                                is_found_from_other_context = true;
-                                break;
-                            }
-                        }
-                        assert(is_found_from_other_context);
-                    } while(false);
-                    assert(variable_table_.find(input_name) !=
-                           variable_table_.end());
-                    input_list.push_back(variable_table_.at(input_name));
-                }
-                procedure proc;
-                std::vector<std::pair<std::string, array>> new_variables;
-                try {
-                    auto factory = procedure_factory_table_.at(node.op_type);
-                    std::tie(proc, new_variables) =
-                      factory.operator()(current_index, node_list, input_list,
-                                         required_output_table);
-                } catch(...) {
-                    for(auto const& rollback : rollback_list) {
-                        rollback(); // remove new inputs
+                            assert(is_found_from_other_context);
+                        } while(false);
                     }
+                    procedure op_proc;
+                    std::vector<std::pair<std::string, array>> new_outputs;
+                    try {
+                        auto factory =
+                          procedure_factory_table_.at(node.op_type);
+                        std::tie(op_proc, new_outputs) =
+                          factory.operator()(current_index, node_list,
+                                             input_list, required_output_table);
+                    } catch(...) { break; }
+                    new_op_proc_list.push_back(op_proc);
+                    procedure_list.insert(
+                      procedure_list.end(),
+                      std::make_move_iterator(new_copy_procedure_list.begin()),
+                      std::make_move_iterator(new_copy_procedure_list.end()));
+                    variable_table_.insert(
+                      std::make_move_iterator(new_outputs.begin()),
+                      std::make_move_iterator(new_outputs.end()));
+                }
+
+                // when no nodes are processed
+                if(current_index == first_node_index) {
                     return nullopt;
                 }
-                procedure_list.push_back(std::move(proc));
-                variable_table_.insert(
-                  std::make_move_iterator(new_variables.begin()),
-                  std::make_move_iterator(new_variables.end()));
-                return std::make_tuple(procedure_list, current_index + 1);
+
+                procedure_list.insert(
+                  procedure_list.end(),
+                  std::make_move_iterator(new_op_proc_list.begin()),
+                  std::make_move_iterator(new_op_proc_list.end()));
+
+                return std::make_tuple(procedure_list, current_index);
             }
         } // namespace generic_backend
-
-    } // namespace mkldnn_with_generic_fallback_backend
+    }     // namespace mkldnn_with_generic_fallback_backend
 } // namespace menoh_impl
