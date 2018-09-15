@@ -100,10 +100,6 @@ namespace menoh_impl {
                                     new_copy_procedure_list.push_back(
                                       copy_proc);
                                     input_list.push_back(arr);
-                                    auto format =
-                                      arr.dims().size() == 2
-                                        ? mkldnn::memory::format::nc
-                                        : mkldnn::memory::format::nchw;
                                     is_found_from_other_context = true;
                                     break;
                                 }
