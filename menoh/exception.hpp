@@ -33,6 +33,13 @@ namespace menoh_impl {
                       "menoh json parse error: " + message) {}
     };
 
+    class invalid_backend_config_error : public exception {
+    public:
+        explicit invalid_backend_config_error(std::string const& message)
+          : exception(menoh_error_code_invalid_backend_config_error,
+                      "menoh invalid backend config error: " + message) {}
+    };
+
 } // namespace menoh_impl
 
 #endif // MENOH_EXCEPTION
