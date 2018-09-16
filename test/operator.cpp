@@ -9,18 +9,9 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <onnx/onnx.pb.h>
 
-#include <menoh/array.hpp>
-#include <menoh/dtype.hpp>
-#include <menoh/onnx.hpp>
-
 #include <menoh/menoh.hpp>
 
 #include "common.hpp"
-
-namespace menoh_impl {
-    inline dtype_t
-    tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt);
-}
 
 namespace {
 
@@ -65,16 +56,12 @@ namespace {
           tensor.raw_data().length() ==
           static_cast<decltype(tensor.raw_data().length())>(total_size * 4));
 
-        using float_t =
-          menoh_impl::dtype_to_type_t<menoh_impl::dtype_t::float_>;
         auto data = std::make_unique<char[]>(total_size * 4);
         std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
                   data.get());
-        return named_array_data{
-          tensor.name(),
-          static_cast<menoh::dtype_t>(
-            menoh_impl::tensor_proto_data_type_to_dtype(tensor.data_type())),
-          std::move(dims), std::move(data)};
+        // TODO other dtype
+        return named_array_data{tensor.name(), menoh::dtype_t::float_,
+                                std::move(dims), std::move(data)};
     }
 
     class OperatorTest : public ::testing::Test {
