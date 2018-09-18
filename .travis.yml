@@ -31,7 +31,8 @@ matrix:
         - os: linux
           env: PLATFORM=linux-x86_64 BUILDENV_IMAGE=okapies/buildenv:linux-x64-devtoolset-6 LINK_STATIC=true
         # Use Travis directly instead of container to run static code analysis using Coverity
-        - os: linux
+        - if: branch = coverity_scan
+          os: linux
           env: RUN_COVERITY=true
           addons:
               apt:
@@ -69,22 +70,7 @@ matrix:
                     --build-dir ${HOME}/build \
                     --install-dir ${HOME}/mkl-dnn-${MKLDNN_VERSION} \
                     --parallel ${MAKE_JOBS}
-              - pip install --user chainer
-          script:
-              #- if [ -f cov-int/build-log.txt ]; then cat cov-int/build-log.txt; fi
-              # CMakeCache.txt generated for coverity_scan build hinders out-of-source build
-              - if [ -f CMakeCache.txt ]; then rm CMakeCache.txt; fi
-              - |
-                bash -ex ${TRAVIS_BUILD_DIR}/.travis/build-menoh.sh \
-                    --source-dir ${TRAVIS_BUILD_DIR} \
-                    --mkldnn-dir ${HOME}/mkl-dnn-${MKLDNN_VERSION}
-              - |
-                bash -ex ${TRAVIS_BUILD_DIR}/.travis/prepare-menoh-data.sh \
-                    --source-dir ${TRAVIS_BUILD_DIR} \
-                    --python-executable python
-              - cd ${TRAVIS_BUILD_DIR}/build
-              - ./test/menoh_test
-              - ldd menoh/libmenoh.so
+          script: true # skip build and test
 
 script:
     - bash -ex ${TRAVIS_BUILD_DIR}/.travis/run-build.sh
