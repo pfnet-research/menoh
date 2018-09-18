@@ -53,9 +53,9 @@ matrix:
                   notification_email: menoh-oss@preferred.jp
                   build_command_prepend: >-
                       cov-configure --compiler /usr/bin/g++-7 --comptype g++ -- -march=native -fPIC -std=gnu++14 &&
-                          cmake
-                              -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn-${MKLDNN_VERSION}/include"
-                              -DMKLDNN_LIBRARY="$HOME/mkl-dnn-${MKLDNN_VERSION}/lib/libmkldnn.so" .
+                      cmake
+                      -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn-${MKLDNN_VERSION}/include"
+                      -DMKLDNN_LIBRARY="$HOME/mkl-dnn-${MKLDNN_VERSION}/lib/libmkldnn.so" .
                   build_command: make
                   branch_pattern: coverity_scan
           before_install:

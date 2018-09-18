@@ -81,5 +81,5 @@ function test_menoh() {
 }
 
 function check_menoh_artifact() {
-    ldd ${PROJ_DIR}/build/menoh/libmenoh.so
+    docker_exec "ldd ${PROJ_DIR}/build/menoh/libmenoh.so"
 }
