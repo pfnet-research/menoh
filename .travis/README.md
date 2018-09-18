@@ -14,12 +14,13 @@ Currently it uses [okapies/buildenv](https://hub.docker.com/r/okapies/buildenv/)
 ## Architecture
 `.travis.yml` -> `run-build.sh` -> `build.sh` -> `install-*.sh` & `build-menoh.sh`
 
-1. `run-build.sh` calls `build.sh` at once for running the actual build workflow
+1. `run-build.sh` just calls a platform's `build.sh` for running the actual build workflow
 2. `build.sh`
-    - In Linux-based platforms, build workflow is run *in the container*
-        - It runs a Docker container before executing the workflow
-        - All commands are run via `docker_exec` and `docker_exec_script` functions
-        - You can access `${HOME}` (`/home/travis`) directory from the container transparently because it maps `${HOME}` in the Travis environment to container's `/home/travis`
+    - For Linux-based platforms, the build workflow is executed *in the container*
+        - `build.sh` runs a Docker container at startup before executing the workflow
+        - All commands are run via `docker_exec` and `docker_exec_script` functions (defined in `init-build-linux.sh`)
+        - You can access `${HOME}` (`/home/travis`) directory from inside the container transparently because it maps `/home/travis` in the Travis environment to container's `/home/travis`
+    - For macOS (OSX), the build workflow is executed on the Travis' VM
     - Install the prerequisites
     - Run a build
     - Run a test

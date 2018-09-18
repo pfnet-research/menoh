@@ -5,6 +5,8 @@ test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS can't be empty" 1>&2; exit 1; }
 export WORK_DIR=${HOME}
 export PROJ_DIR=${TRAVIS_BUILD_DIR} # = ${HOME}/build/${TRAVIS_REPO_SLUG}
 
+## define shared functions for macOS (OSX) platforms
+
 function prepare_menoh_data() {
     bash -ex ${PROJ_DIR}/.travis/prepare-menoh-data.sh \
         --source-dir ${PROJ_DIR} \
@@ -16,7 +18,7 @@ function build_menoh() {
         bash -ex ${PROJ_DIR}/.travis/build-menoh.sh \
             --source-dir ${PROJ_DIR}
     else
-    	# Does not set --link-static-libgcc and --link-static-libstdcxx in macOS
+        # Does not set --link-static-libgcc and --link-static-libstdcxx in macOS
         bash -ex ${PROJ_DIR}/.travis/build-menoh.sh \
             --source-dir ${PROJ_DIR} \
             --link-static-libprotobuf ON
