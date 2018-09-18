@@ -10,6 +10,7 @@
 
 #include <menoh/menoh.h>
 
+#include <menoh/array.hpp>
 #include <menoh/exception.hpp>
 #include <menoh/model_core.hpp>
 #include <menoh/model_core_factory.hpp>
@@ -272,37 +273,44 @@ menoh_error_code menoh_variable_profile_table_builder_add_input_profile_dims_4(
   int32_t width) {
     return check_error([&]() {
         std::vector<int> dims = {num, channel, height, width};
-        builder->input_name_and_dtype_and_dims_list.push_back(
-          std::make_tuple(std::string(name), dtype, dims));
+        builder->input_name_and_profile_list.emplace_back(
+          std::string(name), menoh_impl::array_profile(
+                               static_cast<menoh_impl::dtype_t>(dtype), dims));
         return menoh_error_code_success;
     });
 }
 
-menoh_error_code menoh_variable_profile_table_builder_add_output_profile(
-  menoh_variable_profile_table_builder_handle builder, const char* name,
-  menoh_dtype dtype) {
+menoh_error_code menoh_variable_profile_table_builder_add_output_name(
+  menoh_variable_profile_table_builder_handle builder, const char* name) {
     return check_error([&]() {
-        auto found = std::find_if(
-          builder->output_name_and_dtype_list.begin(),
-          builder->output_name_and_dtype_list.end(),
-          [name](auto const& t) { return name == std::get<0>(t); });
-        if(found != builder->output_name_and_dtype_list.end()) {
+        auto found = std::find(builder->required_output_name_list.begin(),
+                               builder->required_output_name_list.end(),
+                               std::string(name));
+        if(found != builder->required_output_name_list.end()) {
             auto message =
               std::string("menoh same named variable already exist: ") + name;
             menoh_impl::set_last_error_message(message.c_str());
             return menoh_error_code_same_named_variable_already_exist;
         }
-        builder->output_name_and_dtype_list.push_back(
-          std::make_tuple(std::string(name), dtype));
+        builder->required_output_name_list.emplace_back(name);
         return menoh_error_code_success;
     });
+}
+
+/*
+ * deprecated. dtype is totally ignored.
+ */
+menoh_error_code menoh_variable_profile_table_builder_add_output_profile(
+  menoh_variable_profile_table_builder_handle builder, const char* name,
+  menoh_dtype dtype) {
+    return menoh_variable_profile_table_builder_add_output_name(builder, name);
 }
 
 /*
  * variable_profile_table
  */
 struct menoh_variable_profile_table {
-    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
+    std::unordered_map<std::string, menoh_impl::array_profile>
       input_profile_table;
     std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
       output_profile_table;
