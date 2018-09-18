@@ -227,10 +227,9 @@ menoh_error_code MENOH_API menoh_model_data_add_parameter(
  * variable_profile_table_builder
  */
 struct menoh_variable_profile_table_builder {
-    std::vector<std::tuple<std::string, menoh_dtype, std::vector<int>>>
-      input_name_and_dtype_and_dims_list;
-    std::vector<std::tuple<std::string, menoh_dtype>>
-      output_name_and_dtype_list;
+    std::vector<std::pair<std::string, menoh_impl::array_profile>>
+      input_name_and_profile_list;
+    std::vector<std::string> required_output_name_list;
 };
 
 menoh_error_code menoh_make_variable_profile_table_builder(
@@ -250,9 +249,10 @@ menoh_error_code menoh_variable_profile_table_builder_add_input_profile(
   menoh_variable_profile_table_builder_handle builder, const char* name,
   menoh_dtype dtype, int32_t dims_size, const int32_t* dims) {
     return check_error([&]() {
-        builder->input_name_and_dtype_and_dims_list.push_back(
-          std::make_tuple(std::string(name), dtype,
-                          std::vector<int32_t>(dims, dims + dims_size)));
+        builder->input_name_and_profile_list.emplace_back(
+          std::string(name), menoh_impl::array_profile(
+                               static_cast<menoh_impl::dtype_t>(dtype),
+                               std::vector<int32_t>(dims, dims + dims_size)));
         return menoh_error_code_success;
     });
 }
@@ -262,8 +262,9 @@ menoh_error_code menoh_variable_profile_table_builder_add_input_profile_dims_2(
   menoh_dtype dtype, int32_t num, int32_t size) {
     return check_error([&]() {
         std::vector<int> dims = {num, size};
-        builder->input_name_and_dtype_and_dims_list.push_back(
-          std::make_tuple(std::string(name), dtype, dims));
+        builder->input_name_and_profile_list.emplace_back(
+          std::string(name), menoh_impl::array_profile(
+                               static_cast<menoh_impl::dtype_t>(dtype), dims));
         return menoh_error_code_success;
     });
 }
@@ -312,8 +313,9 @@ menoh_error_code menoh_variable_profile_table_builder_add_output_profile(
 struct menoh_variable_profile_table {
     std::unordered_map<std::string, menoh_impl::array_profile>
       input_profile_table;
-    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
+    std::unordered_map<std::string, menoh_impl::array_profile>
       output_profile_table;
+    std::vector<std::string> required_output_name_list;
 };
 
 menoh_error_code menoh_build_variable_profile_table(
@@ -321,49 +323,41 @@ menoh_error_code menoh_build_variable_profile_table(
   const menoh_model_data_handle model_data,
   menoh_variable_profile_table_handle* dst_handle) {
     return check_error([&]() {
-        std::unordered_map<std::string,
-                           std::tuple<menoh_dtype, std::vector<int>>>
-          input_profile_table;
-        std::transform(
-          builder->input_name_and_dtype_and_dims_list.begin(),
-          builder->input_name_and_dtype_and_dims_list.end(),
-          std::inserter(input_profile_table, input_profile_table.end()),
-          [](auto const& t) {
-              return std::make_pair(
-                std::get<0>(t),
-                std::make_tuple(std::get<1>(t), std::get<2>(t)));
-          });
+        std::unordered_map<std::string, menoh_impl::array_profile>
+          input_profile_table(builder->input_name_and_profile_list.begin(),
+                              builder->input_name_and_profile_list.end());
 
+        // FIXME BEGIN dtype inference is also needed
+        // currently dtype is fixed to float
         std::vector<std::pair<std::string, std::vector<int>>>
           input_name_and_dims_pair_list;
-        std::transform(
-          builder->input_name_and_dtype_and_dims_list.begin(),
-          builder->input_name_and_dtype_and_dims_list.end(),
-          std::back_inserter(input_name_and_dims_pair_list), [](auto const& t) {
-              return std::make_pair(std::get<0>(t), std::get<2>(t));
-          });
+        std::transform(builder->input_name_and_profile_list.begin(),
+                       builder->input_name_and_profile_list.end(),
+                       std::back_inserter(input_name_and_dims_pair_list),
+                       [](auto const& p) {
+                           return std::make_pair(p.first, p.second.dims());
+                       });
         auto output_dims_table = menoh_impl::make_output_dims_table(
           model_data->model_data, input_name_and_dims_pair_list);
 
-        std::unordered_map<std::string,
-                           std::tuple<menoh_dtype, std::vector<int>>>
+        std::unordered_map<std::string, menoh_impl::array_profile>
           output_profile_table;
         std::transform(
-          builder->output_name_and_dtype_list.begin(),
-          builder->output_name_and_dtype_list.end(),
+          output_dims_table.begin(), output_dims_table.end(),
           std::inserter(output_profile_table, output_profile_table.end()),
-          [&output_dims_table](auto const& t) {
-              std::string name;
-              menoh_dtype dtype;
-              std::tie(name, dtype) = t;
+          [](auto const& p) {
+              // here fixed to float
               return std::make_pair(
-                name, std::make_tuple(dtype, menoh_impl::find_value(
-                                               output_dims_table, name)));
+                p.first, menoh_impl::array_profile(
+                           static_cast<menoh_impl::dtype_t>(menoh_dtype_float),
+                           p.second));
           });
+        // FIXME END
         *dst_handle =
           std::make_unique<menoh_variable_profile_table>(
             menoh_variable_profile_table{std::move(input_profile_table),
-                                         std::move(output_profile_table)})
+                                         std::move(output_profile_table),
+                                         builder->required_output_name_list})
             .release();
         return menoh_error_code_success;
     });
@@ -405,18 +399,16 @@ menoh_error_code menoh_variable_profile_table_get_dtype(
   const menoh_variable_profile_table_handle variable_profile_table,
   const char* name, menoh_dtype* dst_dtype) {
     return impl::menoh_variable_profile_table_get_variable_attribute(
-      variable_profile_table, name,
-      [&](std::tuple<menoh_dtype, std::vector<int>> const& t) {
-          *dst_dtype = std::get<0>(t);
+      variable_profile_table, name, [&](auto const& profile) {
+          *dst_dtype = static_cast<menoh_dtype>(profile.dtype());
       });
 }
 menoh_error_code menoh_variable_profile_table_get_dims_size(
   const menoh_variable_profile_table_handle variable_profile_table,
   const char* name, int32_t* dst_size) {
     return impl::menoh_variable_profile_table_get_variable_attribute(
-      variable_profile_table, name,
-      [&](std::tuple<menoh_dtype, std::vector<int>> const& t) {
-          *dst_size = static_cast<int32_t>(std::get<1>(t).size());
+      variable_profile_table, name, [&](auto const& profile) {
+          *dst_size = static_cast<int32_t>(profile.dims().size());
       });
 }
 menoh_error_code menoh_variable_profile_table_get_dims_at(
@@ -424,9 +416,7 @@ menoh_error_code menoh_variable_profile_table_get_dims_at(
   const char* name, int32_t index, int32_t* dst_size) {
     return impl::menoh_variable_profile_table_get_variable_attribute(
       variable_profile_table, name,
-      [&](std::tuple<menoh_dtype, std::vector<int>> const& t) {
-          *dst_size = std::get<1>(t).at(index);
-      });
+      [&](auto const& profile) { *dst_size = profile.dims().at(index); });
 }
 
 menoh_error_code menoh_model_data_optimize(
@@ -449,10 +439,11 @@ menoh_error_code menoh_model_data_optimize(
  * model builder
  */
 struct menoh_model_builder {
-    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
+    std::unordered_map<std::string, menoh_impl::array_profile>
       input_profile_table;
-    std::unordered_map<std::string, std::tuple<menoh_dtype, std::vector<int>>>
+    std::unordered_map<std::string, menoh_impl::array_profile>
       output_profile_table;
+    std::vector<std::string> required_output_name_list;
     std::unordered_map<std::string, void*> external_buffer_handle_table;
 };
 
@@ -460,12 +451,13 @@ menoh_error_code menoh_make_model_builder(
   const menoh_variable_profile_table_handle variable_profile_table,
   menoh_model_builder_handle* dst_handle) {
     return check_error([&]() {
-        *dst_handle =
-          std::make_unique<menoh_model_builder>(
-            menoh_model_builder{variable_profile_table->input_profile_table,
-                                variable_profile_table->output_profile_table,
-                                {}})
-            .release();
+        *dst_handle = std::make_unique<menoh_model_builder>(
+                        menoh_model_builder{
+                          variable_profile_table->input_profile_table,
+                          variable_profile_table->output_profile_table,
+                          variable_profile_table->required_output_name_list,
+                          {}})
+                        .release();
         return menoh_error_code_success;
     });
 }
@@ -511,54 +503,44 @@ menoh_error_code menoh_build_model(const menoh_model_builder_handle builder,
         std::unordered_map<std::string, menoh_impl::array> input_table;
         for(auto p : builder->input_profile_table) {
             std::string name;
-            std::tuple<menoh_dtype, std::vector<int>> t;
-            std::tie(name, t) = p;
-            menoh_dtype dtype;
-            std::vector<int> dims;
-            std::tie(dtype, dims) = t;
+            menoh_impl::array_profile profile;
+            std::tie(name, profile) = p;
 
             auto buff = builder->external_buffer_handle_table.find(name);
 
             if(buff == builder->external_buffer_handle_table.end()) {
-                input_table.insert(
-                  {name, menoh_impl::array(
-                           static_cast<menoh_impl::dtype_t>(dtype), dims)});
+                input_table.emplace(name, menoh_impl::array(profile));
             } else {
-                input_table.insert(
-                  {name,
-                   menoh_impl::array(static_cast<menoh_impl::dtype_t>(dtype),
-                                     dims, buff->second)});
+                input_table.emplace(name,
+                                    menoh_impl::array(profile, buff->second));
             }
         }
 
-        std::unordered_map<std::string, menoh_impl::array> output_table;
-        for(auto p : builder->output_profile_table) {
+        std::unordered_map<std::string, menoh_impl::array>
+          required_output_table;
+        for(auto const& required_output_name :
+            builder->required_output_name_list) {
+            auto p = *builder->output_profile_table.find(required_output_name);
             std::string name;
-            std::tuple<menoh_dtype, std::vector<int>> t;
-            std::tie(name, t) = p;
-            menoh_dtype dtype;
-            std::vector<int> dims;
-            std::tie(dtype, dims) = t;
+            menoh_impl::array_profile profile;
+            std::tie(name, profile) = p;
 
             auto buff = builder->external_buffer_handle_table.find(name);
 
             if(buff == builder->external_buffer_handle_table.end()) {
-                output_table.insert(
-                  {name, menoh_impl::array(
-                           static_cast<menoh_impl::dtype_t>(dtype), dims)});
+                required_output_table.emplace(name, menoh_impl::array(profile));
             } else {
-                output_table.insert(
-                  {name,
-                   menoh_impl::array(static_cast<menoh_impl::dtype_t>(dtype),
-                                     dims, buff->second)});
+                required_output_table.emplace(
+                  name, menoh_impl::array(profile, buff->second));
             }
         }
 
         *dst_model_handle =
           std::make_unique<menoh_model>(
-            menoh_model{input_table, output_table,
+            menoh_model{input_table, required_output_table,
                         menoh_impl::make_model_core(
-                          input_table, output_table, model_data->model_data,
+                          input_table, required_output_table,
+                          builder->output_profile_table, model_data->model_data,
                           backend_name, backend_config)})
             .release();
         return menoh_error_code_success;

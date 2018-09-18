@@ -22,6 +22,8 @@ namespace menoh_impl {
               std::unordered_map<std::string, array> const& common_input_table,
               std::unordered_map<std::string, array> const&
                 required_output_table,
+              std::unordered_map<std::string, array_profile> const&
+                output_profile_table,
               std::vector<
                 std::pair<std::string, std::unique_ptr<context>>> const&
                 context_list,
@@ -157,5 +159,5 @@ namespace menoh_impl {
             }
 
         } // namespace mkldnn_backend
-    } // namespace mkldnn_with_generic_fallback_backend
+    }     // namespace mkldnn_with_generic_fallback_backend
 } // namespace menoh_impl

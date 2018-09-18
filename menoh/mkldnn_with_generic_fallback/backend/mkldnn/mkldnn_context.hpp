@@ -27,7 +27,7 @@ namespace menoh_impl {
                     auto dims =
                       ::menoh_impl::mkldnn_backend::extract_dims(found->second);
                     auto variable_memory = found->second; // mutable
-                    procedure copy_proc(nullptr); // mutable
+                    procedure copy_proc(nullptr);         // mutable
                     if(dims.size() == 4) {
                         auto format = static_cast<mkldnn::memory::format>(
                           found->second.get_primitive_desc()
@@ -68,6 +68,8 @@ namespace menoh_impl {
                     common_input_table,
                   std::unordered_map<std::string, array> const&
                     required_output_table,
+                  std::unordered_map<std::string, array_profile> const&
+                    output_profile_table,
                   std::vector<
                     std::pair<std::string, std::unique_ptr<context>>> const&
                     context_list,

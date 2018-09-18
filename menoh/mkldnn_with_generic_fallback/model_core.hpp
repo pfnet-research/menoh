@@ -24,6 +24,8 @@ namespace menoh_impl {
                 context_list,
               std::unordered_map<std::string, array> const& input_table,
               std::unordered_map<std::string, array> const& output_table,
+              std::unordered_map<std::string, array_profile> const&
+                output_profile_table,
               menoh_impl::model_data const& model_data, backend_config const& config);
 
         private:
