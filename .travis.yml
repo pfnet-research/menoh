@@ -1,13 +1,39 @@
 dist: trusty
 sudo: required
 language: cpp
+services:
+  - docker
 addons:
+
+env:
+    global:
+        - PROTOBUF_VERSION: 3.6.1
+        - MKLDNN_VERSION: 0.16
+        - MAKE_JOBS: 2
+        # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+        #   via the "travis encrypt" command using the project repo's public key
+        - secure: "q1I4YsB5VcNaF9Unmm6T92ht9/KwOGbxZVCpXIp5XUVulpaZq7sTd3rL1v3r1mUCYaabkcy9N4UPQjJZsuOlU4jc8zPzPxPir7hOER5umlkfSMuc1RhmShT8cK9naznqv7FLSTIjTZIao85Lrgxgw0B6xzcWc0kSeJPJVAmS5kwmC/FCQS2MPQpyhfE5JjpUrePOT+lRTB6Psm5bWyEww8bPsatO2k5b8DDdmUJIxmuJ1UTCx5rj/ZcTJLWAsj8D7u9aUfCmOhV5+hqHBvJd/06FLt254SNmvzmVLW9CVU/aZvuTtRECgBYCVndR7NxWpRHo1SBKqgLu+cNOFoFyt++1V+FAbpxj9JMktZNyxWp22c/FvBBdHynOsxBxVFdGIzhcwhQMiHFLOK3pnyiByabtINhERqrszkbpztOepBE3o8PGpjOz8iIx1TtLgmWwAw5D6WXx8FeP5FMkJwpXckCMI5tX5wPoU8cpZIwPjCxG3Z+ojHw+80pQWCrMZnEDfcf9zskJNsmv/GbiWGEvI8xVG0gst5VmjaAXK7JhC0cKvPOEmCFRGY+BWdjD3dkYIIElUmBRfTRDpcDJV6j5r1xMv7QKRFDfAjnC33KLJo2aALZTrkRPveIP2h2jU13ZbemN8GKWwEWNzidmwtCbH4rpe80rFqASWkyfii7HrEI="
+
+cache:
+    directories:
+        - ${HOME}/downloads
+        - ${HOME}/build/protobuf-${PROTOBUF_VERSION}
+        - ${HOME}/build/mkl-dnn-${MKLDNN_VERSION}
+
 matrix:
     include:
         - os: osx
+          env: PLATFORM=macosx-x86_64
         - os: osx
-          env: STATIC=1
+          env: PLATFORM=macosx-x86_64 LINK_STATIC=true
         - os: linux
+          env: PLATFORM=linux-x86_64 BUILDENV_IMAGE=okapies/buildenv:linux-x64-devtoolset-6
+        - os: linux
+          env: PLATFORM=linux-x86_64 BUILDENV_IMAGE=okapies/buildenv:linux-x64-devtoolset-6 LINK_STATIC=true
+        # Use Travis directly instead of container to run static code analysis using Coverity
+        - if: branch = coverity_scan
+          os: linux
+          env: RUN_COVERITY=true
           addons:
               apt:
                   sources:
@@ -27,98 +53,20 @@ matrix:
                       description: "Menoh: DNN inference library"
                   notification_email: menoh-oss@preferred.jp
                   build_command_prepend: >-
-                      cov-configure --compiler /usr/bin/g++-7 --comptype g++ -- -march=native -fPIC -std=gnu++14 &&
-                      cmake .
+                      cov-configure --compiler g++-7 --comptype g++ --template &&
+                      cmake -DMKLDNN_INCLUDE_DIR="$HOME/mkl-dnn-${MKLDNN_VERSION}/include" -DMKLDNN_LIBRARY="$HOME/mkl-dnn-${MKLDNN_VERSION}/lib/libmkldnn.so" .
                   build_command: make
                   branch_pattern: coverity_scan
-        - os: linux
-          env: STATIC=1
-          addons:
-              apt:
-                  sources:
-                      - ubuntu-toolchain-r-test
-                  packages:
-                      - gcc-7
-                      - g++-7
-                      - cmake-data
-                      - cmake
-                      - libopencv-dev
-env:
-    global:
-        # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-        #   via the "travis encrypt" command using the project repo's public key
-        - secure: "q1I4YsB5VcNaF9Unmm6T92ht9/KwOGbxZVCpXIp5XUVulpaZq7sTd3rL1v3r1mUCYaabkcy9N4UPQjJZsuOlU4jc8zPzPxPir7hOER5umlkfSMuc1RhmShT8cK9naznqv7FLSTIjTZIao85Lrgxgw0B6xzcWc0kSeJPJVAmS5kwmC/FCQS2MPQpyhfE5JjpUrePOT+lRTB6Psm5bWyEww8bPsatO2k5b8DDdmUJIxmuJ1UTCx5rj/ZcTJLWAsj8D7u9aUfCmOhV5+hqHBvJd/06FLt254SNmvzmVLW9CVU/aZvuTtRECgBYCVndR7NxWpRHo1SBKqgLu+cNOFoFyt++1V+FAbpxj9JMktZNyxWp22c/FvBBdHynOsxBxVFdGIzhcwhQMiHFLOK3pnyiByabtINhERqrszkbpztOepBE3o8PGpjOz8iIx1TtLgmWwAw5D6WXx8FeP5FMkJwpXckCMI5tX5wPoU8cpZIwPjCxG3Z+ojHw+80pQWCrMZnEDfcf9zskJNsmv/GbiWGEvI8xVG0gst5VmjaAXK7JhC0cKvPOEmCFRGY+BWdjD3dkYIIElUmBRfTRDpcDJV6j5r1xMv7QKRFDfAjnC33KLJo2aALZTrkRPveIP2h2jU13ZbemN8GKWwEWNzidmwtCbH4rpe80rFqASWkyfii7HrEI="
-before_install:
-    - |
-      if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-        echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
-      fi
-install:
-    - |
-      if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-        curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.0.3/ubuntu1404_mkl-dnn_0.16-1_amd64.deb
-        curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.0.3/ubuntu1404_mkl-dnn-dev_0.16-1_amd64.deb
-        sudo dpkg -i *.deb
-      fi
-    - |
-      if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        brew update
-        brew upgrade python
-        export PATH=/usr/local/opt/python/libexec/bin:$PATH
-        brew install numpy || true
-        brew install opencv mkl-dnn
-        if [ -z "$STATIC" ]; then brew install protobuf; fi
-      else
-        pyenv local 3.6
-      fi
-    - if [ "$TRAVIS_OS_NAME" = "linux" -a "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
-    - mkdir -p data
-    - pip install --user chainer
-    - python retrieve_data.py
-    - python gen_test_data.py
-before_script:
-    - |
-      echo 'Checking tools and libraries version:'
-      if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-        apt list --installed
-        ldconfig -p
-      fi
-      if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        brew list --versions
-      fi
-      cmake --version
-      make --version
+          install:
+              - if [ "$TRAVIS_OS_NAME" = "linux" -a "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
+              - |
+                bash -ex ${TRAVIS_BUILD_DIR}/.travis/install-mkldnn.sh \
+                    --version ${MKLDNN_VERSION} \
+                    --download-dir ${HOME}/downloads \
+                    --build-dir ${HOME}/build \
+                    --install-dir ${HOME}/mkl-dnn-${MKLDNN_VERSION} \
+                    --parallel ${MAKE_JOBS}
+          script: true # skip build and test
+
 script:
-    #- if [ -f cov-int/build-log.txt ]; then cat cov-int/build-log.txt; fi
-    # CMakeCache.txt generated for coverity_scan build hinders out-of-source build
-    - if [ -f CMakeCache.txt ]; then rm CMakeCache.txt; fi
-    - |
-      if [ -n "$STATIC" ]; then
-        if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-          STATIC_OPTION="-DLINK_STATIC_LIBPROTOBUF=ON"
-        else
-          STATIC_OPTION="-DLINK_STATIC_LIBPROTOBUF=ON -DLINK_STATIC_LIBSTDCXX=ON -DLINK_STATIC_LIBGCC=ON"
-        fi
-      else
-        STATIC_OPTION=""
-      fi
-    - mkdir build
-    - cd build
-    - |
-      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-        cmake -DENABLE_TEST=ON \
-        $STATIC_OPTION \
-        ..
-      else
-        cmake -DENABLE_TEST=ON \
-        $STATIC_OPTION \
-        ..
-      fi
-    - make
-    - ./test/menoh_test
-    - |
-      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-        otool -L menoh/libmenoh.dylib
-      else
-        ldd menoh/libmenoh.so
-      fi
+    - bash -ex ${TRAVIS_BUILD_DIR}/.travis/run-build.sh
