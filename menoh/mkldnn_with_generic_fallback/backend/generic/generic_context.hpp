@@ -45,10 +45,11 @@ namespace menoh_impl {
                     return variable_table_.at(name);
                 }
 
-                using procedure_factory = std::function<std::tuple<
-                  procedure, std::vector<std::pair<std::string, array>>>(
-                  int, std::vector<node> const&, std::vector<array> const&,
-                  std::unordered_map<std::string, array> const&)>;
+                using procedure_factory = std::function<procedure(
+                  node const&, // node
+                  std::vector<array> const&, // input list
+                  std::vector<array> const&  // output list
+                  )>;
                 optional<std::function<void()>>
                 try_to_get_input_from_common_table(
                   std::string const& input_name,
