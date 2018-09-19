@@ -214,7 +214,7 @@ namespace {
     // Tests for MKLDNN with Generic fallback backend
     TEST_OP(mkldnn_with_generic_fallback, test_relu, eps);
 
-    TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
 
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP
