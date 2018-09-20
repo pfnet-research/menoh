@@ -34,24 +34,36 @@ function docker_exec_script() {
     return $?
 }
 
+function build_protobuf() {
+    docker_exec_script \
+        ${PROJ_DIR}/.travis/build-protobuf.sh \
+            --version ${PROTOBUF_VERSION} \
+            --download-dir ${WORK_DIR}/downloads \
+            --extract-dir ${WORK_DIR}/build \
+            --install-dir ${PROTOBUF_INSTALL_DIR} \
+            --parallel ${MAKE_JOBS}
+}
+
 function install_protobuf() {
     docker_exec_script \
         ${PROJ_DIR}/.travis/install-protobuf.sh \
-            --version ${PROTOBUF_VERSION} \
+            --build-dir ${WORK_DIR}/build/protobuf-${PROTOBUF_VERSION}
+}
+
+function build_mkldnn() {
+    docker_exec_script \
+        ${PROJ_DIR}/.travis/build-mkldnn.sh \
+            --version ${MKLDNN_VERSION} \
             --download-dir ${WORK_DIR}/downloads \
-            --build-dir ${WORK_DIR}/build \
-            --install-dir ${PROTOBUF_INSTALL_DIR} \
+            --extract-dir ${WORK_DIR}/build \
+            --install-dir ${MKLDNN_INSTALL_DIR} \
             --parallel ${MAKE_JOBS}
 }
 
 function install_mkldnn() {
     docker_exec_script \
         ${PROJ_DIR}/.travis/install-mkldnn.sh \
-            --version ${MKLDNN_VERSION} \
-            --download-dir ${WORK_DIR}/downloads \
-            --build-dir ${WORK_DIR}/build \
-            --install-dir ${MKLDNN_INSTALL_DIR} \
-            --parallel ${MAKE_JOBS}
+            --build-dir ${WORK_DIR}/build/mkl-dnn-${MKLDNN_VERSION}/build
 }
 
 function prepare_menoh_data() {
@@ -65,10 +77,12 @@ function build_menoh() {
     if [ "${LINK_STATIC}" != "true" ]; then
         docker_exec_script \
             ${PROJ_DIR}/.travis/build-menoh.sh \
+                --build-type Release \
                 --source-dir ${PROJ_DIR}
     else
         docker_exec_script \
             ${PROJ_DIR}/.travis/build-menoh.sh \
+                --build-type Release \
                 --source-dir ${PROJ_DIR} \
                 --link-static-libgcc ON \
                 --link-static-libstdcxx ON \

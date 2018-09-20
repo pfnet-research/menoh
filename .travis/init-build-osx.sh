@@ -16,10 +16,12 @@ function prepare_menoh_data() {
 function build_menoh() {
     if [ "${LINK_STATIC}" != "true" ]; then
         bash -ex ${PROJ_DIR}/.travis/build-menoh.sh \
+            --build-type Release \
             --source-dir ${PROJ_DIR}
     else
         # Does not set --link-static-libgcc and --link-static-libstdcxx in macOS
         bash -ex ${PROJ_DIR}/.travis/build-menoh.sh \
+            --build-type Release \
             --source-dir ${PROJ_DIR} \
             --link-static-libprotobuf ON
     fi

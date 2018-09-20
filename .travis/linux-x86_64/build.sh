@@ -13,7 +13,9 @@ docker_exec "ls -l ${WORK_DIR}/build/${TRAVIS_REPO_SLUG}"
 docker_exec "(printenv | grep PATH) && make --version && cmake --version && g++ --version && ldd --version"
 
 # build and install prerequisites
+build_protobuf
 install_protobuf
+build_mkldnn
 install_mkldnn
 
 docker_exec "pip3 install --user chainer" # for generating test data
