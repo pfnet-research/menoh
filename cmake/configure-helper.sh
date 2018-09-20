@@ -38,4 +38,4 @@ export CC=${ARG_CC}
 export CXX=${ARG_CXX}
 [ -n "${ARG_CXXCPP}" ] && export CXXCPP=${ARG_CXXCPP} || export CXXCPP="${ARG_CXX} -E"
 
-./configure $@
+./configure "$@"

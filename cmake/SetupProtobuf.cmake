@@ -12,8 +12,8 @@ if(LINK_STATIC_LIBPROTOBUF)
         set(PROTOBUF_HASH MD5=406d5b8636576b1c86730ca5cbd1e576)
 
         # Requires `-fPIC` for linking with a shared library
-        set(PROTOBUF_CFLAGS -fPIC)
-        set(PROTOBUF_CXXFLAGS -fPIC)
+        set(PROTOBUF_CFLAGS "-g -O2 -fPIC")
+        set(PROTOBUF_CXXFLAGS "-g -O2 -fPIC")
         if(USE_OLD_GLIBCXX_ABI)
             set(PROTOBUF_CXXFLAGS "${PROTOBUF_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
         endif()
@@ -24,7 +24,7 @@ if(LINK_STATIC_LIBPROTOBUF)
             URL_HASH ${PROTOBUF_HASH}
             DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
             BUILD_IN_SOURCE 1
-            CONFIGURE_COMMAND bash -ex ${CMAKE_MODULE_PATH}/configure-helper.sh --CC ${CMAKE_C_COMPILER} --CXX ${CMAKE_CXX_COMPILER} -- --prefix=${PROTOBUF_DIR} CFLAGS=${PROTOBUF_CFLAGS} CXXFLAGS=${PROTOBUF_CXXFLAGS}
+            CONFIGURE_COMMAND bash -ex ${CMAKE_MODULE_PATH}/configure-helper.sh --CC ${CMAKE_C_COMPILER} --CXX ${CMAKE_CXX_COMPILER} -- "--prefix=${PROTOBUF_DIR}" "CFLAGS=${PROTOBUF_CFLAGS}" "CXXFLAGS=${PROTOBUF_CXXFLAGS}"
             BUILD_COMMAND make -j4
             INSTALL_COMMAND make install
         )
