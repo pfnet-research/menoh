@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # retrieve arguments
 while [[ $# != 0 ]]; do
@@ -29,10 +29,10 @@ done
 test -n "${ARG_BUILD_DIR}" || { echo "--build-dir is not specified" 1>&2; exit 1; }
 
 # install (always)
-echo -e "\e[33;1mInstalling libprotobuf\e[0m"
+echo -e "\e[33;1mInstalling libmkldnn\e[0m"
 
-# install to ${DESTDIR}/`--prefix` if it is specified
-[ -n "${ARG_DESTDIR}" ] && export DESTDIR=${ARG_DESTDIR}
+# install to ${DESTDIR}/${CMAKE_INSTALL_PREFIX} if it is specified
+[ -n "${ARG_DESTDIR}" ] && export DESTDIR="${ARG_DESTDIR}"
 
-cd ${ARG_BUILD_DIR}
-make install
+cd "${ARG_BUILD_DIR}"
+make install/strip

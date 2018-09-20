@@ -60,14 +60,14 @@ matrix:
           install:
               - if [ "$TRAVIS_OS_NAME" = "linux" -a "$CXX" = "g++" ]; then export CXX="g++-7" CC="gcc-7"; fi
               - |
-                bash -ex ${TRAVIS_BUILD_DIR}/.travis/build-mkldnn.sh \
+                bash -ex ${TRAVIS_BUILD_DIR}/scripts/build-mkldnn.sh \
                     --version ${MKLDNN_VERSION} \
                     --download-dir ${HOME}/downloads \
                     --extract-dir ${HOME}/build \
                     --install-dir ${HOME}/mkl-dnn-${MKLDNN_VERSION} \
                     --parallel ${MAKE_JOBS}
               - |
-                bash -ex ${TRAVIS_BUILD_DIR}/.travis/install-mkldnn.sh \
+                bash -ex ${TRAVIS_BUILD_DIR}/scripts/install-mkldnn.sh \
                     --build-dir ${HOME}/build/mkl-dnn-${MKLDNN_VERSION}/build
           script: true # skip build and test
 
