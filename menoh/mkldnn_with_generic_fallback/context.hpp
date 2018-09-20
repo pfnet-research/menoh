@@ -16,6 +16,8 @@ namespace menoh_impl {
 
         class context {
         public:
+            virtual ~context() = default;
+
             optional<std::tuple<procedure, array>>
             try_to_get_variable(std::string const& name) {
                 return do_try_to_get_variable(name);

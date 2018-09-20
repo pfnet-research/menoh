@@ -69,7 +69,7 @@ build_script:
     )
   )
 - if [%TARGET%]==[mingw] (
-    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON -DLINK_STATIC_LIBPROTOBUF=ON -DCMAKE_INSTALL_PREFIX=/mingw64 .. &&
+    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON %STATIC_OPTION% -DCMAKE_INSTALL_PREFIX=/mingw64 .. &&
     make
   ) else (
     cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
@@ -80,9 +80,12 @@ test_script:
 # to find libmenoh.dll, libgtest.dll and libgtest_main.dll
 - if [%TARGET%]==[mingw] set PATH=C:\projects\menoh\build\menoh;C:\projects\menoh\build\test\lib\googletest\googlemock\gtest;C:\msys64\mkl-dnn-86b7129-mingw\bin;%PATH%
 - if [%TARGET%]==[mingw] (
-    ldd test/menoh_test.exe &&
+    echo "ldd libmenoh.dll" &&
     ldd /c/projects/menoh/build/menoh/libmenoh.dll &&
+    echo "ldd libmkldnn.dll" &&
     ldd /mingw64/bin/libmkldnn.dll &&
+    echo "ldd menoh_test.exe" &&
+    ldd test/menoh_test.exe &&
     test\menoh_test
   )
 - cd ..
