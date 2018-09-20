@@ -80,7 +80,7 @@ if [ ! -e "${ARG_BUILD_DIR}/src/libprotobuf.la" ]; then
     [ -d "${ARG_BUILD_DIR}" ] || mkdir -p "${ARG_BUILD_DIR}"
 
     cd "${ARG_BUILD_DIR}"
-    "${SOURCE_DIR}/configure" --prefix="${ARG_INSTALL_DIR}" CFLAGS=-fPIC CXXFLAGS=-fPIC
+    "${SOURCE_DIR}/configure" --prefix="${ARG_INSTALL_DIR}" CFLAGS="-g -O2 -fPIC" CXXFLAGS="-g -O2 -fPIC"
     make -j${ARG_PARALLEL}
 
     echo -e "\e[32;1mlibprotobuf was successfully built.\e[0m"
