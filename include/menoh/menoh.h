@@ -5,7 +5,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#if (defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
+#if(defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
 #define MENOH_API __declspec(dllexport)
 #else
 #define MENOH_API
@@ -20,6 +20,16 @@
 #if MENOH_ERROR_MESSAGE_MAX_LENGTH < 1024
 #undef MENOH_ERROR_MESSAGE_MAX_LENGTH
 #define MENOH_ERROR_MESSAGE_MAX_LENGTH 1024
+#endif
+
+#if defined(__cplusplus) && __cplusplus >= 201402L
+#define MENOH_DEPRECATED_ATTRIBUTE(message) [[deprecated(message)]]
+#elif(defined(_WIN32) || defined(__WIN32__)) && !defined(__GNUC__)
+#define MENOH_DEPRECATED_ATTRIBUTE(message) __declspec(deprecated(message))
+#elif defined(__GNUC__)
+#define MENOH_DEPRECATED_ATTRIBUTE(message) __attribute__((deprecated(message)))
+#else
+#define MENOH_DEPRECATED_ATTRIBUTE(message)
 #endif
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
@@ -66,6 +76,9 @@ enum menoh_error_code_constant {
     menoh_error_code_backend_error,
     menoh_error_code_same_named_variable_already_exist,
     menoh_error_code_unsupported_input_dims,
+    menoh_error_code_same_named_parameter_already_exist,
+    menoh_error_code_same_named_attribute_already_exist,
+    menoh_error_code_invalid_backend_config_error,
 };
 typedef int32_t menoh_error_code;
 /*! \brief Users can get detailed message about last error.
@@ -83,17 +96,6 @@ MENOH_API const char* menoh_get_last_error_message();
  */
 struct menoh_model_data;
 typedef struct menoh_model_data* menoh_model_data_handle;
-
-/*! \brief Load onnx file and make model_data
- */
-menoh_error_code MENOH_API menoh_make_model_data_from_onnx(
-  const char* onnx_filename, menoh_model_data_handle* dst_handle);
-/*! \brief make model_data from onnx binary data on memory
- *
- * \note Users can free onnx_data buffer after calling menoh_make_model_data_from_onnx().
- */
-menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
-  const uint8_t* onnx_data, int32_t size, menoh_model_data_handle* dst_handle);
 /*! \brief Model_data delete function
  *
  * Users must call to release memory resources allocated for
@@ -103,6 +105,69 @@ menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
  * call.
  */
 void MENOH_API menoh_delete_model_data(menoh_model_data_handle model_data);
+/*! \brief Load onnx file and make model_data
+ */
+menoh_error_code MENOH_API menoh_make_model_data_from_onnx(
+  const char* onnx_filename, menoh_model_data_handle* dst_handle);
+/*! \brief make model_data from onnx binary data on memory
+ *
+ * \note Users can free onnx_data buffer after calling
+ * menoh_make_model_data_from_onnx().
+ */
+menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
+  const uint8_t* onnx_data, int32_t size, menoh_model_data_handle* dst_handle);
+/*! \brief Make empty model_data
+ */
+menoh_error_code MENOH_API
+menoh_make_model_data(menoh_model_data_handle* dst_handle);
+/*! \brief Add a new parameter in model_data
+ *
+ * \note Duplication of parameter_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API menoh_model_data_add_parameter(
+  menoh_model_data_handle model_data, const char* parameter_name,
+  menoh_dtype dtype, int32_t dims_size, const int32_t* dims,
+  void* buffer_handle);
+/*! \brief Add a new node to model_data
+ */
+menoh_error_code MENOH_API menoh_model_data_add_new_node(
+  menoh_model_data_handle model_data, const char* op_type);
+/*! \brief Add a new input name to latest added node in model_data
+ */
+menoh_error_code MENOH_API menoh_model_data_add_input_name_to_current_node(
+  menoh_model_data_handle model_data, const char* input_name);
+/*! \brief Add a new output name to latest added node in model_data
+ */
+menoh_error_code MENOH_API menoh_model_data_add_output_name_to_current_node(
+  menoh_model_data_handle model_data, const char* output_name);
+/*! \brief Add a new int attribute to latest added node in model_data
+ *
+ * \note Duplication of attribute_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API menoh_model_data_add_attribute_int_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name,
+  int32_t value);
+/*! \brief Add a new float attribute to latest added node in model_data
+ *
+ * \note Duplication of attribute_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, float value);
+/*! \brief Add a new int array attribute to latest added node in model_data
+ *
+ * \note Duplication of attribute_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
+  const int* value);
+/*! \brief Add a new float array attribute to latest added node in model_data
+ *
+ * \note Duplication of attribute_name is not allowed and it throws error.
+ */
+menoh_error_code MENOH_API
+menoh_model_data_add_attribute_floats_to_current_node(
+  menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
+  const float* value);
 /** @} */
 
 /*! @addtogroup vpt Variable profile table types and operations
@@ -114,8 +179,7 @@ void MENOH_API menoh_delete_model_data(menoh_model_data_handle model_data);
  * This struct configure profiles of variables.
  *
  * See
- *  - menoh_variable_profile_table_builder_add_input_profile_dims_2()
- *  - menoh_variable_profile_table_builder_add_input_profile_dims_4()
+ *  - menoh_variable_profile_table_builder_add_input_profile()
  *  - menoh_variable_profile_table_builder_add_output_profile().
  */
 struct menoh_variable_profile_table_builder;
@@ -134,11 +198,22 @@ menoh_error_code MENOH_API menoh_make_variable_profile_table_builder(
 void MENOH_API menoh_delete_variable_profile_table_builder(
   menoh_variable_profile_table_builder_handle builder);
 
+/*! \brief Add input profile
+ *
+ * Input profile contains name, dtype and dims.
+ */
+menoh_error_code MENOH_API
+menoh_variable_profile_table_builder_add_input_profile(
+  menoh_variable_profile_table_builder_handle builder, const char* name,
+  menoh_dtype dtype, int32_t dims_size, const int32_t* dims);
+
 /*! \brief Add 2D input profile
  *
  * Input profile contains name, dtype and dims (num, size). This 2D input is
  * conventional batched 1D inputs.
  */
+MENOH_DEPRECATED_ATTRIBUTE(
+  "please use menoh_variable_profile_table_builder_add_input_profile() instead")
 menoh_error_code MENOH_API
 menoh_variable_profile_table_builder_add_input_profile_dims_2(
   menoh_variable_profile_table_builder_handle builder, const char* name,
@@ -150,6 +225,8 @@ menoh_variable_profile_table_builder_add_input_profile_dims_2(
  * This 4D input is conventional batched image inputs. Image input is
  * 3D(channel, height, width).
  */
+MENOH_DEPRECATED_ATTRIBUTE(
+  "please use menoh_variable_profile_table_builder_add_input_profile() instead")
 menoh_error_code MENOH_API
 menoh_variable_profile_table_builder_add_input_profile_dims_4(
   menoh_variable_profile_table_builder_handle builder, const char* name,

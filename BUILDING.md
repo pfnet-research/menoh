@@ -124,7 +124,7 @@ make install # as root
 To run the example, you also need to download model data:
 
 ```
-python retrieve_data.py
+python scripts/retrieve_data.py
 ```
 
 #### Static linking

@@ -1,4 +1,4 @@
-build*
+build*/
 data/*
 external/protobuf/
 runx/onnx/onnx.pb.cc

@@ -12,8 +12,6 @@
 #include <menoh/optional.hpp>
 #include <menoh/utility.hpp>
 
-#include <iostream>
-
 namespace menoh_impl {
 
     std::vector<node> extract_needed_node_list(
@@ -36,7 +34,9 @@ namespace menoh_impl {
                             return output_name == required_output_name;
                         });
                   });
-                if(needed_node_iter == node_list.end()) { continue; }
+                if(needed_node_iter == node_list.end()) {
+                    continue;
+                }
                 auto is_already_added =
                   std::find(needed_node_list.begin(), needed_node_list.end(),
                             *needed_node_iter) != needed_node_list.end();
@@ -250,16 +250,20 @@ namespace menoh_impl {
         std::unordered_map<std::string, std::vector<int>> variable_dims_table(
           input_name_and_dims_pair_list.begin(),
           input_name_and_dims_pair_list.end());
-        auto graph = make_graph(model_data.node_list);
-        auto parameter_table = std::unordered_map<std::string, array>(
+        std::transform(
           model_data.parameter_name_and_array_list.begin(),
-          model_data.parameter_name_and_array_list.end());
+          model_data.parameter_name_and_array_list.end(),
+          std::inserter(variable_dims_table, variable_dims_table.end()),
+          [](auto const& p) {
+              return std::make_pair(p.first, p.second.dims());
+          });
+        auto graph = make_graph(model_data.node_list);
         for(auto const& node : graph.node_list()) {
             if(node.op_type == "Conv") {
                 auto weight_name = node.input_name_list.at(1);
                 auto output_channel_num =
                   get_output_channel_num_from_parameter_dims(
-                    find_value(parameter_table, weight_name).dims());
+                    find_value(variable_dims_table, weight_name));
                 auto output_dims = calc_2d_output_dims(node, output_channel_num,
                                                        variable_dims_table);
                 auto dilations =
@@ -283,9 +287,9 @@ namespace menoh_impl {
                 auto weight_name = node.input_name_list.at(1);
                 auto output_channel_num =
                   get_output_channel_num_from_parameter_dims(
-                    find_value(parameter_table, weight_name).dims());
-                auto output_dims = calc_2d_output_dims_for_conv_transpose(node,
-                          output_channel_num, variable_dims_table);
+                    find_value(variable_dims_table, weight_name));
+                auto output_dims = calc_2d_output_dims_for_conv_transpose(
+                  node, output_channel_num, variable_dims_table);
                 auto dilations =
                   optional_attribute_ints(node, "dilations", {1, 1});
                 if(dilations != std::vector<int>({1, 1})) {
@@ -339,8 +343,7 @@ namespace menoh_impl {
                 auto batch_size = get_batch_size_from_variable_dims(
                   find_value(variable_dims_table, input_name));
                 auto weight_dims =
-                  find_value(parameter_table, node.input_name_list.at(1))
-                    .dims();
+                  find_value(variable_dims_table, node.input_name_list.at(1));
                 auto input_size =
                   std::accumulate(input_dims.begin() + 1, input_dims.end(), 1,
                                   std::multiplies<void>());
@@ -359,8 +362,7 @@ namespace menoh_impl {
                 auto batch_size = get_batch_size_from_variable_dims(
                   find_value(variable_dims_table, input_name));
                 auto weight_dims =
-                  find_value(parameter_table, node.input_name_list.at(1))
-                    .dims();
+                  find_value(variable_dims_table, node.input_name_list.at(1));
                 auto trans_a = optional_attribute_int(node, "transA", 0);
                 if(trans_a) {
                     throw unsupported_operator_attribute(
@@ -386,15 +388,15 @@ namespace menoh_impl {
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
             } else if(std::find(supported_operator_list.begin(),
-                                supported_operator_list.end(), node.op_type) !=
+                                supported_operator_list.end(),
+                                node.op_type) !=
                       supported_operator_list
                         .end()) { // check if supported operator
                 auto input_name = node.input_name_list.at(0);
                 auto output_dims = find_value(variable_dims_table, input_name);
                 variable_dims_table.insert(
                   {node.output_name_list.at(0), output_dims});
-            }
-            else {
+            } else {
                 throw unsupported_operator(node.op_type);
             }
         }
