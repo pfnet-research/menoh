@@ -5,8 +5,8 @@ if (ENABLE_MKLDNN)
 endif()  
 
 if(ENABLE_ARMNN)
-    add_subdirectory(arm)
-    file(GLOB ARM_SOURCES "arm/*.cpp")
+    add_subdirectory(armnn)
+    file(GLOB ARM_SOURCES "armnn/*.cpp")
 endif()
 
 file(GLOB SOURCES "./*.cpp")

@@ -1,7 +1,7 @@
 
 #include <menoh/json.hpp>
 
-#include <menoh/arm/model_core.hpp>
+#include <menoh/armnn/model_core.hpp>
 
 using namespace armnn;
 

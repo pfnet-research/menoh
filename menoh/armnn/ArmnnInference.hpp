@@ -5,10 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <menoh/array.hpp>
-#include <menoh/model_core.hpp>
-#include <menoh/model_data.hpp>
-
 #include <boost/assert.hpp>
 #include <boost/format.hpp>
 #include <boost/core/ignore_unused.hpp>
@@ -20,7 +16,11 @@
 
 #include <armnn/ArmNN.hpp>
 
-#include <menoh/arm/MenohParser.hpp>
+#include <menoh/array.hpp>
+#include <menoh/model_core.hpp>
+#include <menoh/model_data.hpp>
+
+#include <menoh/armnn/MenohParser.hpp>
 
 using namespace armnn;
 

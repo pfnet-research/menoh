@@ -7,7 +7,7 @@
 #include <vector>
 #include <iostream>
 
-#include "armnn/ArmNN.hpp"
+#include <armnn/ArmNN.hpp>
 
 #include <menoh/array.hpp>
 #include <menoh/model_core.hpp>

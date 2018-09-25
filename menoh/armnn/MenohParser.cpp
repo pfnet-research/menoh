@@ -24,7 +24,7 @@
 #include <armnnUtils/Permute.hpp>
 #include <armnnUtils/GraphTopologicalSort.hpp>
 
-#include <menoh/arm/MenohParser.hpp>
+#include <menoh/armnn/MenohParser.hpp>
 
 using namespace armnn;
 

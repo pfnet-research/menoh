@@ -6,7 +6,7 @@
 #endif
 
 #if ENABLE_ARMNN
-#include <menoh/arm/model_core.hpp>
+#include <menoh/armnn/model_core.hpp>
 #endif
 
 namespace menoh_impl {
