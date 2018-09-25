@@ -665,30 +665,16 @@ namespace menoh_impl {
                 throw ParseException(boost::str(boost::format("ParseConst : not found %1%") % name));
             }
 
-	    auto arr  = m_ParamByName[name];
-
             const dtype_t MenohDataType = dtype_t::float_;
             const DataType dataType = ConvertMenohTensorDataType(MenohDataType);
             unsigned int numElements = 0U;
-
+	    auto arr  = m_ParamByName[name];
 	    std::vector<unsigned int> dimensionSizes(arr.dims().data(), arr.dims().data()+arr.dims().size());
             if (!dimensionSizes.empty())
             {
                 numElements = std::accumulate(dimensionSizes.begin(), dimensionSizes.end(),
                                             1U, std::multiplies<unsigned int>());
             }
-            TensorProto menohTensor;
-            if (dataType == DataType::Float32)
-            {
-	        menohTensor.set_float( (float *)arr.data(), numElements );
-            }
-            else if (dataType == DataType::Signed32)
-            {
-	        menohTensor.set_int(   (int32_t *)arr.data(), numElements );
-            }
-
-            const int8_t *data = menohTensor.int8_val();
-            MenohVector<int8_t> tensorData(data, menohTensor.int8_size());
 
             const TensorInfo tensorInfo(static_cast<unsigned int>(dimensionSizes.size()), dimensionSizes.data(), dataType);
 #ifdef ARM_DEBUG
@@ -698,6 +684,8 @@ namespace menoh_impl {
 	      std::cout << tensorInfo.GetShape()[i] << " ";
 	    std::cout << std::endl;
 #endif
+
+            MenohVector<int8_t> tensorData((const int8_t *)arr.data(), numElements*GetDataTypeSize(dataType));
             if (tensorData.size() > tensorInfo.GetNumBytes())
             {
                 throw ParseException(boost::str(
@@ -707,8 +695,9 @@ namespace menoh_impl {
                     % tensorInfo.GetNumElements()
                     % name));
             }
+
             return InvokeParseFunction<MakeMenohOperation<ParsedConstMenohOperation>>::Result<ParsedMenohOperationPtr>(
-                dataType, this, node, tensorData, tensorInfo);
+                                       dataType, this, node, tensorData, tensorInfo);
         }
 
         template<typename Type>
@@ -730,8 +719,6 @@ namespace menoh_impl {
 	    std::string name = GetNodeName(node);
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 3);
 
-	    IOutputSlot& inputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-	    TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
             if (!HasParsedConstTensor<float>(GetNodeName(inputs[1].m_IndexedValue->GetNode()))
 	     || !HasParsedConstTensor<float>(GetNodeName(inputs[2].m_IndexedValue->GetNode())))
             {
@@ -742,10 +729,12 @@ namespace menoh_impl {
                 boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[1].m_IndexedValue);
             ParsedConstMenohOperation<float>* biasNode   = 
                 boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[2].m_IndexedValue);
+
             MenohVector<float> weightTensorData;
             ConstTensor weightTensor = weightNode->GetConstTensor(weightTensorData);
             MenohVector<float> biasTensorData;
             ConstTensor biasTensor   = biasNode->GetConstTensor(biasTensorData);
+
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
 
@@ -782,6 +771,9 @@ namespace menoh_impl {
             {
 	        throw ParseException("Unsupported data format passed for Conv2D. Only NHWC and NCHW supported");
             }
+
+	    IOutputSlot& inputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
+	    TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
 
             uint32_t inputHeight = inputTensorInfo.GetShape()[2];
             uint32_t inputWidth  = inputTensorInfo.GetShape()[3];
@@ -1312,8 +1304,6 @@ namespace menoh_impl {
             auto dims = ReadOptionalNodeUint32ListAttribute(node, "dims");
             const TensorInfo tensorInfo(static_cast<unsigned int>(dims.size()), (const unsigned int*)dims.data(), DataType::Float32);
 	    
-            IConnectableLayer* const layer = m_Network->AddInputLayer(layerId, name.c_str());
-
 #ifdef ARM_DEBUG
 	    std::cout << "   output = " << tensorInfo.GetNumDimensions() << ", " << tensorInfo.GetNumElements() << std::endl;
 	    std::cout << "   outputShape = ";
@@ -1321,6 +1311,8 @@ namespace menoh_impl {
 	      std::cout << tensorInfo.GetShape()[i] << " ";
 	    std::cout << std::endl;
 #endif
+            IConnectableLayer* const layer = m_Network->AddInputLayer(layerId, name.c_str());
+
             layer->GetOutputSlot(0).SetTensorInfo(tensorInfo);
 
             TrackInputBinding(layer, layerId, tensorInfo);
@@ -1354,30 +1346,6 @@ namespace menoh_impl {
             activationDesc.m_Function = ActivationFunction::Sigmoid;
 
             return AddActivationLayer(node, activationDesc);
-        }
-
-        ParsedMenohOperationPtr MenohParser::ParseSoftmax(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
-	    
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
-
-            SoftmaxDescriptor softmaxDescriptor;
-            IConnectableLayer* const layer = m_Network->AddSoftmaxLayer(softmaxDescriptor, name.c_str());
-
-            IOutputSlot& prevLayerSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-            prevLayerSlot.Connect(layer->GetInputSlot(0));
-            layer->GetOutputSlot(0).SetTensorInfo(prevLayerSlot.GetTensorInfo());
-
-            TensorInfo outputInfo = prevLayerSlot.GetTensorInfo();
-#ifdef ARM_DEBUG
-	    std::cout << "   output = " << outputInfo.GetNumDimensions() << ", " << outputInfo.GetNumElements() << std::endl;
-	    std::cout << "   outputShape = ";
-	    for( unsigned int i=0 ; i<outputInfo.GetNumDimensions() ; i++ )
-	      std::cout << outputInfo.GetShape()[i] << " ";
-	    std::cout << std::endl;
-#endif
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
         }
 
         ParsedMenohOperationPtr MenohParser::ParseSoftplus(const menoh_impl::node& node, const menoh_impl::graph& graph) {
@@ -1422,6 +1390,30 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
         }
 
+        ParsedMenohOperationPtr MenohParser::ParseSoftmax(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+	    boost::ignore_unused(graph);
+	    std::string name = GetNodeName(node);
+	    
+            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
+
+            SoftmaxDescriptor softmaxDescriptor;
+            IConnectableLayer* const layer = m_Network->AddSoftmaxLayer(softmaxDescriptor, name.c_str());
+
+            IOutputSlot& prevLayerSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
+            prevLayerSlot.Connect(layer->GetInputSlot(0));
+            layer->GetOutputSlot(0).SetTensorInfo(prevLayerSlot.GetTensorInfo());
+
+            TensorInfo outputInfo = prevLayerSlot.GetTensorInfo();
+#ifdef ARM_DEBUG
+	    std::cout << "   output = " << outputInfo.GetNumDimensions() << ", " << outputInfo.GetNumElements() << std::endl;
+	    std::cout << "   outputShape = ";
+	    for( unsigned int i=0 ; i<outputInfo.GetNumDimensions() ; i++ )
+	      std::cout << outputInfo.GetShape()[i] << " ";
+	    std::cout << std::endl;
+#endif
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+        }
+
         ParsedMenohOperationPtr MenohParser::ParseMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
 	    return ParsePooling2d(node, graph, PoolingAlgorithm::Max);
         }
@@ -1436,9 +1428,6 @@ namespace menoh_impl {
 	    std::string name = GetNodeName(node);
 	    
 	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
-            IOutputSlot& inputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-            TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
-
             if (inputs.size() != 1)
             {
                 throw ParseException("2D Pooling expects one input!");
@@ -1446,16 +1435,24 @@ namespace menoh_impl {
 
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
+#ifdef ARM_DEBUG
+            std::cout << "           strides      = " << strides[0]      << ", " << strides[1]      << std::endl;
+            std::cout << "           kernel_shape = " << kernel_shape[0] << ", " << kernel_shape[1] << std::endl;
+            std::cout << "           pads         = " << pads[0]         << ", " << pads[1]         << std::endl;
+#endif            
 
             Pooling2dDescriptor pooling2dDescriptor;
-            pooling2dDescriptor.m_PoolType = pooltype;
-            pooling2dDescriptor.m_PaddingMethod = PaddingMethod::Exclude;
+            pooling2dDescriptor.m_PoolType            = pooltype;
+            pooling2dDescriptor.m_PaddingMethod       = PaddingMethod::Exclude;
             pooling2dDescriptor.m_OutputShapeRounding = OutputShapeRounding::Floor;
 
             pooling2dDescriptor.m_StrideX    = strides[0];
             pooling2dDescriptor.m_StrideY    = strides[1];
             pooling2dDescriptor.m_PoolWidth  = kernel_shape[0];
             pooling2dDescriptor.m_PoolHeight = kernel_shape[1];
+
+            IOutputSlot& inputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
+            TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
 
             uint32_t inputHeight = inputTensorInfo.GetShape()[2];
             uint32_t inputWidth  = inputTensorInfo.GetShape()[3];
@@ -1831,6 +1828,7 @@ namespace menoh_impl {
 	                                                       const std::map<std::string, TensorShape>& inputShapes,
                                                                const std::vector<std::string>& requestedOutputs){
             m_Network = INetwork::Create();
+            assert(m_Network);
 
             m_InputShapes = inputShapes;
             if (requestedOutputs.size() == 0)
@@ -1848,8 +1846,6 @@ namespace menoh_impl {
                 Cleanup();
                 throw e;
             }
-
-	    Cleanup();
 
             return std::move(m_Network);
         }
@@ -1878,12 +1874,12 @@ namespace menoh_impl {
 
         void MenohParser::TrackInputBinding(IConnectableLayer* layer, LayerBindingId id, const TensorInfo& tensorInfo)
         {
-            return TrackBindingPoint(layer, id, tensorInfo, "input", m_NetworkInputsBindingInfo);
+            TrackBindingPoint(layer, id, tensorInfo, "input", m_NetworkInputsBindingInfo);
         }
 
         void MenohParser::TrackOutputBinding(IConnectableLayer* layer, LayerBindingId id, const TensorInfo& tensorInfo)
         {
-            return TrackBindingPoint(layer, id, tensorInfo, "output", m_NetworkOutputsBindingInfo);
+            TrackBindingPoint(layer, id, tensorInfo, "output", m_NetworkOutputsBindingInfo);
         }
 
         void MenohParser::TrackBindingPoint(IConnectableLayer* layer,

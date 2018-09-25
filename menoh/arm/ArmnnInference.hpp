@@ -22,8 +22,11 @@
 
 #include <menoh/arm/MenohParser.hpp>
 
+using namespace armnn;
+
 namespace menoh_impl {
-    namespace armnn_backend {
+
+  namespace armnn_backend {
 
         struct Params
         {
@@ -65,8 +68,13 @@ namespace menoh_impl {
 
         private:
 
-            armnn::InputTensors MakeInputTensors(const std::pair<armnn::LayerBindingId, armnn::TensorInfo>& input,
-                                                 const array& inputTensorData) {
+            void Build( graph menoh_graph,
+                        std::unordered_map<std::string, array> const& parameter_table,
+                        std::map<std::string, TensorShape>& inputShapes,
+                        std::vector<std::string>& requestedOutputs );
+
+            InputTensors MakeInputTensors(const std::pair<armnn::LayerBindingId, TensorInfo>& input,
+                                          const array& inputTensorData) {
                 unsigned int size = (unsigned int)total_size(inputTensorData);
     	        if (size != input.second.GetNumElements())
                 {
@@ -86,8 +94,8 @@ namespace menoh_impl {
                 return { { input.first, armnn::ConstTensor(input.second, inputTensorData.data()) } };
             }
 
-            armnn::OutputTensors MakeOutputTensors(const std::pair<armnn::LayerBindingId, armnn::TensorInfo>& output,
-                                                   const array& outputTensorData) {
+           OutputTensors MakeOutputTensors(const std::pair<armnn::LayerBindingId, TensorInfo>& output,
+                                           const array& outputTensorData) {
                 unsigned int size = (unsigned int)total_size(outputTensorData);
 		if (size != output.second.GetNumElements())
                 {
@@ -97,11 +105,11 @@ namespace menoh_impl {
                 return { { output.first, armnn::Tensor(output.second, outputTensorData.data()) } };
             }
 
-            armnn::InputTensors MakeInputTensors(std::unordered_map<std::string, array> const& inputTensorData) {
+            InputTensors MakeInputTensors(std::unordered_map<std::string, array> const& inputTensorData) {
 	        return MakeInputTensors(m_InputBindingInfo, inputTensorData.begin()->second);
             }
 
-            armnn::OutputTensors MakeOutputTensors(std::unordered_map<std::string, array> const& outputTensorData){
+            OutputTensors MakeOutputTensors(std::unordered_map<std::string, array> const& outputTensorData){
 	        return MakeOutputTensors(m_OutputBindingInfo, outputTensorData.begin()->second);
             }
 
@@ -109,6 +117,9 @@ namespace menoh_impl {
             MenohParser         m_Parser;
 	    armnn::IRuntimePtr 	m_Runtime;
 	    armnn::NetworkId    m_NetworkIdentifier;
+
+            std::vector<std::string> input_name_list;
+            std::vector<std::string> output_name_sorted_list;
 
             std::unordered_map<std::string, array> m_Input;
 	    std::unordered_map<std::string, array> m_Output;

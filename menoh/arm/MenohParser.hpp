@@ -1,15 +1,13 @@
-#pragma once
-
 #ifndef MENOH_PARSER_HPP
 #define MENOH_PARSER_HPP
-
-#include "armnn/ArmNN.hpp"
 
 #include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <iostream>
+
+#include "armnn/ArmNN.hpp"
 
 #include <menoh/array.hpp>
 #include <menoh/model_core.hpp>
@@ -20,7 +18,7 @@ using namespace armnn;
 namespace menoh_impl {
     namespace armnn_backend {
 
-        using BindingPointInfo = std::pair<armnn::LayerBindingId, armnn::TensorInfo>;
+        using BindingPointInfo = std::pair<armnn::LayerBindingId, TensorInfo>;
 
         class MenohParser;
 

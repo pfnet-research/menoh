@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
 
     // Build variable_profile_table and get variable dims (if needed)
     auto vpt = vpt_builder.build_variable_profile_table(model_data);
-#ifdef ARM_MENOH
+#if 0
     auto fc6_dims = vpt.get_variable_profile(fc6_out_name).dims;
     std::vector<float> fc6_out_data(std::accumulate(
     fc6_dims.begin(), fc6_dims.end(), 1, std::multiplies<int32_t>()));
@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
     menoh::model_builder model_builder(vpt);
     model_builder.attach_external_buffer(conv1_1_in_name,
                                          static_cast<void*>(image_data.data()));
-#ifdef ARM_MENOH
+#if 0
     model_builder.attach_external_buffer(
     fc6_out_name, static_cast<void*>(fc6_out_data.data()));
 #endif    
@@ -155,12 +155,12 @@ int main(int argc, char** argv) {
     model.run();
 
     // Get output
-#ifdef ARM_MENOH
+#if 0
     for(int i = 0; i < 10; ++i) {
         std::cout << fc6_out_data.at(i) << " ";
     }
-#endif
     std::cout << "\n";
+#endif
     auto categories = load_category_list(synset_words_path);
     auto top_k = 5;
     auto top_k_indices = extract_top_k_index_list(

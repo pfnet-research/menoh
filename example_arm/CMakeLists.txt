@@ -1,9 +1,18 @@
 # Setup OpenCV
-find_package(OpenCV)
-if (NOT OpenCV_FOUND)
-    message(FATAL_ERROR "OpenCV is not found. OpenCV is needed to build example.")
+if(ENABLE_ANDROID_AARCH64)
+    set(OpenCV_INCLUDE_DIRS ${ARM_HOME}/armnn/OpenCV-2.4.9/include)
+    set(OpenCV_LIBRARY_DIRS ${ARM_HOME}/armnn/OpenCV-2.4.9/lib/arm64-v8a)
+else()
+    find_package(OpenCV)
+    if (NOT OpenCV_FOUND)
+        message(FATAL_ERROR "OpenCV is not found. OpenCV is needed to build example.")
+    endif()
 endif()
-include_directories("../inlcude" ${OpenCV_INCLUDE_DIRS})
+
+include_directories("../inlcude")
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -I ${OpenCV_INCLUDE_DIRS}")
 
 # Build vgg16_example_in_c
 add_executable(vgg16_example_in_c_arm vgg16_example_in_c_arm.c)
