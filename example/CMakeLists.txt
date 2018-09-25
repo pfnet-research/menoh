@@ -16,3 +16,9 @@ target_link_libraries(vgg16_example_in_cpp menoh ${OpenCV_LIBS})
 # Buld general_cnn_example_in_cpp
 add_executable(general_cnn_example_in_cpp general_cnn_example_in_cpp.cpp)
 target_link_libraries(general_cnn_example_in_cpp menoh ${OpenCV_LIBS})
+
+if (ENABLE_TENSORRT)
+    # Build vgg16_example_in_cpp
+    add_executable(vgg16_example_in_tensorrt_cpp vgg16_example_in_tensorrt_cpp.cpp)
+    target_link_libraries(vgg16_example_in_tensorrt_cpp menoh ${OpenCV_LIBS})
+endif()

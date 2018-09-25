@@ -1,11 +1,17 @@
 #include <menoh/model_core.hpp>
 #include <menoh/model_core_factory.hpp>
 
+#if ENABLE_MKLDNN
 #include <menoh/mkldnn/model_core.hpp>
 #include <menoh/mkldnn_with_generic_fallback/model_core.hpp>
 
 #include <menoh/mkldnn_with_generic_fallback/backend/generic/generic_context.hpp>
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/mkldnn_context.hpp>
+#endif
+
+#if ENABLE_TENSORRT
+#include <menoh/tensorrt/model_core.hpp>
+#endif
 
 namespace menoh_impl {
 
@@ -15,6 +21,7 @@ namespace menoh_impl {
                     menoh_impl::model_data const& model_data,
                     std::string const& backend_name,
                     backend_config const& config) {
+#if ENABLE_MKLDNN
         if(backend_name == "mkldnn") {
             return std::make_unique<mkldnn_backend::model_core>(
               mkldnn_backend::make_model_core(input_table, output_table,
@@ -35,7 +42,16 @@ namespace menoh_impl {
               std::move(context_list), input_table, output_table, model_data,
               config);
         }
+#endif
 
+#if ENABLE_TENSORRT
+        if(backend_name == "tensorrt") {
+            return std::make_unique<tensorrt_backend::model_core>(
+              tensorrt_backend::make_model_core(input_table, output_table,
+                                              model_data, config));
+        }
+#endif
+      
         throw invalid_backend_name(backend_name);
     }
 

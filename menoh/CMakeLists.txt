@@ -10,14 +10,28 @@ if(NOT DEFINED ONNX_PROTO_HEADER)
 endif()
 
 # Note: The libraries can be static (.a) or shared (.so)
-if(NOT DEFINED MKLDNN_LIBRARIES)
-    message(FATAL_ERROR "MKLDNN_LIBRARIES is not found")
+if (ENABLE_MKLDNN)
+    if(NOT DEFINED MKLDNN_LIBRARIES)
+        message(FATAL_ERROR "MKLDNN_LIBRARIES is not found")
+    endif()
 endif()
+
 if(NOT DEFINED PROTOBUF_LIBRARIES)
     message(FATAL_ERROR "PROTOBUF_LIBRARIES is not found")
 endif()
 
-file(GLOB_RECURSE SOURCES "." "*.cpp")
+if (ENABLE_MKLDNN)
+    file(GLOB MKLDNN_SOURCES "mkldnn/*.cpp")
+endif()
+
+if (ENABLE_TENSORRT)
+    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda-9.2/include -I .)
+    file(GLOB TENSORRT_SOURCES "tensorrt/*.cpp")
+endif()
+
+file(GLOB MENOH_SOURCES "./*.cpp")
+
+set(SOURCES ${ONNX_PROTO_SRC} ${ONNX_PROTO_HEADER} ${MKLDNN_SOURCES} ${TENSORRT_SOURCES} ${MENOH_SOURCES})
 
 # Create a object library for generating shared library
 add_library(menoh_objlib OBJECT ${SOURCES})
