@@ -182,6 +182,8 @@ namespace menoh_impl {
             builder->setMaxBatchSize(maxBatchSize);
             builder->setMaxWorkspaceSize(1 << 20);
 
+            builder->setFp16Mode(false);
+
             builder->setDebugSync(false);
 
             {
