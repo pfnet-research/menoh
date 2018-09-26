@@ -11,6 +11,7 @@
 #include <menoh/menoh.h>
 
 #include <menoh/array.hpp>
+#include <menoh/attribute_completion_and_shape_inference.hpp>
 #include <menoh/exception.hpp>
 #include <menoh/model_core.hpp>
 #include <menoh/model_core_factory.hpp>
@@ -327,32 +328,10 @@ menoh_error_code menoh_build_variable_profile_table(
           input_profile_table(builder->input_name_and_profile_list.begin(),
                               builder->input_name_and_profile_list.end());
 
-        // FIXME BEGIN dtype inference is also needed
-        // currently dtype is fixed to float
-        std::vector<std::pair<std::string, std::vector<int>>>
-          input_name_and_dims_pair_list;
-        std::transform(builder->input_name_and_profile_list.begin(),
-                       builder->input_name_and_profile_list.end(),
-                       std::back_inserter(input_name_and_dims_pair_list),
-                       [](auto const& p) {
-                           return std::make_pair(p.first, p.second.dims());
-                       });
-        auto output_dims_table = menoh_impl::make_output_dims_table(
-          model_data->model_data, input_name_and_dims_pair_list);
+        auto output_profile_table =
+          menoh_impl::complete_attribute_and_inference_shape(
+            model_data->model_data, input_profile_table);
 
-        std::unordered_map<std::string, menoh_impl::array_profile>
-          output_profile_table;
-        std::transform(
-          output_dims_table.begin(), output_dims_table.end(),
-          std::inserter(output_profile_table, output_profile_table.end()),
-          [](auto const& p) {
-              // here fixed to float
-              return std::make_pair(
-                p.first, menoh_impl::array_profile(
-                           static_cast<menoh_impl::dtype_t>(menoh_dtype_float),
-                           p.second));
-          });
-        // FIXME END
         *dst_handle =
           std::make_unique<menoh_variable_profile_table>(
             menoh_variable_profile_table{std::move(input_profile_table),
