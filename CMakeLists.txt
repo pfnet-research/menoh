@@ -91,8 +91,8 @@ if(ENABLE_MKLDNN)
 endif()
 
 if (ENABLE_TENSORRT)
-    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda-9.2/include)
-    link_directories(/usr/local/cuda-9.2/lib64)
+    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda/include)
+    link_directories(/usr/local/cuda/lib64)
 
     if(ENABLE_BENCHMARK)
         message(STATUS "# add_subdirectory\(benchmark\)")

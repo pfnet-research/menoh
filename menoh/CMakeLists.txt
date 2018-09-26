@@ -25,7 +25,7 @@ if (ENABLE_MKLDNN)
 endif()
 
 if (ENABLE_TENSORRT)
-    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda-9.2/include -I .)
+    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda/include -I .)
     file(GLOB TENSORRT_SOURCES "tensorrt/*.cpp")
 endif()
 

@@ -19,7 +19,7 @@ macro(menoh_link_libraries TARGET_NAME SCOPE)
     endif()
 
     if(ENABLE_TENSORRT)
-        link_directories(/usr/local/cuda-9.2/lib64)
+        link_directories(/usr/local/cuda/lib64)
         target_link_libraries(${TARGET_NAME} ${SCOPE} nvinfer)
         target_link_libraries(${TARGET_NAME} ${SCOPE} cudart)
     endif()
