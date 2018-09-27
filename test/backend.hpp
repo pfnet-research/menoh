@@ -61,9 +61,8 @@ namespace menoh {
             std::vector<float> data;
             std::tie(std::ignore, output_dims, data) =
               menoh_impl::load_np_array(output_filename);
-            dtype_t dtype = dtype_t::float_; // TODO other dtype
             true_output_table.insert({output_name, data});
-            vpt_builder.add_output_profile(output_name, dtype);
+            vpt_builder.add_output_name(output_name);
         }
 
         auto vpt = vpt_builder.build_variable_profile_table(model_data);
