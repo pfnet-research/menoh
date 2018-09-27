@@ -121,7 +121,6 @@ menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
 menoh_error_code MENOH_API
 menoh_make_model_data(menoh_model_data_handle* dst_handle);
 /*! \brief Add a new parameter in model_data
- *
  * \note Duplication of parameter_name is not allowed and it throws error.
  */
 menoh_error_code MENOH_API menoh_model_data_add_parameter(
