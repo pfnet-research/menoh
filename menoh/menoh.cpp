@@ -329,7 +329,7 @@ menoh_error_code menoh_build_variable_profile_table(
                               builder->input_name_and_profile_list.end());
 
         auto output_profile_table =
-          menoh_impl::complete_attribute_and_inference_shape(
+          menoh_impl::complete_attribute_and_infer_shape(
             model_data->model_data, input_profile_table);
 
         *dst_handle =

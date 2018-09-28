@@ -14,7 +14,7 @@
 #include <menoh/model_data.hpp>
 
 namespace menoh_impl {
-    inline auto complete_attribute_and_inference_shape(
+    inline auto complete_attribute_and_infer_shape(
             model_data& model_data,
             std::unordered_map<std::string, array_profile> const&
                 input_profile_table) {
