@@ -105,9 +105,9 @@ namespace menoh_impl {
                 }
                 // if any context can not process the node
                 if(!is_found) {
-                    *logger_ << "failed to interpret: no contexts can interpret"
-                             << graph.node_list().at(current_index).op_type
-                             << "with all context";
+                    *logger_
+                      << "failed to interpret: no contexts can interpret '"
+                      << node.op_type << "'";
                     throw unsupported_operator(node.op_type);
                 }
             }
