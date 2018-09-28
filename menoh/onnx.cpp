@@ -5,7 +5,6 @@
 #include <fstream>
 #include <functional>
 #include <numeric>
-#include <random>
 #include <unordered_map>
 #include <utility>
 
@@ -181,10 +180,6 @@ namespace menoh_impl {
 
         trim_dropout(node_list);
         trim_reshape(node_list);
-
-        std::random_device rd;
-        std::mt19937 g(rd());
-        std::shuffle(node_list.begin(), node_list.end(), g);
 
         std::vector<std::string> all_parameter_name_list;
         all_parameter_name_list.reserve(
