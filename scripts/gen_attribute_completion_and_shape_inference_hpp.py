@@ -4,8 +4,8 @@ import os
 def make_completion_code(op_name,
                          attribute_list=[],
                          shape_inference_code='''
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 ''',
                          preprocess="",
@@ -98,7 +98,7 @@ namespace menoh_impl {{
                     p.first,
                     array_profile(p.second.dtype(), p.second.dims())); }});
         auto profile_of = [&variable_profile_table](std::string const& name){{
-            assert(variable_profile_table.find(name) ==
+            assert(variable_profile_table.find(name) !=
                 variable_profile_table.end());
             return variable_profile_table.at(name);
         }};
