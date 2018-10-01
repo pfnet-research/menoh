@@ -3,7 +3,7 @@ enable_testing()
 # GTest setup
 set(GTEST_DIR "lib/googletest")
 execute_process(COMMAND git submodule update --init -- test/${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-message(STATUS "# add_subdirectory\(${GTEST_DIR}\)")
+message(STATUS "Adding_${GTEST_DIR}")
 add_subdirectory(${GTEST_DIR})
 
 # filesystem setup
@@ -25,11 +25,7 @@ add_executable(menoh_test
 
 )
 
-if(LINK_STATIC_LIBPROTOBUF)
-  target_link_libraries(menoh_test gtest_main menoh_test_target)
-else()
-  target_link_libraries(menoh_test gtest_main menoh_test_target ${PROTOBUF_LIBRARY})
-endif()
+target_link_libraries(menoh_test gtest_main menoh_test_target onnx_proto)
 
 if(UNIX AND NOT APPLE)
     set_property(
