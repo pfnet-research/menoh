@@ -158,7 +158,7 @@ menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
  */
 menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
-  const int* value);
+  const int32_t* value);
 /*! \brief Add a new float array attribute to latest added node in model_data
  *
  * \note Duplication of attribute_name is not allowed and it throws error.

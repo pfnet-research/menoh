@@ -188,7 +188,7 @@ menoh_error_code menoh_model_data_add_attribute_array_to_current_node(
 
 menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
-  const int* value) {
+  const int32_t* value) {
     return menoh_model_data_add_attribute_array_to_current_node(
       model_data, attribute_name, size, value);
 }
