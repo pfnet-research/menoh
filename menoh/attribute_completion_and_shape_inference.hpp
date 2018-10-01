@@ -31,7 +31,7 @@ namespace menoh_impl {
                     p.first,
                     array_profile(p.second.dtype(), p.second.dims())); });
         auto profile_of = [&variable_profile_table](std::string const& name){
-            assert(variable_profile_table.find(name) ==
+            assert(variable_profile_table.find(name) !=
                 variable_profile_table.end());
             return variable_profile_table.at(name);
         };
@@ -70,8 +70,8 @@ if(node.op_type == "Abs") {
     {
         
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -86,8 +86,8 @@ if(node.op_type == "Add") {
     {
         
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -214,8 +214,8 @@ auto momentum = get<float>(node.attribute_table.at("momentum"));
 auto spatial = get<int>(node.attribute_table.at("spatial"));
 
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -474,8 +474,8 @@ node.attribute_table.emplace(
 auto alpha = get<float>(node.attribute_table.at("alpha"));
 
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -599,8 +599,8 @@ node.attribute_table.emplace(
 auto alpha = get<float>(node.attribute_table.at("alpha"));
 
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -668,8 +668,8 @@ auto bias = get<float>(node.attribute_table.at("bias"));
 auto size = get<float>(node.attribute_table.at("size"));
 
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -754,8 +754,8 @@ if(node.op_type == "Relu") {
     {
         
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -782,8 +782,8 @@ node.attribute_table.emplace(
 auto axis = get<int>(node.attribute_table.at("axis"));
 
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -798,8 +798,8 @@ if(node.op_type == "Sum") {
     {
         
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -814,8 +814,8 @@ if(node.op_type == "Sqrt") {
     {
         
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
@@ -830,8 +830,8 @@ if(node.op_type == "Tanh") {
     {
         
         
-assert(node.input_name_list.size() == 1);
-assert(node.output_name_list.size() == 1);
+assert(node.input_name_list.size() > 0);
+assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
