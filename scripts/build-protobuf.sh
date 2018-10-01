@@ -27,6 +27,14 @@ while [[ $# != 0 ]]; do
             readonly ARG_INSTALL_DIR="$2"
             shift 2
             ;;
+        --host)
+            readonly ARG_HOST="$2"
+            shift 2
+            ;;
+        --with-protoc)
+            readonly ARG_WITH_PROTOC="$2"
+            shift 2
+            ;;
         --parallel)
             readonly ARG_PARALLEL="$2"
             shift 2
@@ -55,6 +63,14 @@ test -n "${ARG_BUILD_DIR}" || readonly ARG_BUILD_DIR="${SOURCE_DIR}"
 test -n "${ARG_INSTALL_DIR}" || readonly ARG_INSTALL_DIR=/usr/local
 test -n "${ARG_PARALLEL}" || readonly ARG_PARALLEL=1
 
+# options for cross compiling
+if [ -n "${ARG_HOST}" ]; then
+    readonly OPT_HOST=--host=${ARG_HOST}
+fi
+if [ -n "${ARG_WITH_PROTOC}" ]; then
+    readonly OPT_WITH_PROTOC=--with-protoc=${ARG_WITH_PROTOC}
+fi
+
 # download (if it isn't cached)
 if [ ! -e "${SOURCE_DIR}/LICENSE" ]; then
     echo -e "\e[33;1mDownloading libprotobuf\e[0m"
@@ -80,7 +96,7 @@ if [ ! -e "${ARG_BUILD_DIR}/src/libprotobuf.la" ]; then
     [ -d "${ARG_BUILD_DIR}" ] || mkdir -p "${ARG_BUILD_DIR}"
 
     cd "${ARG_BUILD_DIR}"
-    "${SOURCE_DIR}/configure" --prefix="${ARG_INSTALL_DIR}" CFLAGS="-g -O2 -fPIC" CXXFLAGS="-g -O2 -fPIC"
+    "${SOURCE_DIR}/configure" --prefix="${ARG_INSTALL_DIR}" CFLAGS="-g -O2 -fPIC" CXXFLAGS="-g -O2 -fPIC" "${OPT_HOST}" "${OPT_WITH_PROTOC}"
     make -j${ARG_PARALLEL}
 
     echo -e "\e[32;1mlibprotobuf was successfully built.\e[0m"
