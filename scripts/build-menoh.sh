@@ -29,6 +29,10 @@ while [[ $# != 0 ]]; do
             readonly ARG_MKLDNN_DIR="$2"
             shift 2
             ;;
+        --python-executable)
+            ARG_PYTHON_EXECUTABLE="$2"
+            shift 2
+            ;;
         --link-static-libgcc)
             readonly ARG_LINK_STATIC_LIBGCC="$2"
             shift 2
@@ -63,6 +67,7 @@ if [ -n "${ARG_MKLDNN_DIR}" ]; then
     readonly OPT_MKLDNN_LIBRARY=-DMKLDNN_LIBRARY=${ARG_MKLDNN_DIR}/lib/libmkldnn.so
 fi
 
+test -n "${ARG_PYTHON_EXECUTABLE}" || readonly ARG_PYTHON_EXECUTABLE=python
 test -n "${ARG_LINK_STATIC_LIBGCC}" || readonly ARG_LINK_STATIC_LIBGCC='OFF'
 test -n "${ARG_LINK_STATIC_LIBSTDCXX}" || readonly ARG_LINK_STATIC_LIBSTDCXX='OFF'
 test -n "${ARG_LINK_STATIC_LIBPROTOBUF}" || readonly ARG_LINK_STATIC_LIBPROTOBUF='OFF'
@@ -77,6 +82,7 @@ cmake \
     "-DCMAKE_INSTALL_PREFIX=${ARG_INSTALL_DIR}" \
     "${OPT_MKLDNN_INCLUDE_DIR}" \
     "${OPT_MKLDNN_LIBRARY}" \
+    -DPYTHON_EXECUTABLE=${ARG_PYTHON_EXECUTABLE} \
     -DLINK_STATIC_LIBGCC=${ARG_LINK_STATIC_LIBGCC} \
     -DLINK_STATIC_LIBSTDCXX=${ARG_LINK_STATIC_LIBSTDCXX} \
     -DLINK_STATIC_LIBPROTOBUF=${ARG_LINK_STATIC_LIBPROTOBUF} \
