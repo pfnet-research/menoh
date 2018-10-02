@@ -199,8 +199,8 @@ namespace {
     // TEST_OP(mkldnn, test_conv_with_strides_padding, eps);
     // TEST_OP_SQUASH_DIMS(mkldnn, test_convtranspose, eps); // not found
     // TEST_OP(mkldnn, test_gemm_nobroadcast, eps);
-    TEST_OP(mkldnn, test_globalaveragepool, eps);
-    TEST_OP(mkldnn, test_globalmaxpool, eps);
+    //TEST_OP(mkldnn, test_globalaveragepool, eps);
+    //TEST_OP(mkldnn, test_globalmaxpool, eps);
     TEST_OP(mkldnn, test_maxpool_2d_default, eps);
     TEST_OP_SQUASH_DIMS(mkldnn, test_softmax_axis_1, eps);
     // TEST_OP_SQUASH_DIMS(mkldnn, test_sum_one_input, eps);

@@ -82,11 +82,6 @@ namespace menoh_impl {
                         " valid value: " + valid_value) {}
     };
 
-    std::unordered_map<std::string, std::vector<int>> make_output_dims_table(
-      menoh_impl::model_data const& model_data,
-      std::vector<std::pair<std::string, std::vector<int>>> const&
-        input_dims_table);
-
 } // namespace menoh_impl
 
 #endif // MENOH_GRAPH_HPP
