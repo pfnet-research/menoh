@@ -194,3 +194,12 @@ MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
   cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64
 make
 ```
+
+### Note
+
+#### Python command name
+Menoh requires `python` command to generate source codes at build time. Add `PYTHON_EXECUTABLE` option to `cmake` if you want to use `python` command with non-standard name (e.g. `python3`).
+
+```bash
+cmake -DPYTHON_EXECUTABLE=python3 ..
+```
