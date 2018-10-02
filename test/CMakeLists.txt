@@ -21,8 +21,8 @@ add_executable(menoh_test
     operator.cpp
     mkldnn_with_generic_fallback_backend.cpp
     model_data.cpp
+    attribute_completion_and_shape_inference.cpp
     #vgg16.cpp
-
 )
 
 if(LINK_STATIC_LIBPROTOBUF)
