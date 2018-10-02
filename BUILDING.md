@@ -78,7 +78,7 @@ cd ../..
 ### Windows (MINGW)
 ```
 pacman -S mingw-w64-x86_64-toolchain
-pacman -S git
+pacman -S git make
 pacman -S mingw-w64-x86_64-cmake
 pacman -S mingw-w64-x86_64-protobuf mingw-w64-x86_64-protobuf-c
 ```
