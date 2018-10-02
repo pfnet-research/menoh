@@ -6,9 +6,6 @@ option(LINK_STATIC_LIBSTDCXX "Link static libstdc++ to libmenoh" OFF)
 if(NOT DEFINED MKLDNN_LIBRARIES)
     message(FATAL_ERROR "MKLDNN_LIBRARIES is not found")
 endif()
-if(NOT DEFINED PROTOBUF_LIBRARIES)
-    message(FATAL_ERROR "PROTOBUF_LIBRARIES is not found")
-endif()
 
 file(GLOB_RECURSE SOURCES "." "*.cpp")
 

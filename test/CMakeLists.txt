@@ -25,7 +25,11 @@ add_executable(menoh_test
 
 )
 
-target_link_libraries(menoh_test gtest_main menoh_test_target onnx_proto)
+if(LINK_STATIC_LIBPROTOBUF)
+    target_link_libraries(menoh_test gtest_main menoh_test_target)
+else()
+    target_link_libraries(menoh_test gtest_main menoh_test_target ${PROTOBUF_LIBRARIES})
+endif()
 
 if(UNIX AND NOT APPLE)
     set_property(

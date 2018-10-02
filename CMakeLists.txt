@@ -50,7 +50,7 @@ mark_as_advanced(DOWNLOAD_LOCATION)
 # Enable ExternalProject_Add
 include(ExternalProject)
 
-# Setup protobuf (MUST run before building ONNX)
+# Setup protobuf (it is used in ONNX and Menoh)
 if(LINK_STATIC_LIBPROTOBUF)
     # Note: We can't use `set(PROTOBUF_BUILD_SHARED_LIBS OFF)` in `FindProtobuf` module
     # because `libprotobuf.a` produced by the package manager is not PIC. So we need to
@@ -61,6 +61,8 @@ if(LINK_STATIC_LIBPROTOBUF)
         message(FATAL_ERROR "LINK_STATIC_LIBPROTOBUF is supported only in UNIX-like environments")
     endif()
 else()
+    # Note: It may conflict with the loading mechanism in onnx's CMake configuration.
+    # See external/onnx/CMakeLists.txt for more details.
     include(FindProtobuf)
     find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)
 endif()
