@@ -139,9 +139,11 @@ namespace menoh_impl {
                                              input_list, required_output_table,
                                              engine_);
                     } catch(...) { break; }
+
                     primitive_list.insert(primitive_list.end(),
                                           new_primitive_list.begin(),
                                           new_primitive_list.end());
+
                     // add copy procedures
                     procedure_list.insert(
                       procedure_list.end(),
