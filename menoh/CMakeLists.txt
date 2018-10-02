@@ -11,6 +11,8 @@ file(GLOB_RECURSE SOURCES "." "*.cpp")
 
 # Create a object library for generating shared library
 add_library(menoh_objlib OBJECT ${SOURCES})
+add_dependencies(menoh_objlib gen_onnx_proto) # custom target defined in onnx
+
 set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 include(ConfigureMenoh)
