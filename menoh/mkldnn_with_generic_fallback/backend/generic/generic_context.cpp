@@ -55,8 +55,6 @@ namespace menoh_impl {
                               [&](auto const& table) {
                                   auto found = table.find(input_name);
                                   if(found != table.end()) {
-                                      assert(found->second.dims().size() == 2 ||
-                                             found->second.dims().size() == 4);
                                       input_list.push_back(found->second);
                                       return true;
                                   }
