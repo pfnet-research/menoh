@@ -25,7 +25,7 @@ You also need to install the dependent libraries on your system:
 
 `protobuf` can be installed through most package managers instead of building it yourself. `mkl-dnn` package, unfortunatelly, is not available in many environments at the moment (except for `brew` in macOS).
 
-Note that you can use ProtoBuf either version 2 or 3, but, for example, if you build Menoh with `protoc` ver 3 you should use the binary with runtime ver 3.
+Note that you can use ProtoBuf either version 2 or 3, but the runtime version should be the same as `protoc` in your system.
 
 ### Debian/Ubuntu
 ```
@@ -78,7 +78,7 @@ cd ../..
 ### Windows (MINGW)
 ```
 pacman -S mingw-w64-x86_64-toolchain
-pacman -S git
+pacman -S git make
 pacman -S mingw-w64-x86_64-cmake
 pacman -S mingw-w64-x86_64-protobuf mingw-w64-x86_64-protobuf-c
 ```
@@ -86,7 +86,7 @@ pacman -S mingw-w64-x86_64-protobuf mingw-w64-x86_64-protobuf-c
 #### Installing MKL-DNN from binary package
 ```
 curl -omingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz -L https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
-pacman -S --noconfirm mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
+pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
 ```
 
 #### Installing MKL-DNN from source
