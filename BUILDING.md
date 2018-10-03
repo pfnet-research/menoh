@@ -53,10 +53,9 @@ Download and unzip https://github.com/protocolbuffers/protobuf/releases/download
 
 ```
 cd protobuf-3.6.1/cmake
-mdir build
+mkdir build
 cd build
 cmake .. -G "Visual Studio 14" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
-cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
 cd ../../..
 ```
@@ -67,10 +66,9 @@ git clone https://github.com/intel/mkl-dnn.git
 cd mkl-dnn/scripts
 .\prepare_mkl.bat
 cd ..
-mdir build
+mkdir build
 cd build
 cmake .. -G "Visual Studio 14 Win64"  -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
-cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
 cd ../..
 ```
@@ -177,10 +175,9 @@ Please replace `(CMake_Install_Dir)` in the following with your working director
 ```
 git clone https://github.com/pfnet-research/menoh.git
 cd menoh
-mdir build
+mkdir build
 cd build
-cmake .. -G "Visual Studio 14 Win64" -DCMAKE_PREFIX_PATH=CMake_Install_Dir) -DCMAKE_INSTALL_PREFIX=CMake_Install_Dir) -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF
-cmake --build . --config Debug --target install
+cmake .. -G "Visual Studio 14 Win64" -DCMAKE_PREFIX_PATH=(CMake_Install_Dir) -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir) -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF
 cmake --build . --config Release --target install
 ```
 
