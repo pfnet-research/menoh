@@ -38,6 +38,7 @@ node.attribute_table.emplace(
 
         attribute_definition = '''
 auto {attr_name} = get<{attr_type}>(node.attribute_table.at("{attr_name}"));
+static_cast<void>({attr_name}); // maybe unused
 '''.format(attr_name=attr_name, attr_type=attr_type)
         attribute_definition_list.append(attribute_definition)
     # end for
