@@ -25,6 +25,8 @@ add_executable(menoh_test
     #vgg16.cpp
 )
 
+target_include_directories(menoh_test PUBLIC $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
+
 if(LINK_STATIC_LIBPROTOBUF)
     target_link_libraries(menoh_test gtest_main menoh_test_target)
 else()

@@ -67,13 +67,15 @@ else()
     find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)
 endif()
 
-include_directories(${PROTOBUF_INCLUDE_DIRS})
-
 # Build libonnx.a
 message(STATUS "Adding external/onnx")
 
 set(ONNX_SRC_DIR ${EXTERNAL_DIR}/onnx)
 execute_process(COMMAND git submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+# see https://github.com/onnx/onnx/pull/1466
+message(STATUS "Patching to external/onnx")
+configure_file(${EXTERNAL_DIR}/onnx-v1.3.0-patch_CMakeLists.txt ${EXTERNAL_DIR}/onnx/CMakeLists.txt COPYONLY)
 
 # TODO: enable the following option when it is ready for migrating to onnx-ml
 #set(ONNX_ML 1)
