@@ -7,7 +7,7 @@
 namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
         namespace generic_backend {
-            inline procedure make_relu(node const& node,
+            inline procedure make_relu(node const&,
                                        std::vector<array> const& input_list,
                                        std::vector<array> const& output_list) {
                 assert(input_list.size() == 1);

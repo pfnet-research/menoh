@@ -304,7 +304,7 @@ menoh_error_code menoh_variable_profile_table_builder_add_output_name(
  */
 menoh_error_code menoh_variable_profile_table_builder_add_output_profile(
   menoh_variable_profile_table_builder_handle builder, const char* name,
-  menoh_dtype dtype) {
+  menoh_dtype) {
     return menoh_variable_profile_table_builder_add_output_name(builder, name);
 }
 
