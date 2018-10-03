@@ -79,7 +79,7 @@ configure_file(${EXTERNAL_DIR}/onnx-v1.3.0-patch_CMakeLists.txt ${EXTERNAL_DIR}/
 
 # TODO: enable the following option when it is ready for migrating to onnx-ml
 #set(ONNX_ML 1)
-add_subdirectory(external/onnx) # Note: BUILD_SHARED_LIBS must be OFF in this place
+add_subdirectory(external/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
 include_directories("${ONNX_INCLUDE_DIRS}")
 
 # Setup MKLDNN

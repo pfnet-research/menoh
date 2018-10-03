@@ -4,7 +4,7 @@ enable_testing()
 set(GTEST_DIR "lib/googletest")
 execute_process(COMMAND git submodule update --init -- test/${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 message(STATUS "Adding ${GTEST_DIR}")
-add_subdirectory(${GTEST_DIR})
+add_subdirectory(${GTEST_DIR} EXCLUDE_FROM_ALL)
 
 # filesystem setup
 set(FILESYSTEM_DIR "lib/filesystem")
