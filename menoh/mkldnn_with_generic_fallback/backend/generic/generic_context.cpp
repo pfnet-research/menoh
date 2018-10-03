@@ -30,7 +30,8 @@ namespace menoh_impl {
 
                 std::vector<procedure> new_op_proc_list;
 
-                for(; current_index < node_list.size(); ++current_index) {
+                for(; current_index < static_cast<int>(node_list.size());
+                    ++current_index) {
                     auto const& node = node_list.at(current_index);
                     std::vector<array> input_list;
                     std::vector<procedure> new_copy_procedure_list;
@@ -131,7 +132,9 @@ namespace menoh_impl {
                       std::make_move_iterator(new_copy_procedure_list.end()));
 
                     assert(node.output_name_list.size() == output_list.size());
-                    for(int i = 0; i < node.output_name_list.size(); ++i) {
+                    for(int i = 0;
+                        i < static_cast<int>(node.output_name_list.size());
+                        ++i) {
                         variable_table_.emplace(node.output_name_list.at(i),
                                                 output_list.at(i));
                     }

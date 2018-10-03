@@ -35,7 +35,8 @@ namespace menoh_impl {
 
                 std::vector<mkldnn::primitive> primitive_list;
 
-                for(; current_index < node_list.size(); ++current_index) {
+                for(; current_index < static_cast<int>(node_list.size());
+                    ++current_index) {
                     auto const& node = node_list.at(current_index);
                     std::vector<array> input_list;
                     std::vector<procedure> new_copy_procedure_list;
