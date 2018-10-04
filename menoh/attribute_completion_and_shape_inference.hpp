@@ -7,6 +7,7 @@
  */
 #include <algorithm>
 #include <cassert>
+#include <numeric> // for accumulate
 #include <string>
 #include <unordered_map>
 
@@ -561,6 +562,11 @@ auto transB = get<int>(node.attribute_table.at("transB"));
 
         
 auto a_dims = dims_of(input(0));
+if(ndims_of(input(0)) != 2) {
+    int feature_size = std::accumulate(
+        a_dims.begin()+1, a_dims.end(), 1, std::multiplies<int>());
+    a_dims = ints({a_dims.at(0), feature_size});
+}
 assert(a_dims.size() == 2);
 if(transA) {
     std::swap(a_dims.at(0), a_dims.at(1));
