@@ -69,14 +69,6 @@ namespace menoh_impl {
                                                                      table) {
                                     auto found = table.find(input_name);
                                     if(found != table.end()) {
-                                        if(found->second.dims().size() != 2 &&
-                                           found->second.dims().size() != 4) {
-                                            throw unsupported_operator(
-                                              node.op_type +
-                                              " takes input which has ndims: " +
-                                              std::to_string(
-                                                found->second.dims().size()));
-                                        }
                                         input_list.push_back(found->second);
                                         return true;
                                     }
@@ -117,8 +109,6 @@ namespace menoh_impl {
                                                              // context to array
                                         array arr;
                                         std::tie(copy_proc, arr) = *found;
-                                        assert(arr.dims().size() == 2 ||
-                                               arr.dims().size() == 4);
                                         new_copy_procedure_list.push_back(
                                           copy_proc);
                                         input_list.push_back(arr);
