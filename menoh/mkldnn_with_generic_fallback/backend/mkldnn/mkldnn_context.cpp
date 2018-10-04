@@ -138,7 +138,10 @@ namespace menoh_impl {
                           factory.operator()(current_index, node_list,
                                              input_list, required_output_table,
                                              engine_);
-                    } catch(...) { break; }
+                    } catch(std::exception const& e) {
+                        *logger << e.what() << std::endl;
+                        break;
+                    }
 
                     primitive_list.insert(primitive_list.end(),
                                           new_primitive_list.begin(),
