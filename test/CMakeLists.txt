@@ -3,7 +3,13 @@ enable_testing()
 # GTest setup
 set(GTEST_DIR "lib/googletest")
 execute_process(COMMAND git submodule update --init -- test/${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 message(STATUS "Adding ${GTEST_DIR}")
+
+# Prevent overriding the parent project's compiler/linker settings on Windows
+# See https://github.com/google/googletest/blob/master/googletest/README.md#visual-studio-dynamic-vs-static-runtimes
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
 add_subdirectory(${GTEST_DIR} EXCLUDE_FROM_ALL)
 
 # filesystem setup
