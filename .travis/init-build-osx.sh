@@ -17,12 +17,14 @@ function build_menoh() {
     if [ "${LINK_STATIC}" != "true" ]; then
         bash -ex "${PROJ_DIR}/scripts/build-menoh.sh" \
             --build-type Release \
-            --source-dir "${PROJ_DIR}"
+            --source-dir "${PROJ_DIR}" \
+            --python-executable python
     else
         # Does not set --link-static-libgcc and --link-static-libstdcxx in macOS
         bash -ex "${PROJ_DIR}/scripts/build-menoh.sh" \
             --build-type Release \
             --source-dir "${PROJ_DIR}" \
+            --python-executable python \
             --link-static-libprotobuf ON
     fi
 }

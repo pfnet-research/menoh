@@ -72,7 +72,7 @@ build_script:
     cmake -G "MSYS Makefiles" -DENABLE_TEST=ON %STATIC_OPTION% -DCMAKE_INSTALL_PREFIX=/mingw64 .. &&
     make
   ) else (
-    cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
+    cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
     cmake --build . --config Release --target install
   )
 

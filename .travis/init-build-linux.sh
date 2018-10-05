@@ -78,12 +78,14 @@ function build_menoh() {
         docker_exec_script \
             "${PROJ_DIR}/scripts/build-menoh.sh" \
                 --build-type Release \
-                --source-dir "${PROJ_DIR}"
+                --source-dir "${PROJ_DIR}" \
+                --python-executable python3
     else
         docker_exec_script \
             "${PROJ_DIR}/scripts/build-menoh.sh" \
                 --build-type Release \
                 --source-dir "${PROJ_DIR}" \
+                --python-executable python3 \
                 --link-static-libgcc ON \
                 --link-static-libstdcxx ON \
                 --link-static-libprotobuf ON

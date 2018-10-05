@@ -5,18 +5,25 @@ You need to install [prerequisites](#prerequisites) for your platform before [bu
 To build Menoh, you require the following toolchains:
 
 Unix:
-- CMake 3.1 or later
 - GCC 4.9 or later
+- CMake 3.1 or later
+- Python 2.7 or later
 
 macOS (OSX):
 - XCode
 - [Homebrew](https://brew.sh/)
+- CMake 3.1 or later
+- Python 2.7 or later
 
 Windows:
 - Visual Studio 2015
+- CMake 3.1 or later
+- Python 2.7 or later
 
 Windows (MINGW):
 - [MSYS2](http://www.msys2.org/)
+- CMake 3.1 or later
+- Python 2.7 or later
 
 You also need to install the dependent libraries on your system:
 
@@ -53,10 +60,9 @@ Download and unzip https://github.com/protocolbuffers/protobuf/releases/download
 
 ```
 cd protobuf-3.6.1/cmake
-mdir build
+mkdir build
 cd build
 cmake .. -G "Visual Studio 14" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
-cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
 cd ../../..
 ```
@@ -67,10 +73,9 @@ git clone https://github.com/intel/mkl-dnn.git
 cd mkl-dnn/scripts
 .\prepare_mkl.bat
 cd ..
-mdir build
+mkdir build
 cd build
 cmake .. -G "Visual Studio 14 Win64"  -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
-cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
 cd ../..
 ```
@@ -177,10 +182,9 @@ Please replace `(CMake_Install_Dir)` in the following with your working director
 ```
 git clone https://github.com/pfnet-research/menoh.git
 cd menoh
-mdir build
+mkdir build
 cd build
-cmake .. -G "Visual Studio 14 Win64" -DCMAKE_PREFIX_PATH=CMake_Install_Dir) -DCMAKE_INSTALL_PREFIX=CMake_Install_Dir) -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF
-cmake --build . --config Debug --target install
+cmake .. -G "Visual Studio 14 Win64" -DCMAKE_PREFIX_PATH=(CMake_Install_Dir) -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir) -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF
 cmake --build . --config Release --target install
 ```
 
@@ -193,4 +197,13 @@ mkdir -p build && cd build
 MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
   cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64
 make
+```
+
+### Note
+
+#### Python command name
+Menoh requires `python` command to generate source codes at build time. Add `PYTHON_EXECUTABLE` option to `cmake` if you want to use `python` command with non-standard name (e.g. `python3`).
+
+```bash
+cmake -DPYTHON_EXECUTABLE=python3 ..
 ```
