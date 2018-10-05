@@ -25,6 +25,8 @@ namespace menoh_impl {
             context_list,
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
+          std::unordered_map<std::string, array_profile> const&
+            output_profile_table,
           menoh_impl::model_data const& model_data,
           backend_config const& config)
           : menoh_impl::model_core(),
@@ -72,7 +74,8 @@ namespace menoh_impl {
                       context->process_node_list(
                         context_name, current_index, graph.node_list(),
                         common_parameter_table_, common_input_table_,
-                        required_output_table_, context_list_, logger_.get());
+                        required_output_table_, output_profile_table,
+                        context_list_, logger_.get());
 
                     // if succeeded processing, add procedures into
                     // procedure_list
@@ -102,9 +105,9 @@ namespace menoh_impl {
                 }
                 // if any context can not process the node
                 if(!is_found) {
-                    *logger_ << "failed to interpret"
-                             << graph.node_list().at(current_index).op_type
-                             << "with all context";
+                    *logger_
+                      << "failed to interpret: no contexts can interpret '"
+                      << node.op_type << "'";
                     throw unsupported_operator(node.op_type);
                 }
             }

@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     menoh::variable_profile_table_builder vpt_builder;
     vpt_builder.add_input_profile(conv1_1_in_name, menoh::dtype_t::float_,
                                   {batch_size, 3, 224, 224});
-    vpt_builder.add_output_profile(softmax_out_name, menoh::dtype_t::float_);
+    vpt_builder.add_output_name(softmax_out_name);
     auto vpt = vpt_builder.build_variable_profile_table(model_data);
 
     // Build model

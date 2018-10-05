@@ -8,6 +8,8 @@ macro(menoh_link_libraries TARGET_NAME SCOPE)
         target_link_libraries(${TARGET_NAME} ${SCOPE} -static-libstdc++)
     endif()
 
+    target_link_libraries(${TARGET_NAME} ${SCOPE} onnx) # onnx also contains protobuf
+
     if(NOT ${SCOPE})
         # PUBLIC will add transitive dependencies (`mklml_intel` and `iomp5`) to the link interface
         # Note: change it to PRIVATE after building mkldnn itself
@@ -15,6 +17,4 @@ macro(menoh_link_libraries TARGET_NAME SCOPE)
     else()
         target_link_libraries(${TARGET_NAME} ${MKLDNN_LIBRARIES})
     endif()
-
-    target_link_libraries(${TARGET_NAME} ${SCOPE} ${PROTOBUF_LIBRARIES})
 endmacro()

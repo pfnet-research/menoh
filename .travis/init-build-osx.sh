@@ -8,28 +8,32 @@ export PROJ_DIR=${TRAVIS_BUILD_DIR} # = ${HOME}/build/${TRAVIS_REPO_SLUG}
 ## define shared functions for macOS (OSX) platforms
 
 function prepare_menoh_data() {
-    bash -ex ${PROJ_DIR}/.travis/prepare-menoh-data.sh \
-        --source-dir ${PROJ_DIR} \
+    bash -ex "${PROJ_DIR}/scripts/prepare-menoh-data.sh" \
+        --source-dir "${PROJ_DIR}" \
         --python-executable python
 }
 
 function build_menoh() {
     if [ "${LINK_STATIC}" != "true" ]; then
-        bash -ex ${PROJ_DIR}/.travis/build-menoh.sh \
-            --source-dir ${PROJ_DIR}
+        bash -ex "${PROJ_DIR}/scripts/build-menoh.sh" \
+            --build-type Release \
+            --source-dir "${PROJ_DIR}" \
+            --python-executable python
     else
         # Does not set --link-static-libgcc and --link-static-libstdcxx in macOS
-        bash -ex ${PROJ_DIR}/.travis/build-menoh.sh \
-            --source-dir ${PROJ_DIR} \
+        bash -ex "${PROJ_DIR}/scripts/build-menoh.sh" \
+            --build-type Release \
+            --source-dir "${PROJ_DIR}" \
+            --python-executable python \
             --link-static-libprotobuf ON
     fi
 }
 
 function test_menoh() {
-    cd ${PROJ_DIR}/build
+    cd "${PROJ_DIR}/build"
     ./test/menoh_test
 }
 
 function check_menoh_artifact() {
-    otool -L ${PROJ_DIR}/build/menoh/libmenoh.dylib
+    otool -L "${PROJ_DIR}/build/menoh/libmenoh.dylib"
 }
