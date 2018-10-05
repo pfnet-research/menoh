@@ -5,18 +5,25 @@ You need to install [prerequisites](#prerequisites) for your platform before [bu
 To build Menoh, you require the following toolchains:
 
 Unix:
-- CMake 3.1 or later
 - GCC 4.9 or later
+- CMake 3.1 or later
+- Python 2.7 or later
 
 macOS (OSX):
 - XCode
 - [Homebrew](https://brew.sh/)
+- CMake 3.1 or later
+- Python 2.7 or later
 
 Windows:
 - Visual Studio 2015
+- CMake 3.1 or later
+- Python 2.7 or later
 
 Windows (MINGW):
 - [MSYS2](http://www.msys2.org/)
+- CMake 3.1 or later
+- Python 2.7 or later
 
 You also need to install the dependent libraries on your system:
 
