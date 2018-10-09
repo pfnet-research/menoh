@@ -38,6 +38,7 @@ node.attribute_table.emplace(
 
         attribute_definition = '''
 auto {attr_name} = get<{attr_type}>(node.attribute_table.at("{attr_name}"));
+static_cast<void>({attr_name}); // maybe unused
 '''.format(attr_name=attr_name, attr_type=attr_type)
         attribute_definition_list.append(attribute_definition)
     # end for
@@ -124,10 +125,10 @@ namespace menoh_impl {{
         auto graph = make_graph(model_data.node_list); // FIXME reorder nodes
         model_data.node_list = graph.node_list();
         for(auto& node : model_data.node_list) {{
-            auto input = [&node](int i){{
+            auto input = [&node](auto i){{
                 return node.input_name_list.at(i);
             }};
-            auto output = [&node](int i){{
+            auto output = [&node](auto i){{
                 return node.output_name_list.at(i);
             }};
             {code}
@@ -167,7 +168,7 @@ assert(2 <= ndims_of(input(0)));
             ("axis", "int", None),
         ], '''
 auto output_dims = dims_of(input(0));
-for(int i = 1; i < node.input_name_list.size(); ++i) {
+for(unsigned int i = 1; i < node.input_name_list.size(); ++i) {
     // TODO dim check
     output_dims.at(axis) += dims_of(input(i)).at(axis);
 }
@@ -230,7 +231,7 @@ auto kernel_shape = ints(weights_shape.begin()+2, weights_shape.end());
         ints input_size(input_profile.dims().begin()+2,
                         input_profile.dims().end());
 
-        for(int i = 0; i < kernel_ndims; ++i) {
+        for(unsigned int i = 0; i < kernel_ndims; ++i) {
             auto total_padding = strides[i] * (input_size[i] - 1)
                 + output_padding[i] + kernel_shape[i] - output_shape[i];
             pads[i] = total_padding - (total_padding/2);
@@ -313,13 +314,13 @@ add_variable_to_table(output(0), dtype_of(input(0)),
         ], '''
 auto input_dims = dims_of(input(0));
 ints output_dims(input_dims.size());
-for(int i = 0; i < input_dims.size(); ++i) {
+for(unsigned int i = 0; i < input_dims.size(); ++i) {
     output_dims.at(i) = input_dims.at(perm.at(i));
 }
 add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 ''', preprocess="""
 ints perm(ndims_of(input(0)));
-for(int i = 0; i < perm.size(); ++i) {{
+for(unsigned int i = 0; i < perm.size(); ++i) {{
     perm.at(i) = perm.size()-i-1;
 }}
 """))

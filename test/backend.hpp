@@ -91,7 +91,7 @@ namespace menoh {
         menoh::model_data model_data;
         model_data.add_new_node("Add");
         std::vector<std::pair<std::string, std::string>> inputs;
-        for(int32_t i = 0; i < input_filename_list.size(); ++i) {
+        for(unsigned int i = 0; i < input_filename_list.size(); ++i) {
             auto const& filename = input_filename_list.at(i);
             inputs.push_back({"input" + std::to_string(i), filename});
         }
@@ -123,7 +123,7 @@ namespace menoh {
         model_data.add_new_node("Concat");
         model_data.add_attribute_int_to_current_node("axis", axis);
         std::vector<std::pair<std::string, std::string>> inputs;
-        for(int32_t i = 0; i < input_filename_list.size(); ++i) {
+        for(unsigned int i = 0; i < input_filename_list.size(); ++i) {
             auto const& filename = input_filename_list.at(i);
             inputs.push_back({"input" + std::to_string(i), filename});
         }
@@ -228,7 +228,7 @@ namespace menoh {
         menoh::model_data model_data;
         model_data.add_new_node("Sum");
         std::vector<std::pair<std::string, std::string>> inputs;
-        for(int32_t i = 0; i < input_filename_list.size(); ++i) {
+        for(unsigned int i = 0; i < input_filename_list.size(); ++i) {
             auto const& filename = input_filename_list.at(i);
             inputs.push_back({"input" + std::to_string(i), filename});
         }

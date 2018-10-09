@@ -109,7 +109,6 @@ namespace menoh {
             std::vector<float> true_output_data;
             std::tie(std::ignore, output_dims, true_output_data) =
               menoh_impl::load_np_array(true_output_filename);
-            dtype_t dtype = dtype_t::float_; // TODO other dtype
             if(output_name == "relu_out") {
                 std::transform(true_output_data.begin(), true_output_data.end(),
                                true_output_data.begin(),

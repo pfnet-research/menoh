@@ -57,10 +57,10 @@ namespace menoh_impl {
         auto graph = make_graph(model_data.node_list); // FIXME reorder nodes
         model_data.node_list = graph.node_list();
         for(auto& node : model_data.node_list) {
-            auto input = [&node](int i){
+            auto input = [&node](auto i){
                 return node.input_name_list.at(i);
             };
-            auto output = [&node](int i){
+            auto output = [&node](auto i){
                 return node.output_name_list.at(i);
             };
             
@@ -147,15 +147,19 @@ node.attribute_table.emplace(
     {
         
 auto count_include_pad = get<int>(node.attribute_table.at("count_include_pad"));
+static_cast<void>(count_include_pad); // maybe unused
 
 
 auto kernel_shape = get<ints>(node.attribute_table.at("kernel_shape"));
+static_cast<void>(kernel_shape); // maybe unused
 
 
 auto pads = get<ints>(node.attribute_table.at("pads"));
+static_cast<void>(pads); // maybe unused
 
 
 auto strides = get<ints>(node.attribute_table.at("strides"));
+static_cast<void>(strides); // maybe unused
 
         
 add_variable_to_table(output(0), dtype_of(input(0)),
@@ -207,12 +211,15 @@ node.attribute_table.emplace(
     {
         
 auto epsilon = get<float>(node.attribute_table.at("epsilon"));
+static_cast<void>(epsilon); // maybe unused
 
 
 auto momentum = get<float>(node.attribute_table.at("momentum"));
+static_cast<void>(momentum); // maybe unused
 
 
 auto spatial = get<int>(node.attribute_table.at("spatial"));
+static_cast<void>(spatial); // maybe unused
 
         
 assert(node.input_name_list.size() > 0);
@@ -240,10 +247,11 @@ assert(!"attribute not found: axis");
     {
         
 auto axis = get<int>(node.attribute_table.at("axis"));
+static_cast<void>(axis); // maybe unused
 
         
 auto output_dims = dims_of(input(0));
-for(int i = 1; i < node.input_name_list.size(); ++i) {
+for(unsigned int i = 1; i < node.input_name_list.size(); ++i) {
     // TODO dim check
     output_dims.at(axis) += dims_of(input(i)).at(axis);
 }
@@ -319,18 +327,23 @@ node.attribute_table.emplace(
     {
         
 auto dilations = get<ints>(node.attribute_table.at("dilations"));
+static_cast<void>(dilations); // maybe unused
 
 
 auto group = get<int>(node.attribute_table.at("group"));
+static_cast<void>(group); // maybe unused
 
 
 auto kernel_shape = get<ints>(node.attribute_table.at("kernel_shape"));
+static_cast<void>(kernel_shape); // maybe unused
 
 
 auto pads = get<ints>(node.attribute_table.at("pads"));
+static_cast<void>(pads); // maybe unused
 
 
 auto strides = get<ints>(node.attribute_table.at("strides"));
+static_cast<void>(strides); // maybe unused
 
         
 add_variable_to_table(output(0), dtype_of(input(0)),
@@ -418,7 +431,7 @@ node.attribute_table.emplace(
         ints input_size(input_profile.dims().begin()+2,
                         input_profile.dims().end());
 
-        for(int i = 0; i < kernel_ndims; ++i) {
+        for(unsigned int i = 0; i < kernel_ndims; ++i) {
             auto total_padding = strides[i] * (input_size[i] - 1)
                 + output_padding[i] + kernel_shape[i] - output_shape[i];
             pads[i] = total_padding - (total_padding/2);
@@ -432,18 +445,23 @@ node.attribute_table.emplace(
     {
         
 auto dilations = get<ints>(node.attribute_table.at("dilations"));
+static_cast<void>(dilations); // maybe unused
 
 
 auto group = get<int>(node.attribute_table.at("group"));
+static_cast<void>(group); // maybe unused
 
 
 auto kernel_shape = get<ints>(node.attribute_table.at("kernel_shape"));
+static_cast<void>(kernel_shape); // maybe unused
 
 
 auto output_padding = get<ints>(node.attribute_table.at("output_padding"));
+static_cast<void>(output_padding); // maybe unused
 
 
 auto strides = get<ints>(node.attribute_table.at("strides"));
+static_cast<void>(strides); // maybe unused
 
         
 add_variable_to_table(output(0), dtype_of(input(0)),
@@ -473,6 +491,7 @@ node.attribute_table.emplace(
     {
         
 auto alpha = get<float>(node.attribute_table.at("alpha"));
+static_cast<void>(alpha); // maybe unused
 
         
 assert(node.input_name_list.size() > 0);
@@ -550,15 +569,19 @@ node.attribute_table.emplace(
     {
         
 auto alpha = get<float>(node.attribute_table.at("alpha"));
+static_cast<void>(alpha); // maybe unused
 
 
 auto beta = get<float>(node.attribute_table.at("beta"));
+static_cast<void>(beta); // maybe unused
 
 
 auto transA = get<int>(node.attribute_table.at("transA"));
+static_cast<void>(transA); // maybe unused
 
 
 auto transB = get<int>(node.attribute_table.at("transB"));
+static_cast<void>(transB); // maybe unused
 
         
 auto a_dims = dims_of(input(0));
@@ -609,6 +632,7 @@ node.attribute_table.emplace(
     {
         
 auto alpha = get<float>(node.attribute_table.at("alpha"));
+static_cast<void>(alpha); // maybe unused
 
         
 assert(node.input_name_list.size() > 0);
@@ -669,15 +693,19 @@ assert(!"attribute not found: size");
     {
         
 auto alpha = get<float>(node.attribute_table.at("alpha"));
+static_cast<void>(alpha); // maybe unused
 
 
 auto beta = get<float>(node.attribute_table.at("beta"));
+static_cast<void>(beta); // maybe unused
 
 
 auto bias = get<float>(node.attribute_table.at("bias"));
+static_cast<void>(bias); // maybe unused
 
 
 auto size = get<float>(node.attribute_table.at("size"));
+static_cast<void>(size); // maybe unused
 
         
 assert(node.input_name_list.size() > 0);
@@ -738,15 +766,19 @@ node.attribute_table.emplace(
     {
         
 auto kernel_shape = get<ints>(node.attribute_table.at("kernel_shape"));
+static_cast<void>(kernel_shape); // maybe unused
 
 
 auto pads = get<ints>(node.attribute_table.at("pads"));
+static_cast<void>(pads); // maybe unused
 
 
 auto storage_order = get<int>(node.attribute_table.at("storage_order"));
+static_cast<void>(storage_order); // maybe unused
 
 
 auto strides = get<ints>(node.attribute_table.at("strides"));
+static_cast<void>(strides); // maybe unused
 
         
 add_variable_to_table(output(0), dtype_of(input(0)),
@@ -792,6 +824,7 @@ node.attribute_table.emplace(
     {
         
 auto axis = get<int>(node.attribute_table.at("axis"));
+static_cast<void>(axis); // maybe unused
 
         
 assert(node.input_name_list.size() > 0);
@@ -854,7 +887,7 @@ else
 if(node.op_type == "Transpose") {
     
 ints perm(ndims_of(input(0)));
-for(int i = 0; i < perm.size(); ++i) {{
+for(unsigned int i = 0; i < perm.size(); ++i) {{
     perm.at(i) = perm.size()-i-1;
 }}
 
@@ -873,11 +906,12 @@ node.attribute_table.emplace(
     {
         
 auto perm = get<ints>(node.attribute_table.at("perm"));
+static_cast<void>(perm); // maybe unused
 
         
 auto input_dims = dims_of(input(0));
 ints output_dims(input_dims.size());
-for(int i = 0; i < input_dims.size(); ++i) {
+for(unsigned int i = 0; i < input_dims.size(); ++i) {
     output_dims.at(i) = input_dims.at(perm.at(i));
 }
 add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
