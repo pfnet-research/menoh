@@ -117,8 +117,12 @@ namespace menoh_impl {
 
                     procedure op_proc;
                     try {
-                        auto factory =
-                          procedure_factory_table_.at(node.op_type);
+                        auto found =
+                          procedure_factory_table_.find(node.op_type);
+                        if(found == procedure_factory_table_.end()) {
+                            throw std::runtime_error("factory not found for: " + node.op_type);
+                        }
+                        auto factory = found->second;
                         op_proc =
                           factory.operator()(node, input_list, output_list);
                     } catch(std::exception const& e) {
