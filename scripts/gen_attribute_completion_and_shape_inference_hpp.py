@@ -272,6 +272,12 @@ if(transB) {
     std::swap(b_dims.at(0), b_dims.at(1));
 }
 
+if(a_dims.at(1) != b_dims.at(0)) {
+    throw dimension_mismatch(
+        node.op_type, input(0), "trans(A)[1] and trans(B)[0])",
+        std::to_string(a_dims.at(1)), std::to_string(b_dims.at(0)));
+}
+
 auto output_dims = ints({a_dims.at(0), b_dims.at(1)});
 add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 '''))
