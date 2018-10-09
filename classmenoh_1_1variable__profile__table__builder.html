@@ -88,12 +88,15 @@ $(function() {
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a5102c5d77dc5784172f5871d3c6774dd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1variable__profile__table__builder.html#a5102c5d77dc5784172f5871d3c6774dd">variable_profile_table_builder</a> ()</td></tr>
 <tr class="separator:a5102c5d77dc5784172f5871d3c6774dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae5171920679692e255e5c92b27a0dfcd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1variable__profile__table__builder.html#ae5171920679692e255e5c92b27a0dfcd">add_input_profile</a> (std::string const &amp;name, <a class="el" href="group__cpp__vpt.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a> dtype, std::vector&lt; int32_t &gt; const &amp;dims)</td></tr>
+<tr class="memitem:ae5171920679692e255e5c92b27a0dfcd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1variable__profile__table__builder.html#ae5171920679692e255e5c92b27a0dfcd">add_input_profile</a> (std::string const &amp;name, <a class="el" href="group__cpp__api.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a> dtype, std::vector&lt; int32_t &gt; const &amp;dims)</td></tr>
 <tr class="memdesc:ae5171920679692e255e5c92b27a0dfcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add input profile. That profile contains name, dtype and dims.  <a href="#ae5171920679692e255e5c92b27a0dfcd">More...</a><br /></td></tr>
 <tr class="separator:ae5171920679692e255e5c92b27a0dfcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a996d2b1dfef57de5b5e5684675977a74"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1variable__profile__table__builder.html#a996d2b1dfef57de5b5e5684675977a74">add_output_profile</a> (std::string const &amp;name, <a class="el" href="group__cpp__vpt.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a> dtype)</td></tr>
-<tr class="memdesc:a996d2b1dfef57de5b5e5684675977a74"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add output profile. That profile contains name, dtype.  <a href="#a996d2b1dfef57de5b5e5684675977a74">More...</a><br /></td></tr>
-<tr class="separator:a996d2b1dfef57de5b5e5684675977a74"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acece2699e57579a045b5f8149880c094"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1variable__profile__table__builder.html#acece2699e57579a045b5f8149880c094">add_output_name</a> (std::string const &amp;name)</td></tr>
+<tr class="memdesc:acece2699e57579a045b5f8149880c094"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a name of required output.  <a href="#acece2699e57579a045b5f8149880c094">More...</a><br /></td></tr>
+<tr class="separator:acece2699e57579a045b5f8149880c094"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26053632bf13f39c98ee6b7ea24bdb59"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1variable__profile__table__builder.html#a26053632bf13f39c98ee6b7ea24bdb59">add_output_profile</a> (std::string const &amp;name, <a class="el" href="group__cpp__api.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a>)</td></tr>
+<tr class="memdesc:a26053632bf13f39c98ee6b7ea24bdb59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add output profile. That profile contains name and dtype.  <a href="#a26053632bf13f39c98ee6b7ea24bdb59">More...</a><br /></td></tr>
+<tr class="separator:a26053632bf13f39c98ee6b7ea24bdb59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fb029d8affa10cd22eb84aff850f939"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmenoh_1_1variable__profile__table.html">variable_profile_table</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1variable__profile__table__builder.html#a6fb029d8affa10cd22eb84aff850f939">build_variable_profile_table</a> (<a class="el" href="classmenoh_1_1model__data.html">model_data</a> const &amp;<a class="el" href="classmenoh_1_1model__data.html">model_data</a>)</td></tr>
 <tr class="memdesc:a6fb029d8affa10cd22eb84aff850f939"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory function for <a class="el" href="classmenoh_1_1variable__profile__table.html" title="Key value store for variable_profile. ">variable_profile_table</a>.  <a href="#a6fb029d8affa10cd22eb84aff850f939">More...</a><br /></td></tr>
 <tr class="separator:a6fb029d8affa10cd22eb84aff850f939"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -145,7 +148,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="group__cpp__vpt.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__cpp__api.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a>&#160;</td>
           <td class="paramname"><em>dtype</em>, </td>
         </tr>
         <tr>
@@ -171,8 +174,37 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a996d2b1dfef57de5b5e5684675977a74"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a996d2b1dfef57de5b5e5684675977a74">&#9670;&nbsp;</a></span>add_output_profile()</h2>
+<a id="acece2699e57579a045b5f8149880c094"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acece2699e57579a045b5f8149880c094">&#9670;&nbsp;</a></span>add_output_name()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::variable_profile_table_builder::add_output_name </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Add a name of required output. </p>
+<p>dtype and dims of output are calculated automatically. </p>
+
+</div>
+</div>
+<a id="a26053632bf13f39c98ee6b7ea24bdb59"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26053632bf13f39c98ee6b7ea24bdb59">&#9670;&nbsp;</a></span>add_output_profile()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -189,8 +221,8 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="group__cpp__vpt.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a>&#160;</td>
-          <td class="paramname"><em>dtype</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__cpp__api.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a>&#160;</td>
+          <td class="paramname">&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -205,8 +237,8 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Add output profile. That profile contains name, dtype. </p>
-<p>dims of output is calculated automatically. </p>
+<p>Add output profile. That profile contains name and dtype. </p>
+<p>dims of output are calculated automatically. </p><dl class="section note"><dt>Note</dt><dd>This function is deprecated. Given dtype is totally ignored and inferenced by dtype of input. Use <a class="el" href="classmenoh_1_1variable__profile__table__builder.html#acece2699e57579a045b5f8149880c094" title="Add a name of required output. ">add_output_name()</a> instead. </dd></dl>
 
 </div>
 </div>
@@ -239,7 +271,7 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>/home/okada/PFN/menoh_release_repo/include/menoh/<a class="el" href="menoh_8hpp_source.html">menoh.hpp</a></li>
+<li>/home/okada/PFN/menoh_little_fix/include/menoh/<a class="el" href="menoh_8hpp_source.html">menoh.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

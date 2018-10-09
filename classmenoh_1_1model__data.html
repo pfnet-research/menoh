@@ -86,6 +86,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:aed47a07e2e84773fd8b5c382c25b5d7e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#aed47a07e2e84773fd8b5c382c25b5d7e">model_data</a> ()</td></tr>
+<tr class="separator:aed47a07e2e84773fd8b5c382c25b5d7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70d34572c70fa966b9be23337db2cbf7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#a70d34572c70fa966b9be23337db2cbf7">model_data</a> (<a class="el" href="group__model__data.html#ga4b84ac227cd49b1ef4e950cbbc55bf41">menoh_model_data_handle</a> h)</td></tr>
 <tr class="separator:a70d34572c70fa966b9be23337db2cbf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabe870a6c04c77131b5d656b62a5bc5f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__model__data.html#ga4b84ac227cd49b1ef4e950cbbc55bf41">menoh_model_data_handle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#aabe870a6c04c77131b5d656b62a5bc5f">get</a> () const noexcept</td></tr>
@@ -96,12 +98,53 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ga8f55f15313a0d1c9aa944675d58e2e86"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__cpp__model.html#ga8f55f15313a0d1c9aa944675d58e2e86">optimize</a> (<a class="el" href="classmenoh_1_1variable__profile__table.html">variable_profile_table</a> const &amp;vpt)</td></tr>
 <tr class="memdesc:ga8f55f15313a0d1c9aa944675d58e2e86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optimize <a class="el" href="classmenoh_1_1model__data.html" title="model data class ">model_data</a>.  <a href="group__cpp__model.html#ga8f55f15313a0d1c9aa944675d58e2e86">More...</a><br /></td></tr>
 <tr class="separator:ga8f55f15313a0d1c9aa944675d58e2e86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad759ed2c08fdadb0bab39be5af668a07"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#ad759ed2c08fdadb0bab39be5af668a07">add_new_node</a> (std::string const &amp;op_type)</td></tr>
+<tr class="separator:ad759ed2c08fdadb0bab39be5af668a07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf26bde27f8dea13f5f1862fef3259cc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#aaf26bde27f8dea13f5f1862fef3259cc">add_input_name_to_current_node</a> (std::string const &amp;input_name)</td></tr>
+<tr class="separator:aaf26bde27f8dea13f5f1862fef3259cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0694b99739836b04eee2ed9d25cec92c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#a0694b99739836b04eee2ed9d25cec92c">add_output_name_to_current_node</a> (std::string const &amp;output_name)</td></tr>
+<tr class="separator:a0694b99739836b04eee2ed9d25cec92c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a393b5cf9cd91e09607211bcc7e515512"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#a393b5cf9cd91e09607211bcc7e515512">add_attribute_int_to_current_node</a> (std::string const &amp;attribute_name, int32_t value)</td></tr>
+<tr class="separator:a393b5cf9cd91e09607211bcc7e515512"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8aae684621bcc55b71156072d169ef0f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#a8aae684621bcc55b71156072d169ef0f">add_attribute_ints_to_current_node</a> (std::string const &amp;attribute_name, std::vector&lt; int32_t &gt; const &amp;value)</td></tr>
+<tr class="separator:a8aae684621bcc55b71156072d169ef0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae40ef1411f27237555758f1491c1013b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#ae40ef1411f27237555758f1491c1013b">add_attribute_float_to_current_node</a> (std::string const &amp;attribute_name, float value)</td></tr>
+<tr class="separator:ae40ef1411f27237555758f1491c1013b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7e9ae7e3fd922cc39c668f87a036d79"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#ac7e9ae7e3fd922cc39c668f87a036d79">add_attribute_floats_to_current_node</a> (std::string const &amp;attribute_name, std::vector&lt; float &gt; const &amp;value)</td></tr>
+<tr class="separator:ac7e9ae7e3fd922cc39c668f87a036d79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08d51dd06446292c921f014c43c3e05b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmenoh_1_1model__data.html#a08d51dd06446292c921f014c43c3e05b">add_parameter</a> (std::string const &amp;parameter_name, <a class="el" href="group__cpp__api.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a> dtype, std::vector&lt; int &gt; const &amp;dims, void *buffer_handle)</td></tr>
+<tr class="separator:a08d51dd06446292c921f014c43c3e05b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>model data class </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="aed47a07e2e84773fd8b5c382c25b5d7e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed47a07e2e84773fd8b5c382c25b5d7e">&#9670;&nbsp;</a></span>model_data() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">menoh::model_data::model_data </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a70d34572c70fa966b9be23337db2cbf7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70d34572c70fa966b9be23337db2cbf7">&#9670;&nbsp;</a></span>model_data()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a70d34572c70fa966b9be23337db2cbf7">&#9670;&nbsp;</a></span>model_data() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -128,6 +171,276 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ae40ef1411f27237555758f1491c1013b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae40ef1411f27237555758f1491c1013b">&#9670;&nbsp;</a></span>add_attribute_float_to_current_node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::model_data::add_attribute_float_to_current_node </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>attribute_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac7e9ae7e3fd922cc39c668f87a036d79"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7e9ae7e3fd922cc39c668f87a036d79">&#9670;&nbsp;</a></span>add_attribute_floats_to_current_node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::model_data::add_attribute_floats_to_current_node </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>attribute_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; float &gt; const &amp;&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a393b5cf9cd91e09607211bcc7e515512"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a393b5cf9cd91e09607211bcc7e515512">&#9670;&nbsp;</a></span>add_attribute_int_to_current_node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::model_data::add_attribute_int_to_current_node </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>attribute_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int32_t&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8aae684621bcc55b71156072d169ef0f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8aae684621bcc55b71156072d169ef0f">&#9670;&nbsp;</a></span>add_attribute_ints_to_current_node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::model_data::add_attribute_ints_to_current_node </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>attribute_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; int32_t &gt; const &amp;&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aaf26bde27f8dea13f5f1862fef3259cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf26bde27f8dea13f5f1862fef3259cc">&#9670;&nbsp;</a></span>add_input_name_to_current_node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::model_data::add_input_name_to_current_node </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>input_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad759ed2c08fdadb0bab39be5af668a07"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad759ed2c08fdadb0bab39be5af668a07">&#9670;&nbsp;</a></span>add_new_node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::model_data::add_new_node </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>op_type</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0694b99739836b04eee2ed9d25cec92c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0694b99739836b04eee2ed9d25cec92c">&#9670;&nbsp;</a></span>add_output_name_to_current_node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::model_data::add_output_name_to_current_node </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>output_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a08d51dd06446292c921f014c43c3e05b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08d51dd06446292c921f014c43c3e05b">&#9670;&nbsp;</a></span>add_parameter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void menoh::model_data::add_parameter </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>parameter_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__cpp__api.html#ga75619e905a3a91874ca80e2e77064e7c">dtype_t</a>&#160;</td>
+          <td class="paramname"><em>dtype</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; int &gt; const &amp;&#160;</td>
+          <td class="paramname"><em>dims</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>buffer_handle</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aabe870a6c04c77131b5d656b62a5bc5f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aabe870a6c04c77131b5d656b62a5bc5f">&#9670;&nbsp;</a></span>get()</h2>
 
@@ -186,7 +499,7 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>/home/okada/PFN/menoh_release_repo/include/menoh/<a class="el" href="menoh_8hpp_source.html">menoh.hpp</a></li>
+<li>/home/okada/PFN/menoh_little_fix/include/menoh/<a class="el" href="menoh_8hpp_source.html">menoh.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
