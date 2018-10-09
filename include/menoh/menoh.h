@@ -200,6 +200,7 @@ void MENOH_API menoh_delete_variable_profile_table_builder(
 /*! \brief Add input profile
  *
  * Input profile contains name, dtype and dims.
+ * \note Users can free dims buffer after calling this function.
  */
 menoh_error_code MENOH_API
 menoh_variable_profile_table_builder_add_input_profile(
@@ -210,6 +211,7 @@ menoh_variable_profile_table_builder_add_input_profile(
  *
  * Input profile contains name, dtype and dims (num, size). This 2D input is
  * conventional batched 1D inputs.
+ * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_input_profile() instead
  */
 MENOH_DEPRECATED_ATTRIBUTE(
   "please use menoh_variable_profile_table_builder_add_input_profile() instead")
@@ -223,6 +225,7 @@ menoh_variable_profile_table_builder_add_input_profile_dims_2(
  * Input profile contains name, dtype and dims (num, channel, height, width).
  * This 4D input is conventional batched image inputs. Image input is
  * 3D(channel, height, width).
+ * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_input_profile() instead
  */
 MENOH_DEPRECATED_ATTRIBUTE(
   "please use menoh_variable_profile_table_builder_add_input_profile() instead")
@@ -240,10 +243,11 @@ menoh_variable_profile_table_builder_add_input_profile_dims_4(
 menoh_error_code MENOH_API menoh_variable_profile_table_builder_add_output_name(
   menoh_variable_profile_table_builder_handle builder, const char* name);
 
-/*! \brief [DEPRECATED] Add output profile
+/*! \brief Add output profile
  *
  * Output profile contains name and dtype. Its dims are calculated automatically
  * when calling of menoh_build_variable_profile_table.
+ * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_output_name() instead
  */
 MENOH_DEPRECATED_ATTRIBUTE(
   "please use menoh_variable_profile_table_builder_add_output_name() instead. "
