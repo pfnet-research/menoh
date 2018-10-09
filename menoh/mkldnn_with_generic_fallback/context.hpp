@@ -31,8 +31,6 @@ namespace menoh_impl {
               std::unordered_map<std::string, array> const& common_input_table,
               std::unordered_map<std::string, array> const&
                 required_output_table,
-              std::unordered_map<std::string, array_profile> const&
-                output_profile_table,
               std::vector<
                 std::pair<std::string, std::unique_ptr<context>>> const&
                 context_list,
@@ -40,8 +38,7 @@ namespace menoh_impl {
                 return do_process_node_list(
                   context_name, current_index, node_list,
                   common_parameter_table, common_input_table,
-                  required_output_table, output_profile_table, context_list,
-                  logger);
+                  required_output_table, context_list, logger);
             }
 
             // for specialized optimization across backends
@@ -62,8 +59,6 @@ namespace menoh_impl {
               std::unordered_map<std::string, array> const& common_input_table,
               std::unordered_map<std::string, array> const&
                 required_output_table,
-              std::unordered_map<std::string, array_profile> const&
-                output_profile_table,
               std::vector<
                 std::pair<std::string, std::unique_ptr<context>>> const&
                 context_list,

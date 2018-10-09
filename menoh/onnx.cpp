@@ -5,6 +5,7 @@
 #include <fstream>
 #include <functional>
 #include <numeric>
+#include <random>
 #include <unordered_map>
 #include <utility>
 
@@ -22,7 +23,7 @@
 
 namespace menoh_impl {
 
-    dtype_t tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt) {
+    auto tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt) {
         if(tpdt == onnx::TensorProto_DataType_FLOAT) {
             return dtype_t::float_;
         }
@@ -166,6 +167,7 @@ namespace menoh_impl {
         return node_list;
     }
 
+
     model_data make_model_from_onnx(onnx::ModelProto& onnx_model) {
         // onnx opset version check
         if(onnx_model.opset_import_size() != 0) {
@@ -180,6 +182,10 @@ namespace menoh_impl {
 
         trim_dropout(node_list);
         trim_reshape(node_list);
+
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(node_list.begin(), node_list.end(), g);
 
         std::vector<std::string> all_parameter_name_list;
         all_parameter_name_list.reserve(
@@ -223,17 +229,14 @@ namespace menoh_impl {
         return make_model_from_onnx(onnx_model);
     }
 
-    model_data
-    make_model_data_from_onnx_data_on_memory(const uint8_t* onnx_data,
-                                             int32_t size) {
+    model_data make_model_data_from_onnx_data_on_memory(const uint8_t* onnx_data, int32_t size) {
         namespace gpio = ::google::protobuf::io;
         gpio::ArrayInputStream ais(onnx_data, size);
         gpio::CodedInputStream cis(&ais);
         cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
                                std::numeric_limits<int>::max());
         onnx::ModelProto onnx_model;
-        if(!onnx_model.ParseFromCodedStream(&cis) ||
-           !cis.ConsumedEntireMessage()) {
+        if(!onnx_model.ParseFromCodedStream(&cis) || !cis.ConsumedEntireMessage()) {
             throw onnx_parse_error("parse binary onnx data on memory");
         }
         return make_model_from_onnx(onnx_model);

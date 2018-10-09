@@ -7,6 +7,8 @@ set(MENOH_MINOR_VERSION 1)
 set(MENOH_PATCH_VERSION 0)
 
 # Options
+option(BUILD_SHARED_LIBS "Build shared libs" ON)
+
 option(USE_OLD_GLIBCXX_ABI "Generate binaries for the old libstdc++ ABI" OFF)
 option(LINK_STATIC_LIBPROTOBUF "Link static libprotobuf to libmenoh" OFF)
 
@@ -50,37 +52,11 @@ mark_as_advanced(DOWNLOAD_LOCATION)
 # Enable ExternalProject_Add
 include(ExternalProject)
 
-# Setup protobuf (it is used in ONNX and Menoh)
-if(LINK_STATIC_LIBPROTOBUF)
-    # Note: We can't use `set(PROTOBUF_BUILD_SHARED_LIBS OFF)` in `FindProtobuf` module
-    # because `libprotobuf.a` produced by the package manager is not PIC. So we need to
-    # build it by ourselves.
-    if(UNIX OR MINGW)
-        include(BuildProtobuf)
-    else()
-        message(FATAL_ERROR "LINK_STATIC_LIBPROTOBUF is supported only in UNIX-like environments")
-    endif()
-else()
-    # Note: It may conflict with the loading mechanism in onnx's CMake configuration.
-    # See external/onnx/CMakeLists.txt for more details.
-    include(FindProtobuf)
-    find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)
-endif()
+# Setup protobuf
+include(SetupProtobuf)
 
-# Build libonnx.a
-message(STATUS "Adding external/onnx")
-
-set(ONNX_SRC_DIR ${EXTERNAL_DIR}/onnx)
-execute_process(COMMAND git submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-# see https://github.com/onnx/onnx/pull/1466
-message(STATUS "Patching to external/onnx")
-configure_file(${EXTERNAL_DIR}/onnx-v1.3.0-patch_CMakeLists.txt ${EXTERNAL_DIR}/onnx/CMakeLists.txt COPYONLY)
-
-# TODO: enable the following option when it is ready for migrating to onnx-ml
-#set(ONNX_ML 1)
-add_subdirectory(external/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
-include_directories("${ONNX_INCLUDE_DIRS}")
+# Generate source codes from ONNX protobuf schema
+include(GenerateOnnxSrc)
 
 # Setup MKLDNN
 find_package(MKLDNN "0.14")
@@ -91,24 +67,30 @@ endif()
 include_directories("${MKLDNN_INCLUDE_DIR}")
 
 if(${ENABLE_TEST})
-    message(STATUS "Adding test")
+    enable_testing()
+    # GTest setup
+    set(GTEST_DIR test/lib/googletest)
+    execute_process(COMMAND git submodule update --init -- ${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    message(STATUS "# add_subdirectory\(${GTEST_DIR}\)")
+    add_subdirectory(${GTEST_DIR})
+    message(STATUS "# add_subdirectory\(test\)")
     add_subdirectory(test)
 endif()
 
 if(${ENABLE_BENCHMARK})
-    message(STATUS "Adding benchmark")
+    message(STATUS "# add_subdirectory\(benchmark\)")
     add_subdirectory(benchmark)
 endif()
 
 if(${ENABLE_EXAMPLE})
-    message(STATUS "Adding example")
+    message(STATUS "# add_subdirectory\(example\)")
     add_subdirectory(example)
 endif()
 
-message(STATUS "Adding menoh")
+message(STATUS "# add_subdirectory\(menoh\)")
 add_subdirectory(menoh)
 
-message(STATUS "Adding include")
+message(STATUS "# add_subdirectory\(include\)")
 add_subdirectory(include)
 
 if(SHOW_ALL_VARIABLES)

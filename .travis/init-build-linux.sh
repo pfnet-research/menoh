@@ -16,8 +16,8 @@ export MKLDNN_INSTALL_DIR=/usr/local
 # $HOME:$HOME = /home/travis                     : /home/travis
 #               /home/travis/build               : /home/travis/build
 #               /home/travis/build/<user>/<repo> : /home/travis/build/<user>/<repo> (= ${TRAVIS_BUILD_DIR})
-SOURCE_DIR=$(cd "$(dirname "${BASH_SOURCE:-$0}/..")"; pwd)
-source ${SOURCE_DIR}/scripts/run-container.sh --image ${BUILDENV_IMAGE} --work-dir ${WORK_DIR}
+SHARED_SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE:-$0}); pwd)
+source ${SHARED_SCRIPT_DIR}/run-container.sh --image ${BUILDENV_IMAGE} --work-dir ${WORK_DIR}
 test -n "${BUILDENV_CONTAINER_ID}" || { echo "BUILDENV_CONTAINER_ID can't be empty" 1>&2; exit 1; }
 
 ## define shared functions for Linux-based platforms
@@ -34,58 +34,42 @@ function docker_exec_script() {
     return $?
 }
 
-function build_protobuf() {
-    docker_exec_script \
-        "${PROJ_DIR}/scripts/build-protobuf.sh" \
-            --version ${PROTOBUF_VERSION} \
-            --download-dir "${WORK_DIR}/downloads" \
-            --extract-dir "${WORK_DIR}/build" \
-            --install-dir "${PROTOBUF_INSTALL_DIR}" \
-            --parallel ${MAKE_JOBS}
-}
-
 function install_protobuf() {
     docker_exec_script \
-        "${PROJ_DIR}/scripts/install-protobuf.sh" \
-            --build-dir "${WORK_DIR}/build/protobuf-${PROTOBUF_VERSION}"
-}
-
-function build_mkldnn() {
-    docker_exec_script \
-        "${PROJ_DIR}/scripts/build-mkldnn.sh" \
-            --version ${MKLDNN_VERSION} \
-            --download-dir "${WORK_DIR}/downloads" \
-            --extract-dir "${WORK_DIR}/build" \
-            --install-dir "${MKLDNN_INSTALL_DIR}" \
+        ${PROJ_DIR}/.travis/install-protobuf.sh \
+            --version ${PROTOBUF_VERSION} \
+            --download-dir ${WORK_DIR}/downloads \
+            --build-dir ${WORK_DIR}/build \
+            --install-dir ${PROTOBUF_INSTALL_DIR} \
             --parallel ${MAKE_JOBS}
 }
 
 function install_mkldnn() {
     docker_exec_script \
-        "${PROJ_DIR}/scripts/install-mkldnn.sh" \
-            --build-dir "${WORK_DIR}/build/mkl-dnn-${MKLDNN_VERSION}/build"
+        ${PROJ_DIR}/.travis/install-mkldnn.sh \
+            --version ${MKLDNN_VERSION} \
+            --download-dir ${WORK_DIR}/downloads \
+            --build-dir ${WORK_DIR}/build \
+            --install-dir ${MKLDNN_INSTALL_DIR} \
+            --parallel ${MAKE_JOBS}
 }
 
 function prepare_menoh_data() {
     docker_exec_script \
-        "${PROJ_DIR}/scripts/prepare-menoh-data.sh" \
-            --source-dir "${PROJ_DIR}" \
+        ${PROJ_DIR}/.travis/prepare-menoh-data.sh \
+            --source-dir ${PROJ_DIR} \
             --python-executable python3
 }
 
 function build_menoh() {
     if [ "${LINK_STATIC}" != "true" ]; then
         docker_exec_script \
-            "${PROJ_DIR}/scripts/build-menoh.sh" \
-                --build-type Release \
-                --source-dir "${PROJ_DIR}" \
-                --python-executable python3
+            ${PROJ_DIR}/.travis/build-menoh.sh \
+                --source-dir ${PROJ_DIR}
     else
         docker_exec_script \
-            "${PROJ_DIR}/scripts/build-menoh.sh" \
-                --build-type Release \
-                --source-dir "${PROJ_DIR}" \
-                --python-executable python3 \
+            ${PROJ_DIR}/.travis/build-menoh.sh \
+                --source-dir ${PROJ_DIR} \
                 --link-static-libgcc ON \
                 --link-static-libstdcxx ON \
                 --link-static-libprotobuf ON
@@ -93,9 +77,9 @@ function build_menoh() {
 }
 
 function test_menoh() {
-    docker_exec "cd \"${PROJ_DIR}/build\" && ./test/menoh_test"
+    docker_exec "cd ${PROJ_DIR}/build && ./test/menoh_test"
 }
 
 function check_menoh_artifact() {
-    docker_exec "ldd \"${PROJ_DIR}/build/menoh/libmenoh.so\""
+    docker_exec "ldd ${PROJ_DIR}/build/menoh/libmenoh.so"
 }

@@ -5,25 +5,18 @@ You need to install [prerequisites](#prerequisites) for your platform before [bu
 To build Menoh, you require the following toolchains:
 
 Unix:
-- GCC 4.9 or later
 - CMake 3.1 or later
-- Python 2.7 or later
+- GCC 4.9 or later
 
 macOS (OSX):
 - XCode
 - [Homebrew](https://brew.sh/)
-- CMake 3.1 or later
-- Python 2.7 or later
 
 Windows:
 - Visual Studio 2015
-- CMake 3.1 or later
-- Python 2.7 or later
 
 Windows (MINGW):
 - [MSYS2](http://www.msys2.org/)
-- CMake 3.1 or later
-- Python 2.7 or later
 
 You also need to install the dependent libraries on your system:
 
@@ -32,7 +25,7 @@ You also need to install the dependent libraries on your system:
 
 `protobuf` can be installed through most package managers instead of building it yourself. `mkl-dnn` package, unfortunatelly, is not available in many environments at the moment (except for `brew` in macOS).
 
-Note that you can use ProtoBuf either version 2 or 3, but the runtime version should be the same as `protoc` in your system.
+Note that you can use ProtoBuf either version 2 or 3, but, for example, if you build Menoh with `protoc` ver 3 you should use the binary with runtime ver 3.
 
 ### Debian/Ubuntu
 ```
@@ -60,9 +53,10 @@ Download and unzip https://github.com/protocolbuffers/protobuf/releases/download
 
 ```
 cd protobuf-3.6.1/cmake
-mkdir build
+mdir build
 cd build
 cmake .. -G "Visual Studio 14" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
+cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
 cd ../../..
 ```
@@ -73,9 +67,10 @@ git clone https://github.com/intel/mkl-dnn.git
 cd mkl-dnn/scripts
 .\prepare_mkl.bat
 cd ..
-mkdir build
+mdir build
 cd build
 cmake .. -G "Visual Studio 14 Win64"  -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir)
+cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
 cd ../..
 ```
@@ -83,7 +78,7 @@ cd ../..
 ### Windows (MINGW)
 ```
 pacman -S mingw-w64-x86_64-toolchain
-pacman -S git make
+pacman -S git
 pacman -S mingw-w64-x86_64-cmake
 pacman -S mingw-w64-x86_64-protobuf mingw-w64-x86_64-protobuf-c
 ```
@@ -91,7 +86,7 @@ pacman -S mingw-w64-x86_64-protobuf mingw-w64-x86_64-protobuf-c
 #### Installing MKL-DNN from binary package
 ```
 curl -omingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz -L https://github.com/pfnet-research/menoh/releases/download/v1.0.3/mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
-pacman -U --noconfirm mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
+pacman -S --noconfirm mingw-w64-x86_64-mkl-dnn-0.15-1-x86_64.pkg.tar.xz
 ```
 
 #### Installing MKL-DNN from source
@@ -129,7 +124,7 @@ make install # as root
 To run the example, you also need to download model data:
 
 ```
-python scripts/retrieve_data.py
+python retrieve_data.py
 ```
 
 #### Static linking
@@ -182,9 +177,10 @@ Please replace `(CMake_Install_Dir)` in the following with your working director
 ```
 git clone https://github.com/pfnet-research/menoh.git
 cd menoh
-mkdir build
+mdir build
 cd build
-cmake .. -G "Visual Studio 14 Win64" -DCMAKE_PREFIX_PATH=(CMake_Install_Dir) -DCMAKE_INSTALL_PREFIX=(CMake_Install_Dir) -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF
+cmake .. -G "Visual Studio 14 Win64" -DCMAKE_PREFIX_PATH=CMake_Install_Dir) -DCMAKE_INSTALL_PREFIX=CMake_Install_Dir) -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF
+cmake --build . --config Debug --target install
 cmake --build . --config Release --target install
 ```
 
@@ -197,13 +193,4 @@ mkdir -p build && cd build
 MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
   cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64
 make
-```
-
-### Note
-
-#### Python command name
-Menoh requires `python` command to generate source codes at build time. Add `PYTHON_EXECUTABLE` option to `cmake` if you want to use `python` command with non-standard name (e.g. `python3`).
-
-```bash
-cmake -DPYTHON_EXECUTABLE=python3 ..
 ```

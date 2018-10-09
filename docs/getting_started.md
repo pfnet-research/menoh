@@ -39,7 +39,7 @@ make install
 Execute below command in root directory:
 
 ```
-python scripts/retrieve_data.py
+python retrieve_data.py
 cd build
 ./example/vgg16_example
 ```
@@ -68,7 +68,7 @@ Please give `--help` option for details
 Execute below commands in root directory:
 
 ```
-python scripts/gen_test_data.py
+python gen_test_data.py
 cd build
 cmake -DENABLE_TEST=ON ..
 make

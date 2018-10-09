@@ -69,14 +69,15 @@ namespace menoh {
             std::string output_name;
             std::tie(output_name, std::ignore) = gemm_true_output_filename;
             model_data.add_output_name_to_current_node(output_name);
-            vpt_builder.add_output_name(output_name);
+            dtype_t dtype = dtype_t::float_; // TODO other dtype
+            vpt_builder.add_output_profile(output_name, dtype);
         }
 
         {
             model_data.add_new_node("Relu");
             model_data.add_input_name_to_current_node("gemm_out");
             model_data.add_output_name_to_current_node("relu_out");
-            vpt_builder.add_output_name("relu_out");
+            vpt_builder.add_output_profile("relu_out", dtype_t::float_);
         }
 
         auto vpt = vpt_builder.build_variable_profile_table(model_data);
@@ -109,6 +110,7 @@ namespace menoh {
             std::vector<float> true_output_data;
             std::tie(std::ignore, output_dims, true_output_data) =
               menoh_impl::load_np_array(true_output_filename);
+            dtype_t dtype = dtype_t::float_; // TODO other dtype
             if(output_name == "relu_out") {
                 std::transform(true_output_data.begin(), true_output_data.end(),
                                true_output_data.begin(),

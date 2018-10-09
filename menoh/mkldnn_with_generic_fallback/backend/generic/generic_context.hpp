@@ -32,8 +32,6 @@ namespace menoh_impl {
                     common_input_table,
                   std::unordered_map<std::string, array> const&
                     required_output_table,
-                  std::unordered_map<std::string, array_profile> const&
-                    output_profile_table,
                   std::vector<
                     std::pair<std::string, std::unique_ptr<context>>> const&
                     context_list,
@@ -45,11 +43,10 @@ namespace menoh_impl {
                     return variable_table_.at(name);
                 }
 
-                using procedure_factory = std::function<procedure(
-                  node const&, // node
-                  std::vector<array> const&, // input list
-                  std::vector<array> const&  // output list
-                  )>;
+                using procedure_factory = std::function<std::tuple<
+                  procedure, std::vector<std::pair<std::string, array>>>(
+                  int, std::vector<node> const&, std::vector<array> const&,
+                  std::unordered_map<std::string, array> const&)>;
                 optional<std::function<void()>>
                 try_to_get_input_from_common_table(
                   std::string const& input_name,
