@@ -110,7 +110,7 @@ namespace {
                                                   input.dims);
                 }
                 for(auto const& output : true_output_list) {
-                    vpt_builder.add_output_profile(output.name, output.dtype);
+                    vpt_builder.add_output_name(output.name);
                 }
                 auto onnx_model_filename = parent_dir_path / "model.onnx";
                 auto model_data =
@@ -135,9 +135,10 @@ namespace {
                 auto static_cast_to_float_ptr = [](auto p) {
                     return static_cast<float*>(static_cast<void*>(p));
                 };
-                for(int output_index = 0;
+                for(unsigned int output_index = 0;
                     output_index < true_output_list.size(); ++output_index) {
                     auto const& input = input_list.front();
+                    static_cast<void>(input); // maybe unused
                     auto const& output = output_list.at(output_index);
                     auto const& true_output = true_output_list.at(output_index);
                     auto total_size = std::accumulate(true_output.dims.begin(),

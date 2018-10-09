@@ -30,6 +30,7 @@ namespace menoh_impl {
                 std::pair<std::string, std::unique_ptr<context>>> const&
                 context_list,
               logger_handle logger) {
+                static_cast<void>(output_profile_table); // maybe unused
                 auto first_node_index = current_index;
                 std::vector<procedure> procedure_list;
 

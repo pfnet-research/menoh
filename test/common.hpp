@@ -55,7 +55,7 @@ namespace menoh_impl {
             return false;
         }
         auto size = total_size(lhs);
-        for(auto i = 0; i < size; ++i) {
+        for(unsigned int i = 0; i < size; ++i) {
             float l = *(static_cast<float*>(lhs.data()) + i);
             float r = *(static_cast<float*>(rhs.data()) + i);
             if(!(l - eps < r && r < l + eps)) {
