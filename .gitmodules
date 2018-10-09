@@ -1,6 +1,10 @@
 [submodule "external/onnx"]
 	path = external/onnx
-	url = https://github.com/onnx/onnx
+	url = https://github.com/onnx/onnx.git
+	ignore = dirty
 [submodule "test/lib/googletest"]
 	path = test/lib/googletest
 	url = https://github.com/google/googletest.git
+[submodule "test/lib/filesystem"]
+	path = test/lib/filesystem
+	url = https://github.com/wjakob/filesystem.git

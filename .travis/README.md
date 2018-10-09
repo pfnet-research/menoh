@@ -12,7 +12,7 @@ Linux-based platforms requires a container image with the following softwares:
 Currently it uses [okapies/buildenv](https://hub.docker.com/r/okapies/buildenv/) image for linux-x86_64 platform.
 
 ## Architecture
-`.travis.yml` -> `run-build.sh` -> `build.sh` -> `install-*.sh` & `build-menoh.sh`
+`.travis.yml` -> `run-build.sh` -> `build.sh` -> `scripts/*.sh`
 
 1. `run-build.sh` just calls a platform's `build.sh` for running the actual build workflow
 2. `build.sh`

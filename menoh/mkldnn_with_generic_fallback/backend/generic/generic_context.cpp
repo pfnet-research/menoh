@@ -18,6 +18,8 @@ namespace menoh_impl {
               std::unordered_map<std::string, array> const& common_input_table,
               std::unordered_map<std::string, array> const&
                 required_output_table,
+              std::unordered_map<std::string, array_profile> const&
+                output_profile_table,
               std::vector<
                 std::pair<std::string, std::unique_ptr<context>>> const&
                 context_list,
@@ -28,7 +30,8 @@ namespace menoh_impl {
 
                 std::vector<procedure> new_op_proc_list;
 
-                for(; current_index < node_list.size(); ++current_index) {
+                for(; current_index < static_cast<int>(node_list.size());
+                    ++current_index) {
                     auto const& node = node_list.at(current_index);
                     std::vector<array> input_list;
                     std::vector<procedure> new_copy_procedure_list;
@@ -53,8 +56,6 @@ namespace menoh_impl {
                               [&](auto const& table) {
                                   auto found = table.find(input_name);
                                   if(found != table.end()) {
-                                      assert(found->second.dims().size() == 2 ||
-                                             found->second.dims().size() == 4);
                                       input_list.push_back(found->second);
                                       return true;
                                   }
@@ -101,23 +102,42 @@ namespace menoh_impl {
                             assert(is_found_from_other_context);
                         } while(false);
                     }
+                    std::vector<array> output_list;
+                    for(auto const& output_name : node.output_name_list) {
+                        auto found = required_output_table.find(output_name);
+                        if(found == required_output_table.end()) {
+                            // allocate new array by using profile
+                            output_list.push_back(
+                              array(output_profile_table.at(output_name)));
+                        } else {
+                            // use already allocated array
+                            output_list.push_back(found->second);
+                        }
+                    }
+
                     procedure op_proc;
-                    std::vector<std::pair<std::string, array>> new_outputs;
                     try {
                         auto factory =
                           procedure_factory_table_.at(node.op_type);
-                        std::tie(op_proc, new_outputs) =
-                          factory.operator()(current_index, node_list,
-                                             input_list, required_output_table);
-                    } catch(...) { break; }
+                        op_proc =
+                          factory.operator()(node, input_list, output_list);
+                    } catch(std::exception const& e) {
+                        *logger << e.what() << std::endl;
+                        break;
+                    }
                     new_op_proc_list.push_back(op_proc);
                     procedure_list.insert(
                       procedure_list.end(),
                       std::make_move_iterator(new_copy_procedure_list.begin()),
                       std::make_move_iterator(new_copy_procedure_list.end()));
-                    variable_table_.insert(
-                      std::make_move_iterator(new_outputs.begin()),
-                      std::make_move_iterator(new_outputs.end()));
+
+                    assert(node.output_name_list.size() == output_list.size());
+                    for(int i = 0;
+                        i < static_cast<int>(node.output_name_list.size());
+                        ++i) {
+                        variable_table_.emplace(node.output_name_list.at(i),
+                                                output_list.at(i));
+                    }
                 }
 
                 // when no nodes are processed

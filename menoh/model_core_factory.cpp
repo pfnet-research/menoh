@@ -11,13 +11,15 @@ namespace menoh_impl {
 
     std::unique_ptr<menoh_impl::model_core>
     make_model_core(std::unordered_map<std::string, array> const& input_table,
-                    std::unordered_map<std::string, array> const& output_table,
+                    std::unordered_map<std::string, array> const& required_output_table,
+                    std::unordered_map<std::string, array_profile> const&
+                      output_profile_table,
                     menoh_impl::model_data const& model_data,
                     std::string const& backend_name,
                     backend_config const& config) {
         if(backend_name == "mkldnn") {
             return std::make_unique<mkldnn_backend::model_core>(
-              mkldnn_backend::make_model_core(input_table, output_table,
+              mkldnn_backend::make_model_core(input_table, required_output_table,
                                               model_data, config));
         } else if(backend_name == "mkldnn_with_generic_fallback") {
             using namespace mkldnn_with_generic_fallback_backend;
@@ -32,8 +34,8 @@ namespace menoh_impl {
                                  generic_backend::generic_context>());
             return std::make_unique<
               mkldnn_with_generic_fallback_backend::model_core>(
-              std::move(context_list), input_table, output_table, model_data,
-              config);
+              std::move(context_list), input_table, required_output_table,
+              output_profile_table, model_data, config);
         }
 
         throw invalid_backend_name(backend_name);

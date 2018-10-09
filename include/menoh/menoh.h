@@ -11,7 +11,7 @@
 #define MENOH_API
 #endif
 
-#define MENOH_SUPPORTED_ONNX_OPSET_VERSION 7
+#define MENOH_SUPPORTED_ONNX_OPSET_VERSION 8
 
 #ifndef MENOH_ERROR_MESSAGE_MAX_LENGTH
 #define MENOH_ERROR_MESSAGE_MAX_LENGTH 1024
@@ -121,7 +121,6 @@ menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
 menoh_error_code MENOH_API
 menoh_make_model_data(menoh_model_data_handle* dst_handle);
 /*! \brief Add a new parameter in model_data
- *
  * \note Duplication of parameter_name is not allowed and it throws error.
  */
 menoh_error_code MENOH_API menoh_model_data_add_parameter(
@@ -159,7 +158,7 @@ menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
  */
 menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
-  const int* value);
+  const int32_t* value);
 /*! \brief Add a new float array attribute to latest added node in model_data
  *
  * \note Duplication of attribute_name is not allowed and it throws error.
@@ -233,11 +232,22 @@ menoh_variable_profile_table_builder_add_input_profile_dims_4(
   menoh_dtype dtype, int32_t num, int32_t channel, int32_t height,
   int32_t width);
 
-/*! \brief Add output profile
+/*! \brief Add output name
+ *
+ * dims amd dtype of output are calculated automatically
+ * when calling of menoh_build_variable_profile_table.
+ */
+menoh_error_code MENOH_API menoh_variable_profile_table_builder_add_output_name(
+  menoh_variable_profile_table_builder_handle builder, const char* name);
+
+/*! \brief [DEPRECATED] Add output profile
  *
  * Output profile contains name and dtype. Its dims are calculated automatically
  * when calling of menoh_build_variable_profile_table.
  */
+MENOH_DEPRECATED_ATTRIBUTE(
+  "please use menoh_variable_profile_table_builder_add_output_name() instead. "
+  "dtype is totally ignored.")
 menoh_error_code MENOH_API
 menoh_variable_profile_table_builder_add_output_profile(
   menoh_variable_profile_table_builder_handle builder, const char* name,
