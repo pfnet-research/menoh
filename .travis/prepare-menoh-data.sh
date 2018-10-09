@@ -1,6 +1,4 @@
-#!/bin/bash -e
-
-BASE_DIR=$(cd "$(dirname "${BASH_SOURCE:-$0}")"; pwd)
+#!/bin/bash
 
 # retrieve arguments
 while [[ $# != 0 ]]; do
@@ -28,14 +26,14 @@ while [[ $# != 0 ]]; do
     esac
 done
 
-# options that have default value
-test -n "${ARG_SOURCE_DIR}" || readonly ARG_SOURCE_DIR="${BASE_DIR}/.."
-test -n "${ARG_PYTHON_EXECUTABLE}" || readonly ARG_PYTHON_EXECUTABLE=python
+# validate the arguments
+test -n "${ARG_SOURCE_DIR}" || { echo "ARG_SOURCE_DIR can't be empty" 1>&2; exit 1; }
+test -n "${ARG_PYTHON_EXECUTABLE}" || ARG_PYTHON_EXECUTABLE=python
 
-echo -e "\e[33;1mPreparing data for Menoh tests and examples\e[0m"
+echo -e "\e[33;1mPreparing data/ for Menoh\e[0m"
 
-cd "${ARG_SOURCE_DIR}"
+cd ${ARG_SOURCE_DIR}
 [ -d "data" ] || mkdir -p data
 
-${ARG_PYTHON_EXECUTABLE} scripts/retrieve_data.py
-${ARG_PYTHON_EXECUTABLE} scripts/gen_test_data.py
+${ARG_PYTHON_EXECUTABLE} retrieve_data.py
+${ARG_PYTHON_EXECUTABLE} gen_test_data.py

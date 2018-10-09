@@ -39,12 +39,8 @@
 
 #ifdef _MSC_VER
 #define NOMINMAX
-/*
-  You must include Windows.h before DbgHelp.h.
-  See https://stackoverflow.com/a/43283926/1014818 for more details.
-*/
-#include <Windows.h>
 #include <DbgHelp.h>
+#include <Windows.h>
 #else
 #include <cxxabi.h>
 #endif

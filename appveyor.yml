@@ -40,13 +40,13 @@ install:
 - if [%TARGET%]==[mingw] (
     pip3 install --user chainer &&
     mkdir -p data &&
-    python3 scripts/retrieve_data.py &&
-    python3 scripts/gen_test_data.py
+    python3 retrieve_data.py &&
+    python3 gen_test_data.py
   ) else (
     pip install --user chainer &&
     md data &&
-    python scripts/retrieve_data.py &&
-    python scripts/gen_test_data.py
+    python retrieve_data.py &&
+    python gen_test_data.py
   )
 
 before_build:
@@ -72,7 +72,7 @@ build_script:
     cmake -G "MSYS Makefiles" -DENABLE_TEST=ON %STATIC_OPTION% -DCMAKE_INSTALL_PREFIX=/mingw64 .. &&
     make
   ) else (
-    cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
+    cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DENABLE_TOOL=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
     cmake --build . --config Release --target install
   )
 

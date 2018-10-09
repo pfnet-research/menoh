@@ -6,11 +6,11 @@
 namespace menoh_impl {
 
     template <typename Iter1, typename Iter2>
-    auto assert_eq_list(Iter1 first1, Iter1 last1, Iter2 first2, Iter2 last2, float eps=1.e-4) {
+    auto assert_eq_list(Iter1 first1, Iter1 last1, Iter2 first2, Iter2 last2) {
         ASSERT_EQ(std::distance(first1, last1), std::distance(first2, last2))
           << "size is different";
         while(first1 != last1) {
-            ASSERT_NEAR(*first1, *first2, eps)
+            ASSERT_EQ(*first1, *first2)
               << *first1 << " and " << *first2 << " are different";
             ++first1;
             ++first2;
@@ -55,7 +55,7 @@ namespace menoh_impl {
             return false;
         }
         auto size = total_size(lhs);
-        for(unsigned int i = 0; i < size; ++i) {
+        for(auto i = 0; i < size; ++i) {
             float l = *(static_cast<float*>(lhs.data()) + i);
             float r = *(static_cast<float*>(rhs.data()) + i);
             if(!(l - eps < r && r < l + eps)) {

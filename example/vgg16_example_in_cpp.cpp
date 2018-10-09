@@ -110,8 +110,8 @@ int main(int argc, char** argv) {
     menoh::variable_profile_table_builder vpt_builder;
     vpt_builder.add_input_profile(conv1_1_in_name, menoh::dtype_t::float_,
                                   {batch_size, channel_num, height, width});
-    vpt_builder.add_output_name(fc6_out_name);
-    vpt_builder.add_output_name(softmax_out_name);
+    vpt_builder.add_output_profile(fc6_out_name, menoh::dtype_t::float_);
+    vpt_builder.add_output_profile(softmax_out_name, menoh::dtype_t::float_);
 
     // Build variable_profile_table and get variable dims (if needed)
     auto vpt = vpt_builder.build_variable_profile_table(model_data);

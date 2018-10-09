@@ -9,8 +9,6 @@
 #include <menoh/mkldnn/operator/common.hpp>
 #include <menoh/mkldnn/utility.hpp>
 
-#include <menoh/graph.hpp> // for unsupported_operator error
-
 namespace menoh_impl {
     namespace mkldnn_backend {
 
@@ -96,9 +94,6 @@ namespace menoh_impl {
             variable_memory_table,
           std::unordered_map<std::string, array> const& required_output_table,
           mkldnn::engine const& engine) {
-            if(node.output_name_list.size() != 1) {
-                throw unsupported_operator("MaxPool issuing multiple outputs");
-            }
             return make_pool_primitive<mkldnn::pooling_max>(
               node, variable_memory_table, required_output_table, engine);
         }
