@@ -87,6 +87,11 @@ namespace menoh_impl {
             return name;
         }
 
+        std::string GetPrefixNodeName( const menoh_impl::node& node ) {
+          std::string name(node.op_type + ":" + GetNodeName(node));
+          return name;
+        }
+
         float ReadMandatoryNodeFloatAttribute(const menoh_impl::node& node, const std::string& name){
             return attribute_float( node, name );  
         }
@@ -355,6 +360,8 @@ namespace menoh_impl {
                 BOOST_ASSERT(m_Layer == nullptr);
                 IConstantLayer* const1;
                 const1 = m_Parser->m_Network->addConstant(dimentions, weights);
+                //                std::string fullname("Const_"+name);
+                //                const1->setName(fullname.c_str());
                 const1->setName(name.c_str());
                 std::string pname("tensor_"+name);
                 const1->getOutput(0)->setName(pname.c_str());
@@ -624,9 +631,10 @@ namespace menoh_impl {
             conv1 = m_Network->addConvolution(*input0, 
                                               bias.count, DimsHW{kernel_shape[0], kernel_shape[1]}, weight, bias);
             assert(conv1);
-            conv1->setName(name.c_str());
+            conv1->setName(GetPrefixNodeName(node).c_str());
             conv1->setStride(DimsHW{strides[0], strides[1]});
             conv1->setPadding(DimsHW{pads[0], pads[1]});
+
             std::string pname("tensor_"+name);
             conv1->getOutput(0)->setName(pname.c_str());
             SetLayer(conv1);   
@@ -650,7 +658,8 @@ namespace menoh_impl {
             ITensor** tensors = itensors.data();
             IConcatenationLayer* concat = m_Network->addConcatenation(tensors, numInputs);
             assert(concat);
-            concat->setName(name.c_str());
+            concat->setName(GetPrefixNodeName(node).c_str());
+
             concat->getOutput(0)->setName(name.c_str());
             SetLayer(concat);
 
@@ -671,7 +680,8 @@ namespace menoh_impl {
 
             ILRNLayer* lrn = m_Network->addLRN(*m_Layer->getOutput(0), window, alpha, beta, k);
             assert(lrn);
-            lrn->setName(name.c_str());
+            lrn->setName(GetPrefixNodeName(node).c_str());
+
             lrn->getOutput(0)->setName(name.c_str());
             SetLayer(lrn);
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, lrn);
@@ -709,7 +719,8 @@ namespace menoh_impl {
             IMatrixMultiplyLayer* matrix1;
             matrix1 = m_Network->addMatrixMultiply(*input0, false, *input1, false);
             assert(matrix1);
-            matrix1->setName(name.c_str());
+            matrix1->setName(GetPrefixNodeName(node).c_str());
+
             matrix1->getOutput(0)->setName(name.c_str());
             SetLayer(matrix1);
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, matrix1);
@@ -754,7 +765,7 @@ namespace menoh_impl {
                 for( unsigned int i=offset ; i<dims.size() ; i++ )
                     inputDims.d[i-offset] = dims[i];  
 
-                placeholder = m_Network->addInput(name.c_str(), nvinfer1::DataType::kFLOAT, inputDims);
+                placeholder = m_Network->addInput(GetPrefixNodeName(node).c_str(), nvinfer1::DataType::kFLOAT, inputDims);
                 assert(placeholder);
 #ifdef TENSORRT_DEBUG
                 std::cout << "           inputDims.nbDims = " << inputDims.nbDims;
@@ -774,7 +785,7 @@ namespace menoh_impl {
 
                 scale1 = m_Network->addScale(*placeholder, ScaleMode::kUNIFORM, shift, scale, power);
                 assert(scale1);
-                scale1->setName(name.c_str());           
+                scale1->setName(GetPrefixNodeName(node).c_str());
 
                 std::string pname("tensor_"+name);
                 scale1->getOutput(0)->setName(pname.c_str());
@@ -813,8 +824,8 @@ namespace menoh_impl {
 #endif            
             IActivationLayer* activate = m_Network->addActivation(*input0, activationType);
             assert(activate);
-            activate->setName(name.c_str());
-
+            activate->setName(GetPrefixNodeName(node).c_str());
+                                
             std::string pname("tensor_"+name);
             activate->getOutput(0)->setName(pname.c_str());
             SetLayer(activate);
@@ -832,8 +843,8 @@ namespace menoh_impl {
 #endif            
             ISoftMaxLayer* softmax = m_Network->addSoftMax(*input0);
             assert(softmax);
-            softmax->setName(name.c_str());           
-
+            softmax->setName(GetPrefixNodeName(node).c_str());           
+                              
             std::string pname("tensor_"+name);
             softmax->getOutput(0)->setName(pname.c_str());
 #ifdef TENSORRT_DEBUG
@@ -880,7 +891,7 @@ namespace menoh_impl {
             IPoolingLayer* pool;
             pool = m_Network->addPooling(*input0, pooltype, DimsHW{kernel_shape[0], kernel_shape[1]});
             assert(pool);
-            pool->setName(name.c_str());
+            pool->setName(GetPrefixNodeName(node).c_str());
             pool->setStride( DimsHW{strides[0], strides[1]});
             pool->setPadding(DimsHW{pads[0],    pads[1]});
 
@@ -951,8 +962,9 @@ namespace menoh_impl {
             IFullyConnectedLayer* full;
             full = m_Network->addFullyConnected(*input0, biasTensor.GetShape()[0], weight, bias);
             assert(full);
-            full->setName(name);
-
+            std::string fullname(std::string("FC:")+name);
+            full->setName(fullname.c_str());
+            //full->setName(name);
             std::string pname("tensor_"+std::string(name));
             full->getOutput(0)->setName(pname.c_str());
             SetLayer(full);
@@ -990,7 +1002,9 @@ namespace menoh_impl {
             IFullyConnectedLayer* full;
             full = m_Network->addFullyConnected(*input0, bias.count, weight, bias);
             assert(full);
-            full->setName(name);
+            std::string fullname(std::string("FC:")+name);
+            full->setName(fullname.c_str());
+            //full->setName(name);
             std::string pname("tensor_"+std::string(name));
             full->getOutput(0)->setName(pname.c_str());
             SetLayer(full);

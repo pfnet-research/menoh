@@ -61,6 +61,35 @@ public:
 namespace menoh_impl {
     namespace tensorrt_backend {
 
+        struct Profiler : public IProfiler
+        {
+            const int TIMING_ITERATIONS = 1;
+
+            typedef std::pair<std::string, float> Record;
+            std::vector<Record> mProfile;
+
+            virtual void reportLayerTime(const char* layerName, float ms)
+            {
+                auto record = std::find_if(mProfile.begin(), mProfile.end(), [&](const Record& r){ return r.first == layerName; });
+                if (record == mProfile.end())
+                    mProfile.push_back(std::make_pair(layerName, ms));
+                else
+                    record->second += ms;
+            }
+
+            void printLayerTimes()
+            {
+                float totalTime = 0;
+                printf("\n=== TensorRT Profiling ===\n");
+                for (size_t i = 0; i < mProfile.size(); i++)
+                {
+                    printf("  %-40.40s %4.3f ms\n", mProfile[i].first.c_str(), mProfile[i].second / TIMING_ITERATIONS);
+                    totalTime += mProfile[i].second;
+                }
+                printf("=== Time over all layers: %4.3f ms ===\n\n", totalTime / TIMING_ITERATIONS);
+            }
+        } gProfiler;
+      
         static Logger gLogger;
 
         TensorRTInference::TensorRTInference( const Params& params )
@@ -214,6 +243,8 @@ namespace menoh_impl {
             context = engine->createExecutionContext();
             assert(context);
 
+            context->setProfiler(&gProfiler);
+
             auto input_map  = m_Input[ input_name_list[0].c_str()];
             auto output_map = m_Output[output_name_sorted_list[0].c_str()];
             int input_size  = total_size(input_map) *GetDataTypeSize(DataType::kFLOAT);
@@ -251,6 +282,9 @@ namespace menoh_impl {
             std::cout << "Run time = "
                       << std::chrono::duration_cast<std::chrono::milliseconds>(end -start).count()/1000.0
                       << " sec" << std::endl;
+
+            gProfiler.printLayerTimes();
+            
 #ifdef TENSORRT_DEBUG
             std::cout << "TensorRTInference::Run::done" << std::endl;          
 #endif
