@@ -116,7 +116,7 @@ namespace menoh_impl {
         // Build
         // ==========================================================
 
-        void ArmnnInference::Build( graph menoh_graph,
+        void ArmnnInference::Build( menoh_impl::graph menoh_graph,
                                     std::unordered_map<std::string, array> const& parameter_table,
                                     std::map<std::string, armnn::TensorShape>& inputShapes,
                                     std::vector<std::string>& requestedOutputs ) {
@@ -152,9 +152,23 @@ namespace menoh_impl {
 #ifdef ARM_DEBUG
             std::cout << "ArmnnInference::Run::start" << std::endl;
 #endif
+            bool m_EnableProfiling = true;
+
+            std::shared_ptr<armnn::IProfiler> profiler = m_Runtime->GetProfiler(m_NetworkIdentifier);
+            if (profiler)
+            {
+                profiler->EnableProfiling(m_EnableProfiling);
+            }
+
             armnn::Status ret = m_Runtime->EnqueueWorkload(m_NetworkIdentifier,
                                                            MakeInputTensors(m_Input),
                                                            MakeOutputTensors(m_Output));
+
+            if (profiler)
+            {
+                profiler->AnalyzeEventsAndWriteResults(std::cout);
+                // profiler->Print(std::cout);
+            }
 #ifdef ARM_DEBUG
             std::cout << "ArmnnInference::Run::done" << std::endl;          
 #endif

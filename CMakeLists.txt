@@ -29,7 +29,7 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     # using Clang
-    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -DARM_DEBUG")
     if (ENABLE_ANDROID_AARCH64)
       if (ENABLE_OPENCL) 
         set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fPIE -fPIC -DANDROID_ARM -DENABLE_OPENCL")
@@ -42,7 +42,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
-    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra -DARM_DEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -DARM_DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DNDEBUG -march=native")
 endif()
 

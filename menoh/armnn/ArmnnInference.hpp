@@ -68,7 +68,7 @@ namespace menoh_impl {
 
         private:
 
-            void Build( graph menoh_graph,
+            void Build( menoh_impl::graph menoh_graph,
                         std::unordered_map<std::string, array> const& parameter_table,
                         std::map<std::string, TensorShape>& inputShapes,
                         std::vector<std::string>& requestedOutputs );
