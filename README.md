@@ -41,8 +41,8 @@ This codebase contains C API and C++ API.
 - For Ubuntu user, binary packages are available.
     ```
     $ curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.1.0/ubuntu1604_mkl-dnn_0.16-1_amd64.deb
-    $ curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.1.0/ubuntu1604_menoh_1.0.3-1_amd64.deb
-    $ curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.1.0/ubuntu1604_menoh-dev_1.0.3-1_amd64.deb
+    $ curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.1.0/ubuntu1604_menoh_1.1.0-1_amd64.deb
+    $ curl -LO https://github.com/pfnet-research/menoh/releases/download/v1.1.0/ubuntu1604_menoh-dev_1.1.0-1_amd64.deb
     $ sudo apt install ./ubuntu1604_*_amd64.deb
     ```
     If you are using Ubuntu 18.04, please replace `1604` with `1804`.
