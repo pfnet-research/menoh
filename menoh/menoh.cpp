@@ -50,6 +50,21 @@ namespace menoh_impl {
 
 #undef MENOH_ERROR_MESSAGE_MAX_LENGTH
 
+namespace menoh_impl {
+    class input_not_found : public exception {
+    public:
+        input_not_found(std::string const& input_name)
+          : exception(menoh_error_code_input_not_found_error,
+                      "menoh input not found error: " + input_name) {}
+    };
+    class output_not_found : public exception {
+    public:
+        output_not_found(std::string const& output_name)
+          : exception(menoh_error_code_output_not_found_error,
+                      "menoh output not found error: " + output_name) {}
+    };
+} // namespace menoh_impl
+
 const char* menoh_get_last_error_message() {
     return menoh_impl::get_error_message_singleton().data();
 }
@@ -328,9 +343,34 @@ menoh_error_code menoh_build_variable_profile_table(
           input_profile_table(builder->input_name_and_profile_list.begin(),
                               builder->input_name_and_profile_list.end());
 
+        std::set<std::string> given_input_name_set;
+        for(auto const& p : input_profile_table) {
+            given_input_name_set.insert(p.first);
+        }
+        std::set<std::string> model_input_name_set;
+        for(auto const& node : model_data->model_data.node_list) {
+            model_input_name_set.insert(node.input_name_list.begin(),
+                                        node.input_name_list.end());
+        }
+        std::vector<std::string> diff;
+        std::set_difference(
+          given_input_name_set.begin(), given_input_name_set.end(),
+          model_input_name_set.begin(), model_input_name_set.end(),
+          std::back_inserter(diff));
+        if(!diff.empty()) {
+            throw menoh_impl::input_not_found(diff.front());
+        }
+
         auto output_profile_table =
-          menoh_impl::complete_attribute_and_infer_shape(
-            model_data->model_data, input_profile_table);
+          menoh_impl::complete_attribute_and_infer_shape(model_data->model_data,
+                                                         input_profile_table);
+
+        for(auto const& output_name : builder->required_output_name_list) {
+            if(output_profile_table.find(output_name) ==
+               output_profile_table.end()) {
+                throw menoh_impl::output_not_found(output_name);
+            }
+        }
 
         *dst_handle =
           std::make_unique<menoh_variable_profile_table>(

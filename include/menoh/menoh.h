@@ -79,6 +79,8 @@ enum menoh_error_code_constant {
     menoh_error_code_same_named_parameter_already_exist,
     menoh_error_code_same_named_attribute_already_exist,
     menoh_error_code_invalid_backend_config_error,
+    menoh_error_code_input_not_found_error,
+    menoh_error_code_output_not_found_error,
 };
 typedef int32_t menoh_error_code;
 /*! \brief Users can get detailed message about last error.
@@ -268,6 +270,10 @@ typedef struct menoh_variable_profile_table*
   menoh_variable_profile_table_handle;
 
 /*! \brief Factory function for variable_profile_table
+ *
+ * \note this function throws menoh_input_not_found_error when no nodes have given input name.
+ * \note this function throws menoh_output_not_found_error when no nodes have given output name.
+ * \note this function throws menoh_variable_not_found_error when needed variable for model execution does not exist.
  */
 menoh_error_code MENOH_API menoh_build_variable_profile_table(
   const menoh_variable_profile_table_builder_handle builder,

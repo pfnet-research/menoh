@@ -81,6 +81,7 @@ def main():
 
 #include <menoh/array.hpp>
 #include <menoh/model_data.hpp>
+#include <menoh/utility.hpp>
 
 namespace menoh_impl {{
     inline auto complete_attribute_and_infer_shape(
@@ -100,8 +101,10 @@ namespace menoh_impl {{
                     p.first,
                     array_profile(p.second.dtype(), p.second.dims())); }});
         auto profile_of = [&variable_profile_table](std::string const& name){{
-            assert(variable_profile_table.find(name) !=
-                variable_profile_table.end());
+            if(variable_profile_table.find(name) ==
+                variable_profile_table.end()) {{
+                throw variable_not_found(name);
+            }}
             return variable_profile_table.at(name);
         }};
         auto dims_of = [&variable_profile_table, profile_of](
