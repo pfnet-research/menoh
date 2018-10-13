@@ -12,6 +12,27 @@ namespace menoh_impl {
                 procedure_factory_table_.emplace(
                   "Gemm", mkldnn_with_generic_fallback_backend::mkldnn_backend::
                             make_gemm);
+
+                // eltwise
+                procedure_factory_table_.emplace(
+                  "Abs", mkldnn_with_generic_fallback_backend::mkldnn_backend::
+                            make_abs);
+                procedure_factory_table_.emplace(
+                  "Elu", mkldnn_with_generic_fallback_backend::mkldnn_backend::
+                            make_elu);
+                procedure_factory_table_.emplace(
+                  "LeakyRelu",
+                mkldnn_with_generic_fallback_backend::mkldnn_backend::
+                            make_leaky_relu);
+                procedure_factory_table_.emplace(
+                  "Relu", mkldnn_with_generic_fallback_backend::mkldnn_backend::
+                            make_relu);
+                procedure_factory_table_.emplace(
+                  "Sqrt", mkldnn_with_generic_fallback_backend::mkldnn_backend::
+                            make_sqrt);
+                procedure_factory_table_.emplace(
+                  "Tanh", mkldnn_with_generic_fallback_backend::mkldnn_backend::
+                            make_tanh);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>
