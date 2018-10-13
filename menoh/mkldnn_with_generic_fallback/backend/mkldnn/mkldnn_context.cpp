@@ -10,6 +10,9 @@ namespace menoh_impl {
 
             mkldnn_context::mkldnn_context() : context() {
                 procedure_factory_table_.emplace(
+                  "Conv", mkldnn_with_generic_fallback_backend::mkldnn_backend::
+                            make_conv);
+                procedure_factory_table_.emplace(
                   "Gemm", mkldnn_with_generic_fallback_backend::mkldnn_backend::
                             make_gemm);
             }
