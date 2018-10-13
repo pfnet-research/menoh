@@ -18,8 +18,6 @@ namespace menoh_impl {
                       mkldnn::engine const& engine) {
 
                 std::vector<mkldnn::primitive> primitives;
-                std::vector<mkldnn::memory> temp_memory_list;
-                std::vector<array> owned_array_list;
 
                 auto alpha = optional_attribute_float(node, "alpha", 1.f);
                 if(alpha != 1) {

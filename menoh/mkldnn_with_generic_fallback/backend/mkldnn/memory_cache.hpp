@@ -1,8 +1,8 @@
 #ifndef MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_MKLDNN_MEMORY_CACHE_HPP
 #define MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_MKLDNN_MEMORY_CACHE_HPP
 
-#include <tuple>
 #include <numeric>
+#include <tuple>
 
 #include <menoh/array.hpp>
 #include <menoh/optional.hpp>
@@ -47,6 +47,8 @@ namespace menoh_impl {
                 std::tuple<mkldnn::memory, optional<mkldnn::primitive>>
                 get_memory(std::vector<int> const& dims,
                            mkldnn::memory::format format);
+
+                mkldnn::memory get_data_memory();
 
                 void add_cached_memory(mkldnn::memory const& added_memory) {
                     // check format is different

@@ -2,8 +2,6 @@
 
 #include <numeric> // for accumulate
 
-#include <iostream>
-
 namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
         namespace mkldnn_backend {
@@ -86,7 +84,6 @@ namespace menoh_impl {
                       : ndims_to_weight_memory_format(dims.size())},
                    engine()},
                   const_cast<void*>(original_array_->data()));
-                std::cout << "jjj" << std::endl;
                 add_cached_memory(base_memory);
 
                 mkldnn::memory new_memory(
@@ -96,7 +93,33 @@ namespace menoh_impl {
                 auto reorder_primitive =
                   mkldnn::reorder(base_memory, new_memory);
                 return std::make_tuple(new_memory, reorder_primitive);
-            } // namespace mkldnn_backend
+            }
+
+            mkldnn::memory
+            memory_cache::get_data_memory() {
+                auto found =
+                  std::find_if(cached_memory_list_.begin(),
+                               cached_memory_list_.end(), [](auto const& m) {
+                                   return is_data_format(extract_format(m));
+                               });
+
+                // when found data format type memory
+                if(found != cached_memory_list_.end()) {
+                    return *found;
+                }
+
+                assert(original_array_);
+                auto original_dtype =
+                  dtype_to_mkldnn_memory_data_type(original_array_->dtype());
+                mkldnn::memory base_memory(
+                  {{{dims()},
+                    original_dtype,
+                    ndims_to_data_memory_format(dims().size())},
+                   engine()},
+                  const_cast<void*>(original_array_->data()));
+                add_cached_memory(base_memory);
+                return base_memory;
+            }
 
         } // namespace mkldnn_backend
     }     // namespace mkldnn_with_generic_fallback_backend
