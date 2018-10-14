@@ -12,6 +12,9 @@ namespace menoh_impl {
                 procedure_factory_table_.emplace(
                   "Gemm", mkldnn_with_generic_fallback_backend::mkldnn_backend::
                             make_gemm);
+                procedure_factory_table_.emplace(
+                  "Softmax", mkldnn_with_generic_fallback_backend::mkldnn_backend::
+                            make_softmax);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>

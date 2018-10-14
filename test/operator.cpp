@@ -123,7 +123,7 @@ namespace {
                       input.name, static_cast<void*>(input.data.get()));
                 }
                 auto model =
-                  model_builder.build_model(model_data, backend_name);
+                  model_builder.build_model(model_data, backend_name, R"({"log_output":"stdout"})");
                 model_data.reset();
 
                 std::vector<menoh::variable> output_list;
@@ -216,6 +216,12 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_relu, eps);
 
     //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_0, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_1, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_2, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_softmax_default_axis, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_softmax_example, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_softmax_large_number, eps);
 
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP
