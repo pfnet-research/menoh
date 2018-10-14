@@ -9,9 +9,11 @@ namespace menoh_impl {
         namespace mkldnn_backend {
 
             mkldnn_context::mkldnn_context() : context() {
-                procedure_factory_table_.emplace(
-                  "Gemm", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_gemm);
+                using namespace mkldnn_with_generic_fallback_backend::
+                  mkldnn_backend;
+                procedure_factory_table_.emplace("AveragePool", make_average_pool);
+                procedure_factory_table_.emplace("Gemm", make_gemm);
+                procedure_factory_table_.emplace("MaxPool", make_max_pool);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>

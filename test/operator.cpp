@@ -123,7 +123,7 @@ namespace {
                       input.name, static_cast<void*>(input.data.get()));
                 }
                 auto model =
-                  model_builder.build_model(model_data, backend_name);
+                  model_builder.build_model(model_data, backend_name, R"({"log_output": "stdout"})");
                 model_data.reset();
 
                 std::vector<menoh::variable> output_list;
@@ -216,6 +216,31 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_relu, eps);
 
     //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_1d_default, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_default, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_pads, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_pads_count_include_pad, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_precomputed_pads, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_precomputed_pads_count_include_pad, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_precomputed_same_upper, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_precomputed_strides, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_same_lower, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_same_upper, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_strides, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_3d_default, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_1d_default, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_default, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_pads, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_precomputed_pads, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_precomputed_same_upper, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_precomputed_strides, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_same_lower, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_same_upper, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_strides, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_3d_default, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_with_argmax_2d_precomputed_pads, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_with_argmax_2d_precomputed_strides, eps);
+
 
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP
