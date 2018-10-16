@@ -175,7 +175,7 @@ add_variable_to_table(output(0), dtype_of(input(0)),
 else
 
 
-if(node.op_type == "BatchNorm") {
+if(node.op_type == "BatchNormalization") {
     
     
 {
