@@ -161,7 +161,7 @@ add_variable_to_table(output(0), dtype_of(input(0)),
 assert(2 <= ndims_of(input(0)));
 '''))
     code_list.append(
-        make_completion_code("BatchNorm", [
+        make_completion_code("BatchNormalization", [
             ("epsilon", "float", "1.e-05f"),
             ("momentum", "float", "0.9f"),
             ("spatial", "int", "1"),
