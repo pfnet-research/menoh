@@ -66,7 +66,7 @@ namespace menoh_impl {
                                                          engine_));
                                         assert(
                                           result_pair.second &&
-                                          "alredy same named variable exist");
+                                          "already same named variable exist");
                                         input_memory_cache_list.push_back(
                                           std::ref(result_pair.first->second));
                                         break;
@@ -106,7 +106,7 @@ namespace menoh_impl {
                                                          engine_));
                                         assert(
                                           result_pair.second &&
-                                          "alredy same named variable exist");
+                                          "already same named variable exist");
                                         input_memory_cache_list.push_back(
                                           std::ref(result_pair.first->second));
                                         break;
@@ -139,7 +139,7 @@ namespace menoh_impl {
                                             memory_cache(arr, engine_));
                                         assert(
                                           result_pair.second &&
-                                          "alredy same named variable exist");
+                                          "already same named variable exist");
                                         input_memory_cache_list.push_back(
                                           std::ref(result_pair.first->second));
                                         break;
