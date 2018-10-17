@@ -193,10 +193,12 @@ cmake --build . --config Release --target install
 ```
 git clone https://github.com/pfnet-research/menoh.git
 cd menoh
-mkdir -p build && cd build
+mkdir -p build
+cd build
 MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
-  cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64
+  cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=/mingw64 ..
 make
+make install
 ```
 
 ### Note
