@@ -17,7 +17,7 @@ option(LINK_STATIC_LIBPROTOBUF "Link static libprotobuf to libmenoh" OFF)
 
 option(ENABLE_TEST      "Build test"      OFF)
 option(ENABLE_BENCHMARK "Build benchmark" ON)
-option(ENABLE_EXAMPLE   "Build example"   ON)
+option(ENABLE_EXAMPLE   "Build example"   OFF)
 
 option(SHOW_ALL_VARIABLES "Debug: show all variables" OFF)
 
