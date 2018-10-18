@@ -17,7 +17,7 @@ option(LINK_STATIC_LIBPROTOBUF "Link static libprotobuf to libmenoh" OFF)
 
 option(ENABLE_TEST      "Build test"      OFF)
 option(ENABLE_BENCHMARK "Build benchmark" ON)
-option(ENABLE_EXAMPLE   "Build example"   OFF)
+option(ENABLE_EXAMPLE   "Build example"   ON)
 
 option(SHOW_ALL_VARIABLES "Debug: show all variables" OFF)
 
@@ -91,7 +91,11 @@ if(ENABLE_MKLDNN)
 endif()
 
 if (ENABLE_TENSORRT)
-    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda/include)
+
+    set(TENSORRT_DIR /usr/local/TensorRT-5.0.0.10)
+
+    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda/include -I ${TENSORRT_DIR}/include )
+    link_directories(${TENSORRT_DIR}/lib)
     link_directories(/usr/local/cuda/lib64)
 
     if(ENABLE_BENCHMARK)
