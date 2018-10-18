@@ -1,8 +1,8 @@
 set(PROTOBUF_VERSION_STATIC "3.6.1")
+set(PROTOBUF_HASH MD5=406d5b8636576b1c86730ca5cbd1e576)
 
 set(PROTOBUF_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf-${PROTOBUF_VERSION_STATIC})
 set(PROTOBUF_URL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION_STATIC}/protobuf-cpp-${PROTOBUF_VERSION_STATIC}.tar.gz")
-set(PROTOBUF_HASH MD5=406d5b8636576b1c86730ca5cbd1e576)
 
 # Requires `-fPIC` for linking with a shared library
 set(PROTOBUF_CFLAGS "-g -O2 -fPIC")
@@ -34,11 +34,16 @@ set(PROTOBUF_LIBRARIES ${PROTOBUF_LIBRARY})
 set(PROTOBUF_PROTOC_EXECUTABLE ${PROTOBUF_DIR}/bin/protoc)
 set(PROTOBUF_FOUND TRUE)
 
+# configure protobuf::libprotobuf
 add_library(protobuf::libprotobuf UNKNOWN IMPORTED)
 # Note: INTERFACE_INCLUDE_DIRECTORIES can't set in this place because include/ is
 # not installed during executing `cmake`
 set_target_properties(protobuf::libprotobuf PROPERTIES
     IMPORTED_LOCATION "${PROTOBUF_LIBRARY_STATIC}")
+add_dependencies(protobuf::libprotobuf Protobuf)
+
+# configure protobuf::protoc
 add_executable(protobuf::protoc IMPORTED)
 set_target_properties(protobuf::protoc PROPERTIES
     IMPORTED_LOCATION "${PROTOBUF_PROTOC_EXECUTABLE}")
+add_dependencies(protobuf::protoc Protobuf)

@@ -63,8 +63,8 @@ test -n "${ARG_BUILD_DIR}" || readonly ARG_BUILD_DIR="${ARG_SOURCE_DIR}/build"
 test -n "${ARG_INSTALL_DIR}" || readonly ARG_INSTALL_DIR=/usr/local
 
 if [ -n "${ARG_MKLDNN_DIR}" ]; then
-    OPT_MKLDNN_INCLUDE_DIR=-DMKLDNN_INCLUDE_DIR=${ARG_MKLDNN_DIR}/include
-    OPT_MKLDNN_LIBRARY=-DMKLDNN_LIBRARY=${ARG_MKLDNN_DIR}/lib/libmkldnn.so
+    readonly OPT_MKLDNN_INCLUDE_DIR=-DMKLDNN_INCLUDE_DIR=${ARG_MKLDNN_DIR}/include
+    readonly OPT_MKLDNN_LIBRARY=-DMKLDNN_LIBRARY=${ARG_MKLDNN_DIR}/lib/libmkldnn.so
 fi
 
 test -n "${ARG_PYTHON_EXECUTABLE}" || readonly ARG_PYTHON_EXECUTABLE=python
