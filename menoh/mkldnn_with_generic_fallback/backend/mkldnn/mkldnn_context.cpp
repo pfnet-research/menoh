@@ -42,8 +42,9 @@ namespace menoh_impl {
 
                     std::vector<procedure> new_copy_procedure_list;
                     std::vector<mkldnn::primitive> new_primitive_list;
+                    std::vector<memory_cache> new_output_memory_cache_list;
                     std::vector<std::pair<std::string, memory_cache>>
-                      new_named_output_memory_cache_list;
+                      new_named_temp_memory_cache_list;
 
                     try {
                         std::vector<std::reference_wrapper<memory_cache>>
@@ -149,7 +150,8 @@ namespace menoh_impl {
                             } while(false);
                         }
 
-                        std::vector<mkldnn::memory> output_memory_list;
+                        std::vector<formatted_array>
+                          output_formatted_array_list;
                         for(auto const& output_name : node.output_name_list) {
                             auto found =
                               required_output_table.find(output_name);
@@ -160,14 +162,19 @@ namespace menoh_impl {
                             if(found == required_output_table.end()) {
                                 // not required output
                                 // add `any` format memory
-                                output_memory_list.push_back(
-                                  make_memory_from_array_profile(
-                                    output_profile_table.at(output_name),
-                                    mkldnn::memory::format::any, engine_));
+                                auto arr =
+                                  array(output_profile_table.at(output_name));
+                                allocated_array_list_.push_back(arr);
+                                output_formatted_array_list.push_back(
+                                  formatted_array(mkldnn::memory::format::any,
+                                                  arr));
                             } else {
                                 // required output
-                                output_memory_list.push_back(
-                                  array_to_data_memory(found->second, engine_));
+                                output_formatted_array_list.push_back(
+                                  formatted_array(
+                                    ndims_to_data_memory_format(
+                                      found->second.dims().size()),
+                                    found->second));
                             }
                         }
 
@@ -178,10 +185,15 @@ namespace menoh_impl {
                                                      node.op_type);
                         }
                         auto factory = found->second;
-                        std::tie(new_primitive_list,
-                                 new_named_output_memory_cache_list) =
+                        procedure_factory_return_type factory_return =
                           factory.operator()(node, input_memory_cache_list,
-                                             output_memory_list, engine_);
+                                             output_formatted_array_list,
+                                             engine_);
+                        new_primitive_list = factory_return.primitives;
+                        new_output_memory_cache_list =
+                          factory_return.output_memory_cache_list;
+                        new_named_temp_memory_cache_list =
+                          factory_return.named_temp_memory_cache_list;
                     } catch(std::exception const& e) {
                         *logger << e.what() << std::endl;
                         break;
@@ -198,9 +210,15 @@ namespace menoh_impl {
                       std::make_move_iterator(new_copy_procedure_list.end()));
 
                     // update context
-                    variable_memory_cache_table_.insert(
-                      new_named_output_memory_cache_list.begin(),
-                      new_named_output_memory_cache_list.end());
+                    for(unsigned int i = 0; i < node.output_name_list.size();
+                        ++i) {
+                        variable_memory_cache_table_.emplace(
+                          node.output_name_list.at(i),
+                          new_output_memory_cache_list.at(i));
+                    }
+                    temp_memory_cache_table_.insert(
+                      new_named_temp_memory_cache_list.begin(),
+                      new_named_temp_memory_cache_list.end());
                 }
 
                 // when no nodes are processed

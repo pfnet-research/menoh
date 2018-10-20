@@ -25,7 +25,7 @@ namespace menoh_impl {
                   : cached_memory_list_({mem}),
                     engine_(mem.get_primitive_desc().get_engine()) {}
 
-                mkldnn::memory::data_type dtype() const {
+                mkldnn::memory::data_type data_type() const {
                     if(original_array_) {
                         return dtype_to_mkldnn_memory_data_type(
                           original_array_->dtype());

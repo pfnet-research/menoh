@@ -1,14 +1,22 @@
 #ifndef MENOH_IMPL_MKLDNN_WITH_FALLBACK_BACKEND_BACKEND_MKLDNN_MKLDNN_CONTEXT_HPP
 #define MENOH_IMPL_MKLDNN_WITH_FALLBACK_BACKEND_BACKEND_MKLDNN_MKLDNN_CONTEXT_HPP
 
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include <mkldnn.hpp>
+
+#include <menoh/any.hpp>
 #include <menoh/array.hpp>
 #include <menoh/mkldnn/utility.hpp>
 #include <menoh/model_core.hpp>
 
-#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/memory_cache.hpp>
 #include <menoh/mkldnn_with_generic_fallback/context.hpp>
 
-#include <mkldnn.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/formatted_array.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/memory_cache.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/procedure_factory.hpp>
 
 namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
@@ -70,19 +78,12 @@ namespace menoh_impl {
                     return variable_memory_cache_table_.at(name);
                 }
 
-                using procedure_factory = std::function<
-                  std::tuple<std::vector<mkldnn::primitive>,
-                             std::vector<std::pair<std::string, memory_cache>>>(
-                    node const&,
-                    std::vector<std::reference_wrapper<
-                      memory_cache>> const&, // input_memory_cache_list
-                    std::vector<mkldnn::memory> const&, // output_memory_list
-                    mkldnn::engine const&               // engine
-                    )>;
-
                 mkldnn::engine engine_{mkldnn::engine::kind::cpu, 0}; // TODO
+                std::vector<array> allocated_array_list_;
                 std::unordered_map<std::string, memory_cache>
                   variable_memory_cache_table_;
+                std::unordered_map<std::string, memory_cache>
+                  temp_memory_cache_table_;
                 std::unordered_map<std::string, procedure_factory>
                   procedure_factory_table_;
             };
