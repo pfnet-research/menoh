@@ -1,7 +1,10 @@
 #ifndef MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_ELTWISE_HPP
 #define MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_ELTWISE_HPP
 
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/formatted_array.hpp>
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/memory_cache.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/operator/output_management.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/procedure_factory.hpp>
 
 #include <mkldnn.hpp>
 
@@ -9,27 +12,19 @@ namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
         namespace mkldnn_backend {
 
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_eltwise(
+            inline procedure_factory_return_type make_eltwise(
               mkldnn::algorithm eltwise_alg, float alpha, float beta,
-              node const& node,
-              std::vector<std::reference_wrapper<memory_cache>> const&
-                input_memory_cache_list,
-              std::vector<mkldnn::memory> const& output_memory_list,
-              mkldnn::engine const& engine) {
+              MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY_PARAMETER_LIST) {
 
                 std::vector<mkldnn::primitive> primitives;
-                std::vector<mkldnn::memory> temp_memory_list;
-                std::vector<array> owned_array_list;
 
                 memory_cache& input_memory_cache =
                   input_memory_cache_list.at(0);
                 auto input_dims = input_memory_cache.dims();
                 auto input_memory = input_memory_cache.get_data_memory();
 
-                auto const& output_memory = output_memory_list.at(0);
-                auto output_dims = extract_dims(output_memory);
+                auto output_dims =
+                  output_formatted_array_list.at(0).array().dims();
 
                 mkldnn::eltwise_forward::desc eltwise_desc(
                   mkldnn::prop_kind::forward_inference, eltwise_alg,
@@ -37,130 +32,50 @@ namespace menoh_impl {
                 auto eltwise_pd =
                   mkldnn::eltwise_forward::primitive_desc(eltwise_desc, engine);
 
-                memory_cache output_memory_cache;
-                optional<mkldnn::memory> op_output_memory;
-                if(extract_format(output_memory) ==
-                     mkldnn::memory::format::any ||
-                   extract_format(output_memory) ==
-                     extract_format(eltwise_pd.dst_primitive_desc())) {
-                    op_output_memory = mkldnn::memory(
-                      {{{extract_dims(output_memory)},
-                        extract_data_type(output_memory),
-                        extract_format(eltwise_pd.dst_primitive_desc())},
-                       engine},
-                      output_memory.get_data_handle());
-                    output_memory_cache.add_cached_memory(*op_output_memory);
-                } else {
-                    op_output_memory = mkldnn::memory(
-                      {{{extract_dims(output_memory)},
-                        extract_data_type(output_memory),
-                        extract_format(eltwise_pd.dst_primitive_desc())},
-                       engine});
-                    output_memory_cache.add_cached_memory(*op_output_memory);
-                    output_memory_cache.add_cached_memory(output_memory);
-                }
+                auto output_memory_cache = manage_output(
+                  output_formatted_array_list.at(0),
+                  eltwise_pd.dst_primitive_desc(), engine, primitives,
+                  [&eltwise_pd,
+                   &input_memory](mkldnn::memory const& output_memory) {
+                      return mkldnn::eltwise_forward(eltwise_pd, input_memory,
+                                                     output_memory);
+                  });
 
-                primitives.push_back(mkldnn::eltwise_forward(
-                  eltwise_pd, input_memory, *op_output_memory));
-
-                if(extract_format(output_memory) !=
-                     mkldnn::memory::format::any &&
-                   extract_format(output_memory) !=
-                     extract_format(eltwise_pd.dst_primitive_desc())) {
-                    primitives.push_back(
-                      mkldnn::reorder(*op_output_memory, output_memory));
-                }
-
-                std::vector<std::pair<std::string, memory_cache>>
-                  output_memory_cache_list({std::make_pair(
-                    node.output_name_list.at(0), output_memory_cache)});
-                return std::make_tuple(primitives, output_memory_cache_list);
+                return procedure_factory_return_type{
+                  primitives, {output_memory_cache}, {}};
             }
 
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_abs(node const& node,
-                     std::vector<std::reference_wrapper<memory_cache>> const&
-                       input_memory_cache_list,
-                     std::vector<mkldnn::memory> const& output_memory_list,
-                     mkldnn::engine const& engine) {
-                auto alpha = 0.f;
-                auto beta = 0.f;
-                return make_eltwise(mkldnn::algorithm::eltwise_abs, alpha, beta,
-                                    node, input_memory_cache_list,
-                                    output_memory_list, engine);
-            }
+#define MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY(factory_name, eltwise_alg, alpha, \
+                                             beta)                             \
+    inline procedure_factory_return_type factory_name(                         \
+      MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY_PARAMETER_LIST) {                 \
+        return make_eltwise(                                                   \
+          eltwise_alg, alpha, beta,                                            \
+          MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY_ARGUMENT_LIST);               \
+    }
+#define MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY_NO_PARAM(factory_name, \
+                                                      eltwise_alg)  \
+    MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY(factory_name, eltwise_alg, 0.f, 0.f)
 
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_elu(node const& node,
-                     std::vector<std::reference_wrapper<memory_cache>> const&
-                       input_memory_cache_list,
-                     std::vector<mkldnn::memory> const& output_memory_list,
-                     mkldnn::engine const& engine) {
-                auto alpha = attribute_float(node, "alpha");
-                auto beta = 0.f;
-                return make_eltwise(mkldnn::algorithm::eltwise_elu, alpha, beta,
-                                    node, input_memory_cache_list,
-                                    output_memory_list, engine);
-            }
+            MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY_NO_PARAM(
+              make_abs, mkldnn::algorithm::eltwise_abs);
+            MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY_NO_PARAM(
+              make_sqrt, mkldnn::algorithm::eltwise_sqrt);
+            MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY_NO_PARAM(
+              make_tanh, mkldnn::algorithm::eltwise_tanh);
 
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_leaky_relu(
-              node const& node,
-              std::vector<std::reference_wrapper<memory_cache>> const&
-                input_memory_cache_list,
-              std::vector<mkldnn::memory> const& output_memory_list,
-              mkldnn::engine const& engine) {
-                auto alpha = attribute_float(node, "alpha");
-                auto beta = 0.f;
-                return make_eltwise(mkldnn::algorithm::eltwise_relu,
-                                    alpha, beta, node, input_memory_cache_list,
-                                    output_memory_list, engine);
-            }
+            MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY(make_elu,
+                                                 mkldnn::algorithm::eltwise_elu,
+                                                 attribute_float(node, "alpha"),
+                                                 0.f);
+            MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY(
+              make_leaky_relu, mkldnn::algorithm::eltwise_relu,
+              attribute_float(node, "alpha"), 0.f);
+            MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY_NO_PARAM(
+              make_relu, mkldnn::algorithm::eltwise_relu);
 
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_relu(node const& node,
-                      std::vector<std::reference_wrapper<memory_cache>> const&
-                        input_memory_cache_list,
-                      std::vector<mkldnn::memory> const& output_memory_list,
-                      mkldnn::engine const& engine) {
-                auto alpha = 0.f;
-                auto beta = 0.f;
-                return make_eltwise(mkldnn::algorithm::eltwise_relu, alpha,
-                                    beta, node, input_memory_cache_list,
-                                    output_memory_list, engine);
-            }
-
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_sqrt(node const& node,
-                      std::vector<std::reference_wrapper<memory_cache>> const&
-                        input_memory_cache_list,
-                      std::vector<mkldnn::memory> const& output_memory_list,
-                      mkldnn::engine const& engine) {
-                auto alpha = 0.f;
-                auto beta = 0.f;
-                return make_eltwise(mkldnn::algorithm::eltwise_sqrt, alpha,
-                                    beta, node, input_memory_cache_list,
-                                    output_memory_list, engine);
-            }
-
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_tanh(node const& node,
-                      std::vector<std::reference_wrapper<memory_cache>> const&
-                        input_memory_cache_list,
-                      std::vector<mkldnn::memory> const& output_memory_list,
-                      mkldnn::engine const& engine) {
-                auto alpha = 0.f;
-                auto beta = 0.f;
-                return make_eltwise(mkldnn::algorithm::eltwise_tanh, alpha,
-                                    beta, node, input_memory_cache_list,
-                                    output_memory_list, engine);
-            }
+#undef MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY_NO_PARAM
+#undef MENOH_MKLDNN_CONTEXT_ELTWISE_FACTORY
 
         } // namespace mkldnn_backend
     }     // namespace mkldnn_with_generic_fallback_backend
