@@ -1,7 +1,10 @@
 #ifndef MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_BATCH_NORM_HPP
 #define MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_BATCH_NORM_HPP
 
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/formatted_array.hpp>
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/memory_cache.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/operator/output_management.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/procedure_factory.hpp>
 
 #include <mkldnn.hpp>
 
@@ -9,18 +12,12 @@ namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
         namespace mkldnn_backend {
 
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_batch_norm(
-              node const& node,
-              std::vector<std::reference_wrapper<memory_cache>> const&
-                input_memory_cache_list,
-              std::vector<mkldnn::memory> const& output_memory_list,
-              mkldnn::engine const& engine) {
+            inline procedure_factory_return_type make_batch_norm(
+              MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY_PARAMETER_LIST) {
 
                 std::vector<mkldnn::primitive> primitives;
                 std::vector<std::pair<std::string, memory_cache>>
-                  output_memory_cache_list;
+                  temp_memory_cache_list;
 
                 auto epsilon = attribute_float(node, "epsilon");
                 auto spatial = attribute_int(node, "spatial");
@@ -78,13 +75,13 @@ namespace menoh_impl {
                       "BatchNormalization with invalid data_type");
                 }
                 memory_cache weight_memory_cache(weight_memory);
-                output_memory_cache_list.emplace_back(
+                temp_memory_cache_list.emplace_back(
                   "menoh_mkldnn_temp_memory_" + node.op_type + "_" +
                     node.output_name_list.front() + "_weight_memory",
                   weight_memory_cache);
 
-                auto const& output_memory = output_memory_list.at(0);
-                auto output_dims = extract_dims(output_memory);
+                auto output_dims =
+                  output_formatted_array_list.at(0).array().dims();
                 assert(output_dims.at(0) == input_dims.at(0) &&
                        "invalid shape inference");
 
@@ -92,52 +89,26 @@ namespace menoh_impl {
                   mkldnn::prop_kind::forward_inference,
                   input_memory.get_primitive_desc().desc(), epsilon,
                   mkldnn::use_global_stats | mkldnn::use_scale_shift |
-                    omit_stats);
+                    mkldnn::omit_stats);
                 mkldnn::batch_normalization_forward::primitive_desc
                   batch_norm_pd(batch_norm_desc, engine);
 
-                memory_cache output_memory_cache;
-                optional<mkldnn::memory> op_output_memory;
-                if(extract_format(output_memory) ==
-                     mkldnn::memory::format::any ||
-                   extract_format(output_memory) ==
-                     extract_format(batch_norm_pd.dst_primitive_desc())) {
-                    op_output_memory = mkldnn::memory(
-                      {{{extract_dims(output_memory)},
-                        extract_data_type(output_memory),
-                        extract_format(batch_norm_pd.dst_primitive_desc())},
-                       engine},
-                      output_memory.get_data_handle());
-                    output_memory_cache.add_cached_memory(*op_output_memory);
-                } else {
-                    op_output_memory = mkldnn::memory(
-                      {{{extract_dims(output_memory)},
-                        extract_data_type(output_memory),
-                        extract_format(batch_norm_pd.dst_primitive_desc())},
-                       engine});
-                    output_memory_cache.add_cached_memory(*op_output_memory);
-                    output_memory_cache.add_cached_memory(output_memory);
-                }
+                auto output_memory_cache = manage_output(
+                  output_formatted_array_list.at(0),
+                  batch_norm_pd.dst_primitive_desc(), engine, primitives,
+                  [&batch_norm_pd, &input_memory, &mean_memory, &var_memory,
+                   &weight_memory](mkldnn::memory const& output_memory) {
+                      return mkldnn::batch_normalization_forward(
+                        batch_norm_pd,
+                        static_cast<mkldnn::primitive::at>(input_memory),
+                        static_cast<mkldnn::primitive::at>(mean_memory),
+                        static_cast<mkldnn::primitive::at>(var_memory),
+                        static_cast<mkldnn::primitive::at>(weight_memory),
+                        output_memory);
+                  });
 
-                primitives.push_back(mkldnn::batch_normalization_forward(
-                  batch_norm_pd,
-                  static_cast<mkldnn::primitive::at>(input_memory),
-                  static_cast<mkldnn::primitive::at>(mean_memory),
-                  static_cast<mkldnn::primitive::at>(var_memory),
-                  static_cast<mkldnn::primitive::at>(weight_memory),
-                  *op_output_memory));
-
-                if(extract_format(output_memory) !=
-                     mkldnn::memory::format::any &&
-                   extract_format(output_memory) !=
-                     extract_format(batch_norm_pd.dst_primitive_desc())) {
-                    primitives.push_back(
-                      mkldnn::reorder(*op_output_memory, output_memory));
-                }
-
-                output_memory_cache_list.emplace_back(
-                  node.output_name_list.at(0), output_memory_cache);
-                return std::make_tuple(primitives, output_memory_cache_list);
+                return procedure_factory_return_type{
+                  primitives, {output_memory_cache}, temp_memory_cache_list};
             }
 
         } // namespace mkldnn_backend
