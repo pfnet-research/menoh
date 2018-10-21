@@ -13,7 +13,7 @@ namespace menoh_impl {
         namespace mkldnn_backend {
 
             inline procedure_factory_return_type
-            MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY(make_gemm) {
+            make_gemm(MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY_PARAMETER_LIST) {
 
                 std::vector<mkldnn::primitive> primitives;
 

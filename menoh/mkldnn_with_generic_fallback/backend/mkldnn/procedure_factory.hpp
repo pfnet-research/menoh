@@ -8,13 +8,15 @@
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/memory_cache.hpp>
 #include <mkldnn.hpp>
 
-#define MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY(factory_name)           \
-    factory_name(                                                      \
-      node const& node,                                                \
-      std::vector<std::reference_wrapper<memory_cache>> const&         \
-        input_memory_cache_list,                                       \
-      std::vector<formatted_array> const& output_formatted_array_list, \
-      mkldnn::engine const& engine)
+#define MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY_PARAMETER_LIST          \
+    node const &node,                                                  \
+      std::vector<std::reference_wrapper<memory_cache>> const          \
+        &input_memory_cache_list,                                      \
+      std::vector<formatted_array> const &output_formatted_array_list, \
+      mkldnn::engine const &engine
+
+#define MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY_ARGUMENT_LIST \
+    node, input_memory_cache_list, output_formatted_array_list, engine
 
 namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
@@ -29,12 +31,12 @@ namespace menoh_impl {
 
             using procedure_factory =
               std::function<procedure_factory_return_type(
-                node const&,
-                std::vector<std::reference_wrapper<
-                  memory_cache>> const&, // input_memory_cache_list
-                std::vector<
-                  formatted_array> const&, // output_formatted_array_list
-                mkldnn::engine const&      // engine
+                node const &,
+                std::vector<std::reference_wrapper<memory_cache>> const
+                  &, // input_memory_cache_list
+                std::vector<formatted_array> const
+                  &,                   // output_formatted_array_list
+                mkldnn::engine const & // engine
                 )>;
 
         } // namespace mkldnn_backend
