@@ -1,7 +1,10 @@
 #ifndef MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_CONV_HPP
 #define MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_CONV_HPP
 
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/formatted_array.hpp>
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/memory_cache.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/operator/output_management.hpp>
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/procedure_factory.hpp>
 
 #include <mkldnn.hpp>
 
@@ -9,13 +12,8 @@ namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
         namespace mkldnn_backend {
 
-            inline std::tuple<std::vector<mkldnn::primitive>,
-                              std::vector<std::pair<std::string, memory_cache>>>
-            make_conv(node const& node,
-                      std::vector<std::reference_wrapper<memory_cache>> const&
-                        input_memory_cache_list,
-                      std::vector<mkldnn::memory> const& output_memory_list,
-                      mkldnn::engine const& engine) {
+            inline procedure_factory_return_type
+            make_conv(MENOH_MKLDNN_CONTEXT_PROCEDURE_FACTORY_PARAMETER_LIST) {
 
                 std::vector<mkldnn::primitive> primitives;
 
@@ -33,20 +31,18 @@ namespace menoh_impl {
                   input_memory_cache_list.at(1);
                 auto weight_dims = weight_memory_cache.dims();
 
-                auto const& output_memory = output_memory_list.at(0);
-                auto output_dims = extract_dims(output_memory);
+                auto output_dims =
+                  output_formatted_array_list.at(0).array().dims();
                 assert(output_dims.at(0) == input_dims.at(0) &&
                        "invalid shape inference");
-                assert(output_dims.at(1) == output_size &&
-                       "invalid shape inference");
-                auto conv_input_md =
-                  mkldnn::memory::desc({input_dims}, input_memory_cache.dtype(),
-                                       mkldnn::memory::format::any);
+                auto conv_input_md = mkldnn::memory::desc(
+                  {input_dims}, input_memory_cache.data_type(),
+                  mkldnn::memory::format::any);
                 auto conv_weight_md = mkldnn::memory::desc(
-                  {weight_dims}, weight_memory_cache.dtype(),
+                  {weight_dims}, weight_memory_cache.data_type(),
                   mkldnn::memory::format::any);
                 auto conv_output_md = mkldnn::memory::desc(
-                  {output_dims}, extract_data_type(output_memory),
+                  {output_dims}, input_memory_cache.data_type(),
                   mkldnn::memory::format::any);
 
                 optional<mkldnn::memory> bias_memory_opt;
@@ -107,50 +103,24 @@ namespace menoh_impl {
                   weight_memory_cache, weight_dims,
                   extract_format(conv_pd.weights_primitive_desc()), primitives);
 
-                memory_cache output_memory_cache;
-                optional<mkldnn::memory> op_output_memory;
-                if(extract_format(output_memory) ==
-                     mkldnn::memory::format::any ||
-                   extract_format(output_memory) ==
-                     extract_format(conv_pd.dst_primitive_desc())) {
-                    op_output_memory = mkldnn::memory(
-                      {{{extract_dims(output_memory)},
-                        extract_data_type(output_memory),
-                        extract_format(conv_pd.dst_primitive_desc())},
-                       engine},
-                      output_memory.get_data_handle());
-                    output_memory_cache.add_cached_memory(*op_output_memory);
-                } else {
-                    op_output_memory = mkldnn::memory(
-                      {{{extract_dims(output_memory)},
-                        extract_data_type(output_memory),
-                        extract_format(conv_pd.dst_primitive_desc())},
-                       engine});
-                    output_memory_cache.add_cached_memory(*op_output_memory);
-                    output_memory_cache.add_cached_memory(output_memory);
-                }
+                auto output_memory_cache = manage_output(
+                  output_formatted_array_list.at(0),
+                  conv_pd.dst_primitive_desc(), engine, primitives,
+                  [&conv_pd, &input_memory, &weight_memory,
+                   &bias_memory_opt](mkldnn::memory const& output_memory) {
+                      if(bias_memory_opt) {
+                          return mkldnn::convolution_forward(
+                            conv_pd, input_memory, weight_memory,
+                            *bias_memory_opt, output_memory);
+                      } else {
+                          return mkldnn::convolution_forward(
+                            conv_pd, input_memory, weight_memory,
+                            output_memory);
+                      }
+                  });
 
-                if(bias_memory_opt) {
-                    primitives.push_back(mkldnn::convolution_forward(
-                      conv_pd, input_memory, weight_memory, *bias_memory_opt,
-                      *op_output_memory));
-                } else {
-                    primitives.push_back(mkldnn::convolution_forward(
-                      conv_pd, input_memory, weight_memory, *op_output_memory));
-                }
-
-                if(extract_format(output_memory) !=
-                     mkldnn::memory::format::any &&
-                   extract_format(output_memory) !=
-                     extract_format(conv_pd.dst_primitive_desc())) {
-                    primitives.push_back(
-                      mkldnn::reorder(*op_output_memory, output_memory));
-                }
-
-                std::vector<std::pair<std::string, memory_cache>>
-                  output_memory_cache_list({std::make_pair(
-                    node.output_name_list.at(0), output_memory_cache)});
-                return std::make_tuple(primitives, output_memory_cache_list);
+                return procedure_factory_return_type{
+                  primitives, {output_memory_cache}, {}};
             }
 
         } // namespace mkldnn_backend
