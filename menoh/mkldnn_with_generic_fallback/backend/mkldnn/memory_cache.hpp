@@ -21,7 +21,7 @@ namespace menoh_impl {
 
                 memory_cache(array const& arr, mkldnn::engine const& engine)
                   : original_array_(arr), engine_(engine) {}
-                memory_cache(mkldnn::memory const& mem)
+                explicit memory_cache(mkldnn::memory const& mem)
                   : cached_memory_list_({mem}),
                     engine_(mem.get_primitive_desc().get_engine()) {}
 
@@ -42,7 +42,10 @@ namespace menoh_impl {
                     return extract_dims(cached_memory_list_.front());
                 }
 
-                mkldnn::engine engine() const { return *engine_; }
+                mkldnn::engine const& engine() const {
+                    assert(engine_ && "engine_ is not set");
+                    return *engine_;
+                }
 
                 std::tuple<mkldnn::memory, optional<mkldnn::primitive>>
                 get_memory(std::vector<int> const& dims,
@@ -54,6 +57,7 @@ namespace menoh_impl {
                     // check format is different
                     // MEMO: dims may be different (eg FC's weight for 4d input
                     // and 2d input)
+                    assert(engine_ && "please use non default constructor");
                     if(original_array_) {
                         auto mdims = extract_dims(added_memory);
                         assert(total_size(*original_array_) ==

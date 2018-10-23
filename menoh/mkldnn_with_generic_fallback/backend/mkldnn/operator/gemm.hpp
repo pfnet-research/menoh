@@ -56,7 +56,7 @@ namespace menoh_impl {
                 auto weight_dims = weight_memory_cache.dims(); // mutable
                 assert(weight_dims.size() == 2);
                 if(input_dims.size() != 2) {
-                    weight_dims = std::vector<int>{weight_dims.front()};
+                    weight_dims = std::vector<int>({weight_dims.front()});
                     weight_dims.insert(weight_dims.end(),
                                        input_dims.begin() + 1,
                                        input_dims.end());
@@ -66,11 +66,7 @@ namespace menoh_impl {
                 auto bias_dims = bias_memory_cache.dims();
                 int output_size = weight_dims.at(0);
                 if(output_size != bias_dims.at(0)) {
-                    throw failed_to_configure_operator(
-                      node.op_type, node.output_name_list.at(0),
-                      "dims[0] of input C must be equal to dims[0] of "
-                      "input B: "
-                      "broadcast is not supported yet");
+                    throw std::runtime_error("broadcast is not supported yet");
                 }
 
                 auto output_dims =
@@ -98,6 +94,7 @@ namespace menoh_impl {
                   gemm_output_md);
                 auto gemm_pd = mkldnn::inner_product_forward::primitive_desc(
                   gemm_desc, engine);
+                auto op_input_dims = extract_dims(gemm_pd.src_primitive_desc());
 
                 auto input_memory = get_memory(
                   input_memory_cache,

@@ -115,6 +115,7 @@ namespace menoh_impl {
                                 }
 
                                 // search in other contexts' variable table
+                                bool is_found_from_other_context = false;
                                 for(auto const& context_pair : context_list) {
                                     if(context_pair.first == context_name) {
                                         continue; // skip self
@@ -143,10 +144,11 @@ namespace menoh_impl {
                                           "already same named variable exist");
                                         input_memory_cache_list.push_back(
                                           std::ref(result_pair.first->second));
+                                        is_found_from_other_context = true;
                                         break;
                                     }
                                 }
-                                assert(!"never come here");
+                                assert(is_found_from_other_context);
                             } while(false);
                         }
 
@@ -227,9 +229,18 @@ namespace menoh_impl {
                 }
 
                 procedure_list.emplace_back([this, primitive_list]() {
+                    /*
                     mkldnn::stream(mkldnn::stream::kind::eager)
                       .submit(primitive_list)
                       .wait();
+                    */
+                    int i = 0;
+                    for(auto const& primitive : primitive_list) {
+                        mkldnn::stream(mkldnn::stream::kind::eager)
+                          .submit({primitive})
+                          .wait();
+                        ++i;
+                    }
                 });
 
                 return std::make_tuple(procedure_list, current_index);

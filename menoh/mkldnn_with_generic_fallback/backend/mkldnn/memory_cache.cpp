@@ -24,6 +24,7 @@ namespace menoh_impl {
                     }
                 }
 
+                // try to convert array to memory
                 if(original_array_ &&
                    (ndims_to_data_memory_format(dims.size()) == format ||
                     ndims_to_weight_memory_format(dims.size()) == format)) {
@@ -57,9 +58,10 @@ namespace menoh_impl {
                         mkldnn::memory new_memory(
                           {{{dims}, extract_data_type(found_memory), format},
                            engine()});
-                        add_cached_memory(new_memory);
                         auto reorder_primitive =
-                          mkldnn::reorder(found_memory, new_memory);
+                          mkldnn::reorder(found_memory,
+                                          new_memory);
+                        add_cached_memory(new_memory);
                         return std::make_tuple(new_memory, reorder_primitive);
                     }
                 }
@@ -95,8 +97,7 @@ namespace menoh_impl {
                 return std::make_tuple(new_memory, reorder_primitive);
             }
 
-            mkldnn::memory
-            memory_cache::get_data_memory() {
+            mkldnn::memory memory_cache::get_data_memory() {
                 auto found =
                   std::find_if(cached_memory_list_.begin(),
                                cached_memory_list_.end(), [](auto const& m) {

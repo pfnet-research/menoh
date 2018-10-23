@@ -17,7 +17,6 @@ namespace menoh_impl {
               mkldnn::memory::primitive_desc const& output_memory_pd,
               mkldnn::engine const& engine, PrimitiveGen pg) {
                 std::vector<mkldnn::primitive> primitives;
-                memory_cache output_memory_cache;
 
                 auto op_output_format = extract_format(output_memory_pd);
                 bool is_reorder_needed =
@@ -29,7 +28,7 @@ namespace menoh_impl {
                         output_memory_pd) // this line allocates memory
                     : output_formatted_array.make_memory(op_output_format,
                                                          engine);
-                output_memory_cache.add_cached_memory(op_output_memory);
+                memory_cache output_memory_cache(op_output_memory);
 
                 primitives.push_back(pg(op_output_memory));
 
