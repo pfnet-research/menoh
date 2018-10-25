@@ -229,18 +229,9 @@ namespace menoh_impl {
                 }
 
                 procedure_list.emplace_back([this, primitive_list]() {
-                    /*
                     mkldnn::stream(mkldnn::stream::kind::eager)
                       .submit(primitive_list)
                       .wait();
-                    */
-                    int i = 0;
-                    for(auto const& primitive : primitive_list) {
-                        mkldnn::stream(mkldnn::stream::kind::eager)
-                          .submit({primitive})
-                          .wait();
-                        ++i;
-                    }
                 });
 
                 return std::make_tuple(procedure_list, current_index);
