@@ -94,7 +94,6 @@ namespace menoh_impl {
                   gemm_output_md);
                 auto gemm_pd = mkldnn::inner_product_forward::primitive_desc(
                   gemm_desc, engine);
-                auto op_input_dims = extract_dims(gemm_pd.src_primitive_desc());
 
                 auto input_memory = get_memory(
                   input_memory_cache,
