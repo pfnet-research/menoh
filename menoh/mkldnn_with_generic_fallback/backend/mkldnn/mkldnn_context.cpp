@@ -29,6 +29,9 @@ namespace menoh_impl {
                 // Pool
                 procedure_factory_table_.emplace("AveragePool", make_average_pool);
                 procedure_factory_table_.emplace("MaxPool", make_max_pool);
+              
+                // Softmax
+                procedure_factory_table_.emplace("Softmax", make_softmax);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>
