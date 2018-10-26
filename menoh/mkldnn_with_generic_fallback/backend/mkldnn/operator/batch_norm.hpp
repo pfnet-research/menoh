@@ -23,7 +23,7 @@ namespace menoh_impl {
                 auto spatial = attribute_int(node, "spatial");
                 if(!spatial) {
                     throw std::runtime_error(
-                      "Non spacial BatchNorm is not supported");
+                      "Non spacial BatchNormalization is not supported");
                 }
 
                 memory_cache& input_memory_cache =
