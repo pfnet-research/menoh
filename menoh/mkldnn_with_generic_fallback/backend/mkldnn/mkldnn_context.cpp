@@ -9,33 +9,26 @@ namespace menoh_impl {
         namespace mkldnn_backend {
 
             mkldnn_context::mkldnn_context() : context() {
-                procedure_factory_table_.emplace(
-                  "Conv", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_conv);
-                procedure_factory_table_.emplace(
-                  "Gemm", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_gemm);
+                using namespace mkldnn_with_generic_fallback_backend::
+                  mkldnn_backend;
+                
+                // Conv
+                procedure_factory_table_.emplace("Conv", make_conv);
+              
+                // Gemm
+                procedure_factory_table_.emplace("Gemm", make_gemm);
 
-                // eltwise
-                procedure_factory_table_.emplace(
-                  "Abs", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_abs);
-                procedure_factory_table_.emplace(
-                  "Elu", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_elu);
-                procedure_factory_table_.emplace(
-                  "LeakyRelu",
-                mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_leaky_relu);
-                procedure_factory_table_.emplace(
-                  "Relu", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_relu);
-                procedure_factory_table_.emplace(
-                  "Sqrt", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_sqrt);
-                procedure_factory_table_.emplace(
-                  "Tanh", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_tanh);
+                // Eltwise
+                procedure_factory_table_.emplace("Abs", make_abs);
+                procedure_factory_table_.emplace("Elu", make_elu);
+                procedure_factory_table_.emplace("LeakyRelu", make_leaky_relu);
+                procedure_factory_table_.emplace("Relu", make_relu);
+                procedure_factory_table_.emplace("Sqrt", make_sqrt);
+                procedure_factory_table_.emplace("Tanh", make_tanh);
+              
+                // Pool
+                procedure_factory_table_.emplace("AveragePool", make_average_pool);
+                procedure_factory_table_.emplace("MaxPool", make_max_pool);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>
