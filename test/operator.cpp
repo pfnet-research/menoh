@@ -123,7 +123,7 @@ namespace {
                       input.name, static_cast<void*>(input.data.get()));
                 }
                 auto model =
-                  model_builder.build_model(model_data, backend_name);
+                  model_builder.build_model(model_data, backend_name, R"({"log_output":"stdout"})");
                 model_data.reset();
 
                 std::vector<menoh::variable> output_list;
@@ -214,6 +214,9 @@ namespace {
 
     // Tests for MKLDNN with Generic fallback backend
     TEST_OP(mkldnn_with_generic_fallback, test_relu, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_mul, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_mul_bcast, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_mul_example, eps);
 
     //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
 

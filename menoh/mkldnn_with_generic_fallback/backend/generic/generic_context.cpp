@@ -7,6 +7,7 @@ namespace menoh_impl {
 
             generic_context::generic_context() : context() {
                 procedure_factory_table_.emplace("Relu", make_relu);
+                procedure_factory_table_.emplace("Mul", make_mul);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>
@@ -120,7 +121,8 @@ namespace menoh_impl {
                         auto found =
                           procedure_factory_table_.find(node.op_type);
                         if(found == procedure_factory_table_.end()) {
-                            throw std::runtime_error("factory not found for: " + node.op_type);
+                            throw std::runtime_error("factory not found for: " +
+                                                     node.op_type);
                         }
                         auto factory = found->second;
                         op_proc =
