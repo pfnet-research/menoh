@@ -124,6 +124,7 @@ namespace {
                 }
                 auto model =
                   model_builder.build_model(model_data, backend_name, R"({"log_output": "stdout"})");
+
                 model_data.reset();
 
                 std::vector<menoh::variable> output_list;
@@ -212,8 +213,20 @@ namespace {
     // TEST_OP(mkldnn, test_averagepool_2d_precomputed_same_upper, eps);
 
 
+    // Conv
+    TEST_OP(mkldnn_with_generic_fallback, test_basic_conv_without_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_basic_conv_with_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_and_asymmetric_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_no_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_padding, eps);
+
     // Tests for MKLDNN with Generic fallback backend
-    TEST_OP(mkldnn_with_generic_fallback, test_relu, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_abs, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_elu, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_leakyrelu, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_relu, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_sqrt, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_tanh, eps);
 
     //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
     //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_1d_default, eps);

@@ -11,8 +11,23 @@ namespace menoh_impl {
             mkldnn_context::mkldnn_context() : context() {
                 using namespace mkldnn_with_generic_fallback_backend::
                   mkldnn_backend;
-                procedure_factory_table_.emplace("AveragePool", make_average_pool);
+                
+                // Conv
+                procedure_factory_table_.emplace("Conv", make_conv);
+              
+                // Gemm
                 procedure_factory_table_.emplace("Gemm", make_gemm);
+
+                // Eltwise
+                procedure_factory_table_.emplace("Abs", make_abs);
+                procedure_factory_table_.emplace("Elu", make_elu);
+                procedure_factory_table_.emplace("LeakyRelu", make_leaky_relu);
+                procedure_factory_table_.emplace("Relu", make_relu);
+                procedure_factory_table_.emplace("Sqrt", make_sqrt);
+                procedure_factory_table_.emplace("Tanh", make_tanh);
+              
+                // Pool
+                procedure_factory_table_.emplace("AveragePool", make_average_pool);
                 procedure_factory_table_.emplace("MaxPool", make_max_pool);
             }
 
