@@ -9,12 +9,29 @@ namespace menoh_impl {
         namespace mkldnn_backend {
 
             mkldnn_context::mkldnn_context() : context() {
-                procedure_factory_table_.emplace(
-                  "Gemm", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_gemm);
-                procedure_factory_table_.emplace(
-                  "Softmax", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_softmax);
+                using namespace mkldnn_with_generic_fallback_backend::
+                  mkldnn_backend;
+                
+                // Conv
+                procedure_factory_table_.emplace("Conv", make_conv);
+              
+                // Gemm
+                procedure_factory_table_.emplace("Gemm", make_gemm);
+
+                // Eltwise
+                procedure_factory_table_.emplace("Abs", make_abs);
+                procedure_factory_table_.emplace("Elu", make_elu);
+                procedure_factory_table_.emplace("LeakyRelu", make_leaky_relu);
+                procedure_factory_table_.emplace("Relu", make_relu);
+                procedure_factory_table_.emplace("Sqrt", make_sqrt);
+                procedure_factory_table_.emplace("Tanh", make_tanh);
+              
+                // Pool
+                procedure_factory_table_.emplace("AveragePool", make_average_pool);
+                procedure_factory_table_.emplace("MaxPool", make_max_pool);
+              
+                // Softmax
+                procedure_factory_table_.emplace("Softmax", make_softmax);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>
