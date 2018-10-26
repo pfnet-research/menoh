@@ -212,6 +212,13 @@ namespace {
     // TEST_OP(mkldnn, test_averagepool_2d_precomputed_same_upper, eps);
 
 
+    // Conv
+    TEST_OP(mkldnn_with_generic_fallback, test_basic_conv_without_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_basic_conv_with_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_and_asymmetric_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_no_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_padding, eps);
+
     // Tests for MKLDNN with Generic fallback backend
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_abs, eps);
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_elu, eps);
