@@ -23,7 +23,6 @@ namespace menoh_impl {
                   input_memory_cache_list.at(0);
                 auto input_dims = input_memory_cache.dims();
                 auto input_memory = input_memory_cache.get_data_memory();
-                auto input_format = extract_format(input_memory);
 
                 auto output_dims =
                   output_formatted_array_list.at(0).array().dims();
