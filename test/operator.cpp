@@ -266,6 +266,16 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_softmax_example, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_softmax_large_number, eps);
 
+    // Transpose
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_0, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_1, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_2, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_3, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_4, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_5, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_default, eps);
+
+
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP
 #undef TEST_OP_IMPL
