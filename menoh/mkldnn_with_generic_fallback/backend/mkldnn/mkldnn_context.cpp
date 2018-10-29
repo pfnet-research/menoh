@@ -11,7 +11,11 @@ namespace menoh_impl {
             mkldnn_context::mkldnn_context() : context() {
                 using namespace mkldnn_with_generic_fallback_backend::
                   mkldnn_backend;
-                
+              
+                // BatchNormalization
+                procedure_factory_table_.emplace(
+                  "BatchNormalization", mkldnn_backend::make_batch_norm);
+
                 // Conv
                 procedure_factory_table_.emplace("Conv", make_conv);
               

@@ -327,6 +327,7 @@ add_variable_to_table(output(0), dtype_of(input(0)),
         dims_of(input(0)), dims_of(input(1))));
 '''))
     code_list.append(make_completion_code("Relu"))
+    code_list.append(make_completion_code("Sigmoid"))
     code_list.append(make_completion_code("Softmax", [("axis", "int", "1")]))
     code_list.append(make_completion_code("Sum"))
     code_list.append(make_completion_code("Sqrt"))
