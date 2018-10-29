@@ -7,6 +7,7 @@ namespace menoh_impl {
 
             generic_context::generic_context() : context() {
                 procedure_factory_table_.emplace("Relu", make_relu);
+                procedure_factory_table_.emplace("Sigmoid", make_sigmoid);
                 procedure_factory_table_.emplace("Transpose", make_transpose);
             }
 
