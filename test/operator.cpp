@@ -241,6 +241,13 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_sigmoid_example, eps);
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_tanh, eps);
 
+    //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+
+    // Mul
+    TEST_OP(mkldnn_with_generic_fallback, test_mul, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_mul_bcast, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_mul_example, eps);
+  
     // Pool
     //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_1d_default, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_default, eps);

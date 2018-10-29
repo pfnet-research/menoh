@@ -16,6 +16,21 @@
 #include <menoh/utility.hpp>
 
 namespace menoh_impl {
+    inline std::vector<int> broadcast_shape(std::vector<int> const& adims,
+                                            std::vector<int> const& bdims) {
+        if(adims.size() < bdims.size()) {
+            return broadcast_shape(bdims, adims);
+        }
+        auto num_of_left_ones = adims.size() - bdims.size();
+        std::vector<int> cdims(num_of_left_ones, 1);
+        cdims.insert(cdims.end(), bdims.begin(), bdims.end());
+        std::vector<int> broadcast_dims;
+        assert(cdims.size() == adims.size());
+        std::transform(adims.begin(), adims.end(), cdims.begin(),
+                       std::back_inserter(broadcast_dims),
+                       [](auto a, auto b){ return std::max(a, b); });
+        return broadcast_dims;
+    }
     inline auto complete_attribute_and_infer_shape(
             model_data& model_data,
             std::unordered_map<std::string, array_profile> const&
@@ -788,6 +803,22 @@ add_variable_to_table(output(0), dtype_of(input(0)),
     calc_2d_output_dims(
         dims_of(input(0)), dims_of(input(0)).at(1),
         kernel_shape, strides, pads));
+
+    }
+}
+else
+
+
+if(node.op_type == "Mul") {
+    
+    
+    
+    {
+        
+        
+add_variable_to_table(output(0), dtype_of(input(0)),
+    broadcast_shape(
+        dims_of(input(0)), dims_of(input(1))));
 
     }
 }
