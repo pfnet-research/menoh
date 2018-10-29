@@ -43,8 +43,8 @@ namespace {
 
         // TODO int array
         std::vector<int> dims(tensor.dims().begin(), tensor.dims().end());
-        assert(2 <= dims.size());
         if(squash_dims) {
+            assert(2 <= dims.size());
             dims.at(1) = std::accumulate(dims.begin() + 1, dims.end(), 1,
                                          std::multiplies<int>());
             dims.erase(dims.begin() + 2, dims.end());
