@@ -219,6 +219,10 @@ namespace {
 
 
     // Tests for MKLDNN with Generic fallback backend
+
+    // BatchNormalization
+    TEST_OP(mkldnn_with_generic_fallback, test_batchnorm_epsilon, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_batchnorm_example, eps);
   
     // Conv
     TEST_OP(mkldnn_with_generic_fallback, test_basic_conv_without_padding, eps);
@@ -233,14 +237,9 @@ namespace {
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_leakyrelu, eps);
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_relu, eps);
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_sqrt, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_sigmoid, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_sigmoid_example, eps);
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_tanh, eps);
-
-    // BatchNormalization
-    TEST_OP(mkldnn_with_generic_fallback, test_batchnorm_epsilon, eps);
-    TEST_OP(mkldnn_with_generic_fallback, test_batchnorm_example, eps);
-
-    // Gemm
-    // TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
 
     // Pool
     //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_1d_default, eps);
