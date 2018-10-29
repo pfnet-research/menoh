@@ -129,4 +129,9 @@ namespace menoh {
         relu_test("mkldnn_with_generic_fallback", R"({"log_output": "stdout"})",
                   "../data/random_input_3_4096.txt", "../data/relu_1d.txt");
     }
+
+    TEST_F(MkldnnWithGenericFallbackBackendTest, tanh_test) {
+        tanh_test("mkldnn_with_generic_fallback", R"({"log_output": "stdout"})",
+                  "../data/random_input_3_4096.txt", "../data/tanh_1d.txt");
+    }
 } // namespace menoh

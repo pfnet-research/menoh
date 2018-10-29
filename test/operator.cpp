@@ -124,6 +124,7 @@ namespace {
                 }
                 auto model =
                   model_builder.build_model(model_data, backend_name, R"({"log_output":"stdout"})");
+
                 model_data.reset();
 
                 std::vector<menoh::variable> output_list;
@@ -211,14 +212,64 @@ namespace {
     // TEST_OP(mkldnn, test_averagepool_2d_precomputed_pads, eps);
     // TEST_OP(mkldnn, test_averagepool_2d_precomputed_same_upper, eps);
 
-
+  
     // Tests for MKLDNN with Generic fallback backend
-    TEST_OP(mkldnn_with_generic_fallback, test_relu, eps);
+
+    // Conv
+    TEST_OP(mkldnn_with_generic_fallback, test_basic_conv_without_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_basic_conv_with_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_and_asymmetric_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_no_padding, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_padding, eps);
+  
+    // Eltwise
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_abs, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_elu, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_leakyrelu, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_relu, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_sqrt, eps);
+    TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_tanh, eps);
+
+    //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+
+    // Mul
     TEST_OP(mkldnn_with_generic_fallback, test_mul, eps);
     //TEST_OP(mkldnn_with_generic_fallback, test_mul_bcast, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_mul_example, eps);
+  
+    // Pool
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_1d_default, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_default, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_pads, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_pads_count_include_pad, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_precomputed_pads, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_precomputed_pads_count_include_pad, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_precomputed_same_upper, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_precomputed_strides, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_same_lower, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_same_upper, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_strides, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_3d_default, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_1d_default, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_default, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_pads, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_precomputed_pads, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_precomputed_same_upper, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_precomputed_strides, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_same_lower, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_same_upper, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_maxpool_2d_strides, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_3d_default, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_with_argmax_2d_precomputed_pads, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_with_argmax_2d_precomputed_strides, eps);
 
-    //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+    // Softmax
+    //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_0, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_1, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_2, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_softmax_default_axis, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_softmax_example, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_softmax_large_number, eps);
 
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP
