@@ -2,6 +2,7 @@
 #define MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_GENERIC_OPERATOR_TRANSPOSE_HPP
 
 #include <vector>
+
 #include <menoh/array.hpp>
 #include <menoh/mkldnn_with_generic_fallback/procedure.hpp>
 
@@ -9,8 +10,7 @@ namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
         namespace generic_backend {
 
-            inline std::vector<int>
-            calc_strides(std::vector<int> const& dims) {
+            inline std::vector<int> calc_strides(std::vector<int> const& dims) {
                 std::vector<int> strides({1});
                 for(int i = dims.size() - 1; i >= 1; --i) {
                     strides.push_back(strides.back() * dims.at(i));
@@ -39,14 +39,16 @@ namespace menoh_impl {
             }
 
             inline procedure
-            make_transpose(node const& node, std::vector<array> const& input_list,
+            make_transpose(node const& node,
+                           std::vector<array> const& input_list,
                            std::vector<array> const& output_list) {
                 assert(input_list.size() == 1);
                 assert(output_list.size() == 1);
 
                 auto input = input_list.at(0);
                 if(input.dtype() != dtype_t::float_) {
-                    throw std::runtime_error("not implemented yet");
+                    throw invalid_dtype(
+                      std::to_string(static_cast<int>(input.dtype())));
                 }
 
                 auto perm = attribute_ints(node, "perm");
