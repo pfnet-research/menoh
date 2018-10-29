@@ -16,6 +16,8 @@ namespace menoh_impl {
 
         class context {
         public:
+            virtual ~context() = 0;
+
             optional<std::tuple<procedure, array>>
             try_to_get_variable(std::string const& name) {
                 return do_try_to_get_variable(name);
@@ -70,6 +72,7 @@ namespace menoh_impl {
             // for specialized optimization across backends
             virtual any do_take_variable_handle(std::string const& name) = 0;
         };
+        inline context::~context(){}
 
     } // namespace mkldnn_with_generic_fallback_backend
 } // namespace menoh_impl

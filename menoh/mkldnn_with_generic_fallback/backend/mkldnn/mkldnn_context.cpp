@@ -1,18 +1,41 @@
+#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/memory_conversion.hpp>
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/mkldnn_context.hpp>
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/operator.hpp>
 
 #include <menoh/graph.hpp> // for unsupported_operator error
-
-#include <menoh/mkldnn/utility.hpp>
 
 namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
         namespace mkldnn_backend {
 
             mkldnn_context::mkldnn_context() : context() {
+                using namespace mkldnn_with_generic_fallback_backend::
+                  mkldnn_backend;
+              
+                // BatchNormalization
                 procedure_factory_table_.emplace(
-                  "Gemm", mkldnn_with_generic_fallback_backend::mkldnn_backend::
-                            make_gemm);
+                  "BatchNormalization", mkldnn_backend::make_batch_norm);
+
+                // Conv
+                procedure_factory_table_.emplace("Conv", make_conv);
+              
+                // Gemm
+                procedure_factory_table_.emplace("Gemm", make_gemm);
+
+                // Eltwise
+                procedure_factory_table_.emplace("Abs", make_abs);
+                procedure_factory_table_.emplace("Elu", make_elu);
+                procedure_factory_table_.emplace("LeakyRelu", make_leaky_relu);
+                procedure_factory_table_.emplace("Relu", make_relu);
+                procedure_factory_table_.emplace("Sqrt", make_sqrt);
+                procedure_factory_table_.emplace("Tanh", make_tanh);
+              
+                // Pool
+                procedure_factory_table_.emplace("AveragePool", make_average_pool);
+                procedure_factory_table_.emplace("MaxPool", make_max_pool);
+              
+                // Softmax
+                procedure_factory_table_.emplace("Softmax", make_softmax);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>
@@ -31,6 +54,7 @@ namespace menoh_impl {
                 context_list,
               logger_handle logger) {
                 static_cast<void>(output_profile_table); // maybe unused
+
                 auto first_node_index = current_index;
                 std::vector<procedure> procedure_list;
 
@@ -39,57 +63,79 @@ namespace menoh_impl {
                 for(; current_index < static_cast<int>(node_list.size());
                     ++current_index) {
                     auto const& node = node_list.at(current_index);
-                    std::vector<array> input_list;
+
                     std::vector<procedure> new_copy_procedure_list;
                     std::vector<mkldnn::primitive> new_primitive_list;
-                    std::vector<std::pair<std::string, mkldnn::memory>>
-                      new_output_memory_list;
-                    std::vector<mkldnn::memory> new_temp_memory_list;
+                    std::vector<memory_cache> new_output_memory_cache_list;
+                    std::vector<std::pair<std::string, memory_cache>>
+                      new_named_temp_memory_cache_list;
 
                     try {
+                        std::vector<std::reference_wrapper<memory_cache>>
+                          input_memory_cache_list;
                         for(auto const& input_name : node.input_name_list) {
                             do {
-                                // search in self variable table
-                                auto found_from_variable_memory_table =
-                                  variable_memory_table_.find(input_name);
-                                if(found_from_variable_memory_table !=
-                                   variable_memory_table_.end()) {
-                                    *logger
-                                      << input_name
-                                      << " is found in self variable table"
-                                      << std::endl;
-                                    input_list.push_back(
-                                      menoh_impl::mkldnn_backend::
-                                        memory_to_array(
-                                          found_from_variable_memory_table
-                                            ->second));
-                                    break;
+                                // search in common parameter table
+                                {
+                                    auto found =
+                                      common_parameter_table.find(input_name);
+                                    if(found != common_parameter_table.end()) {
+                                        *logger << input_name
+                                                << " is found from self common "
+                                                   "parameter table"
+                                                << std::endl;
+                                        auto result_pair =
+                                          variable_memory_cache_table_.emplace(
+                                            input_name,
+                                            memory_cache(found->second,
+                                                         engine_));
+                                        assert(
+                                          result_pair.second &&
+                                          "already same named variable exist");
+                                        input_memory_cache_list.push_back(
+                                          std::ref(result_pair.first->second));
+                                        break;
+                                    }
                                 }
 
-                                // search in common parameter and input table
-                                auto found_from_common_table = [&](auto const&
-                                                                     table) {
-                                    auto found = table.find(input_name);
-                                    if(found != table.end()) {
-                                        input_list.push_back(found->second);
-                                        return true;
+                                // search in self variable table
+                                {
+                                    auto found =
+                                      variable_memory_cache_table_.find(
+                                        input_name);
+                                    if(found !=
+                                       variable_memory_cache_table_.end()) {
+                                        *logger << input_name
+                                                << " is found from self "
+                                                   "variable table"
+                                                << std::endl;
+                                        input_memory_cache_list.push_back(
+                                          found->second);
+                                        break;
                                     }
-                                    return false;
-                                };
-                                if(found_from_common_table(
-                                     common_parameter_table)) {
-                                    *logger
-                                      << input_name
-                                      << " is found in common parameter table"
-                                      << std::endl;
-                                    break;
                                 }
-                                if(found_from_common_table(
-                                     common_input_table)) {
-                                    *logger << input_name
-                                            << " is found in common input table"
-                                            << std::endl;
-                                    break;
+
+                                // search in common input table
+                                {
+                                    auto found =
+                                      common_input_table.find(input_name);
+                                    if(found != common_input_table.end()) {
+                                        *logger << input_name
+                                                << " is found from self common "
+                                                   "input table"
+                                                << std::endl;
+                                        auto result_pair =
+                                          variable_memory_cache_table_.emplace(
+                                            input_name,
+                                            memory_cache(found->second,
+                                                         engine_));
+                                        assert(
+                                          result_pair.second &&
+                                          "already same named variable exist");
+                                        input_memory_cache_list.push_back(
+                                          std::ref(result_pair.first->second));
+                                        break;
+                                    }
                                 }
 
                                 // search in other contexts' variable table
@@ -113,7 +159,15 @@ namespace menoh_impl {
                                         std::tie(copy_proc, arr) = *found;
                                         new_copy_procedure_list.push_back(
                                           copy_proc);
-                                        input_list.push_back(arr);
+                                        auto result_pair =
+                                          variable_memory_cache_table_.emplace(
+                                            input_name,
+                                            memory_cache(arr, engine_));
+                                        assert(
+                                          result_pair.second &&
+                                          "already same named variable exist");
+                                        input_memory_cache_list.push_back(
+                                          std::ref(result_pair.first->second));
                                         is_found_from_other_context = true;
                                         break;
                                     }
@@ -122,14 +176,50 @@ namespace menoh_impl {
                             } while(false);
                         }
 
-                        // make primitives and
-                        auto factory =
-                          procedure_factory_table_.at(node.op_type);
-                        std::tie(new_primitive_list, new_output_memory_list,
-                                 new_temp_memory_list) =
-                          factory.operator()(current_index, node_list,
-                                             input_list, required_output_table,
+                        std::vector<formatted_array>
+                          output_formatted_array_list;
+                        for(auto const& output_name : node.output_name_list) {
+                            auto found =
+                              required_output_table.find(output_name);
+                            assert(
+                              variable_memory_cache_table_.find(output_name) ==
+                                variable_memory_cache_table_.end() &&
+                              "variable have not already exist");
+                            if(found == required_output_table.end()) {
+                                // not required output
+                                // add `any` format memory
+                                auto arr =
+                                  array(output_profile_table.at(output_name));
+                                allocated_array_list_.push_back(arr);
+                                output_formatted_array_list.push_back(
+                                  formatted_array(mkldnn::memory::format::any,
+                                                  arr));
+                            } else {
+                                // required output
+                                output_formatted_array_list.push_back(
+                                  formatted_array(
+                                    ndims_to_data_memory_format(
+                                      found->second.dims().size()),
+                                    found->second));
+                            }
+                        }
+
+                        auto found =
+                          procedure_factory_table_.find(node.op_type);
+                        if(found == procedure_factory_table_.end()) {
+                            throw std::runtime_error("factory not found for: " +
+                                                     node.op_type);
+                        }
+                        auto factory = found->second;
+                        procedure_factory_return_type factory_return =
+                          factory.operator()(node, input_memory_cache_list,
+                                             output_formatted_array_list,
                                              engine_);
+                        new_primitive_list = factory_return.primitives;
+                        new_output_memory_cache_list =
+                          factory_return.output_memory_cache_list;
+                        new_named_temp_memory_cache_list =
+                          factory_return.named_temp_memory_cache_list;
                     } catch(std::exception const& e) {
                         *logger << e.what() << std::endl;
                         break;
@@ -146,13 +236,15 @@ namespace menoh_impl {
                       std::make_move_iterator(new_copy_procedure_list.end()));
 
                     // update context
-                    variable_memory_table_.insert(
-                      std::make_move_iterator(new_output_memory_list.begin()),
-                      std::make_move_iterator(new_output_memory_list.end()));
-                    temp_memory_list_.insert(
-                      temp_memory_list_.end(),
-                      std::make_move_iterator(new_temp_memory_list.begin()),
-                      std::make_move_iterator(new_temp_memory_list.end()));
+                    for(unsigned int i = 0; i < node.output_name_list.size();
+                        ++i) {
+                        variable_memory_cache_table_.emplace(
+                          node.output_name_list.at(i),
+                          new_output_memory_cache_list.at(i));
+                    }
+                    temp_memory_cache_table_.insert(
+                      new_named_temp_memory_cache_list.begin(),
+                      new_named_temp_memory_cache_list.end());
                 }
 
                 // when no nodes are processed

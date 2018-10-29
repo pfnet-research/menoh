@@ -65,6 +65,18 @@ else()
     # See external/onnx/CMakeLists.txt for more details.
     include(FindProtobuf)
     find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)
+
+    # Note: `protobuf::protoc` is not supported in CMake 3.9.4 or older
+    if(NOT TARGET protobuf::protoc)
+        find_program(Protobuf_PROTOC_EXECUTABLE
+            NAMES protoc
+            DOC "The Google Protocol Buffers Compiler")
+        add_executable(protobuf::protoc IMPORTED)
+        if(EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
+            set_target_properties(protobuf::protoc PROPERTIES
+                IMPORTED_LOCATION "${Protobuf_PROTOC_EXECUTABLE}")
+        endif()
+    endif()
 endif()
 
 # Build libonnx.a
