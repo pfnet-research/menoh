@@ -75,7 +75,7 @@ Execute following command in build directory created at Build section.
 make install
 ```
 
-# Run VGG16 example (it can run Resnet50 as well)
+# Run VGG16 example (it can run ResNet-50 as well)
 
 Execute following command in root directory.
 
