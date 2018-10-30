@@ -97,7 +97,7 @@ top 5 categories are
 
 ```
 
-You can also run ResNet50
+You can also run ResNet-50
 
 ```
 ./example/vgg16_example_in_cpp -m ../data/resnet50.onnx
