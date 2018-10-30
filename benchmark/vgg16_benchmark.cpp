@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     cmdline::parser a;
     a.add<std::string>("input", '\0', "input_data");
     a.add<std::string>("model", '\0', "onnx model path", false,
-                       "../data/VGG16.onnx");
+                       "../data/vgg16.onnx");
     a.parse_check(argc, argv);
 
     constexpr auto category_num = 1000;
@@ -25,8 +25,8 @@ int main(int argc, char** argv) {
     auto onnx_model_path = a.get<std::string>("model");
 
     // Aliases to onnx's node input and output tensor name
-    auto conv1_1_in_name = "140326425860192";
-    auto softmax_out_name = "140326200803680";
+    auto conv1_1_in_name = "Input_0";
+    auto softmax_out_name = "Softmax_0";
 
     // Load ONNX model data
     auto model_data = menoh::make_model_data_from_onnx(onnx_model_path);
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 
     // Build model
     menoh::model_builder model_builder(vpt);
-    auto model = model_builder.build_model(model_data, "mkldnn");
+    auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
