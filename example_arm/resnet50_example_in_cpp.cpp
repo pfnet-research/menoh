@@ -94,7 +94,9 @@ int main(int argc, char** argv) {
     // Preprocess
     cv::resize(image_mat, image_mat, cv::Size(width, height));
     image_mat.convertTo(image_mat, CV_32FC3);
-    image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
+    //    image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
+    image_mat -= 128.0f;
+    image_mat /= 128.0f;
     auto image_data = reorder_to_chw(image_mat);
 
     // Load ONNX model data
