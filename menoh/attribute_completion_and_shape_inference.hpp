@@ -633,6 +633,40 @@ add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 else
 
 
+if(node.op_type == "GlobalAveragePool") {
+    
+    
+    
+    {
+        
+        
+auto input_dims = dims_of(input(0));
+auto output_dims = ints({input_dims[0], input_dims[1], 1, 1});
+add_variable_to_table(output(0), dtype_of(input(0)),
+    output_dims);
+
+    }
+}
+else
+
+
+if(node.op_type == "GlobalMaxPool") {
+    
+    
+    
+    {
+        
+        
+auto input_dims = dims_of(input(0));
+auto output_dims = ints({input_dims[0], input_dims[1], 1, 1});
+add_variable_to_table(output(0), dtype_of(input(0)),
+    output_dims);
+
+    }
+}
+else
+
+
 if(node.op_type == "LeakyRelu") {
     
     

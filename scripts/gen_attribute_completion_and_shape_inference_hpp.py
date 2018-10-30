@@ -301,6 +301,20 @@ auto output_dims = ints({a_dims.at(0), b_dims.at(1)});
 add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 '''))
     code_list.append(
+        make_completion_code("GlobalAveragePool", [], '''
+auto input_dims = dims_of(input(0));
+auto output_dims = ints({input_dims[0], input_dims[1], 1, 1});
+add_variable_to_table(output(0), dtype_of(input(0)),
+    output_dims);
+'''))
+    code_list.append(
+        make_completion_code("GlobalMaxPool", [], '''
+auto input_dims = dims_of(input(0));
+auto output_dims = ints({input_dims[0], input_dims[1], 1, 1});
+add_variable_to_table(output(0), dtype_of(input(0)),
+    output_dims);
+'''))
+    code_list.append(
         make_completion_code("LeakyRelu", [("alpha", "float", "0.01f")]))
     code_list.append(
         make_completion_code("LRN", [
