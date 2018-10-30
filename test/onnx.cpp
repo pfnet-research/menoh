@@ -14,7 +14,7 @@ namespace menoh_impl {
     namespace {
         class ONNXTest : public ::testing::Test {
         public:
-            std::string model_filename{"../data/VGG16.onnx"};
+            std::string model_filename{"../data/vgg16.onnx"};
         };
 
         TEST_F(ONNXTest, make_model_data_from_onnx_file) {
