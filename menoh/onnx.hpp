@@ -21,14 +21,13 @@ namespace menoh_impl {
 
     class unsupported_onnx_opset_version : public exception {
     public:
-        unsupported_onnx_opset_version(std::string const& filename,
-                                       int actual_version,
+        unsupported_onnx_opset_version(int actual_version,
                                        int supported_version)
-          : exception(
-              menoh_error_code_unsupported_onnx_opset_version,
-              "menoh unsupported onnx opset version error: " + filename +
-                " has onnx opset version " + std::to_string(actual_version) +
-                " > " + std::to_string(supported_version)) {}
+          : exception(menoh_error_code_unsupported_onnx_opset_version,
+                      "menoh unsupported onnx opset version error: given onnx "
+                      "has opset version " +
+                        std::to_string(actual_version) + " > " +
+                        std::to_string(supported_version)) {}
     };
 
     class invalid_attribute_type : public exception {
@@ -40,7 +39,10 @@ namespace menoh_impl {
                         attribute_type + " for \"" + attribute_name + "\"") {}
     };
 
-    model_data load_onnx(std::string const& filename);
+    model_data make_model_data_from_onnx_file(std::string const& filename);
+    model_data
+    make_model_data_from_onnx_data_on_memory(const uint8_t* onnx_data,
+                                             int32_t size);
 
     std::vector<std::string>
     extract_model_input_name_list(menoh_impl::model_data const& model_data);

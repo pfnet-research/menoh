@@ -29,13 +29,14 @@ int main() {
     menoh_variable_profile_table_builder_handle vpt_builder;
     ERROR_CHECK(menoh_make_variable_profile_table_builder(&vpt_builder));
 
-    ERROR_CHECK(menoh_variable_profile_table_builder_add_input_profile_dims_4(
-      vpt_builder, conv1_1_in_name, menoh_dtype_float, 1, 3, 224, 224));
+    const int32_t input_dims[] = {1, 3, 224, 224};
+    ERROR_CHECK(menoh_variable_profile_table_builder_add_input_profile(
+      vpt_builder, conv1_1_in_name, menoh_dtype_float, 4, input_dims));
 
-    ERROR_CHECK(menoh_variable_profile_table_builder_add_output_profile(
-      vpt_builder, fc6_out_name, menoh_dtype_float));
-    ERROR_CHECK(menoh_variable_profile_table_builder_add_output_profile(
-      vpt_builder, softmax_out_name, menoh_dtype_float));
+    ERROR_CHECK(menoh_variable_profile_table_builder_add_output_name(
+      vpt_builder, fc6_out_name));
+    ERROR_CHECK(menoh_variable_profile_table_builder_add_output_name(
+      vpt_builder, softmax_out_name));
 
     menoh_variable_profile_table_handle variable_profile_table;
     ERROR_CHECK(menoh_build_variable_profile_table(vpt_builder, model_data,

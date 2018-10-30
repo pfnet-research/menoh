@@ -12,8 +12,6 @@
 #include <menoh/optional.hpp>
 #include <menoh/utility.hpp>
 
-#include <iostream>
-
 namespace menoh_impl {
 
     std::vector<node> extract_needed_node_list(
@@ -36,7 +34,9 @@ namespace menoh_impl {
                             return output_name == required_output_name;
                         });
                   });
-                if(needed_node_iter == node_list.end()) { continue; }
+                if(needed_node_iter == node_list.end()) {
+                    continue;
+                }
                 auto is_already_added =
                   std::find(needed_node_list.begin(), needed_node_list.end(),
                             *needed_node_iter) != needed_node_list.end();
@@ -220,185 +220,5 @@ namespace menoh_impl {
                                        }),
                         node_list.end());
     }
-
-    std::unordered_map<std::string, std::vector<int>> make_output_dims_table(
-      menoh_impl::model_data const& model_data,
-      std::vector<std::pair<std::string, std::vector<int>>> const&
-        input_name_and_dims_pair_list) {
-
-        std::vector<std::string> supported_operator_list{{"Abs",
-                                                          "Elu",
-                                                          "LeakyRelu",
-                                                          "Relu",
-                                                          "Sqrt",
-                                                          "Tanh",
-                                                          "AveragePool",
-                                                          "Add",
-                                                          "BatchNormalization",
-                                                          "Concat",
-                                                          "Conv",
-                                                          "ConvTranspose",
-                                                          "FC",
-                                                          "Gemm",
-                                                          "GlobalAveragePool",
-                                                          "GlobalMaxPool",
-                                                          "LRN",
-                                                          "MaxPool",
-                                                          "Softmax",
-                                                          "Sum"}};
-
-        std::unordered_map<std::string, std::vector<int>> variable_dims_table(
-          input_name_and_dims_pair_list.begin(),
-          input_name_and_dims_pair_list.end());
-        auto graph = make_graph(model_data.node_list);
-        auto parameter_table = std::unordered_map<std::string, array>(
-          model_data.parameter_name_and_array_list.begin(),
-          model_data.parameter_name_and_array_list.end());
-        for(auto const& node : graph.node_list()) {
-            if(node.op_type == "Conv") {
-                auto weight_name = node.input_name_list.at(1);
-                auto output_channel_num =
-                  get_output_channel_num_from_parameter_dims(
-                    find_value(parameter_table, weight_name).dims());
-                auto output_dims = calc_2d_output_dims(node, output_channel_num,
-                                                       variable_dims_table);
-                auto dilations =
-                  optional_attribute_ints(node, "dilations", {1, 1});
-                if(dilations != std::vector<int>({1, 1})) {
-                    auto actual = "(" + std::to_string(dilations.at(0)) + ", " +
-                                  std::to_string(dilations.at(1)) + ")";
-                    throw unsupported_operator_attribute(
-                      node.op_type, node.output_name_list.front(), "dilations",
-                      actual, "(1, 1)");
-                }
-                auto group = optional_attribute_int(node, "group", 1);
-                if(group != 1) {
-                    throw unsupported_operator_attribute(
-                      node.op_type, node.output_name_list.front(), "group",
-                      std::to_string(group), "1");
-                }
-                variable_dims_table.insert(
-                  {node.output_name_list.at(0), output_dims});
-            } else if(node.op_type == "ConvTranspose") {
-                auto weight_name = node.input_name_list.at(1);
-                auto output_channel_num =
-                  get_output_channel_num_from_parameter_dims(
-                    find_value(parameter_table, weight_name).dims());
-                auto output_dims = calc_2d_output_dims_for_conv_transpose(node,
-                          output_channel_num, variable_dims_table);
-                auto dilations =
-                  optional_attribute_ints(node, "dilations", {1, 1});
-                if(dilations != std::vector<int>({1, 1})) {
-                    auto actual = "(" + std::to_string(dilations.at(0)) + ", " +
-                                  std::to_string(dilations.at(1)) + ")";
-                    throw unsupported_operator_attribute(
-                      node.op_type, node.output_name_list.front(), "dilations",
-                      actual, "(1, 1)");
-                }
-                auto group = optional_attribute_int(node, "group", 1);
-                if(group != 1) {
-                    throw unsupported_operator_attribute(
-                      node.op_type, node.output_name_list.front(), "group",
-                      std::to_string(group), "1");
-                }
-                variable_dims_table.insert(
-                  {node.output_name_list.at(0), output_dims});
-            } else if(node.op_type == "MaxPool" ||
-                      node.op_type == "AveragePool") {
-                auto input_name = node.input_name_list.at(0);
-                auto output_channel_num = get_channel_num_from_variable_dims(
-                  find_value(variable_dims_table, input_name));
-                if(node.op_type == "AveragePool") {
-                    auto pads = optional_attribute_ints(node, "pads", {0, 0});
-                    auto count_include_pad = optional_attribute_int(
-                      node, "count_include_pad", 1); // TODO
-                    if(pads != std::vector<int>({0, 0}) &&
-                       count_include_pad == 0) {
-                        throw unsupported_operator_attribute(
-                          node.op_type, node.output_name_list.front(),
-                          "count_include_pad",
-                          std::to_string(count_include_pad), "0");
-                    }
-                }
-                auto output_dims = calc_2d_output_dims(node, output_channel_num,
-                                                       variable_dims_table);
-                variable_dims_table.insert(
-                  {node.output_name_list.at(0), output_dims});
-            } else if(node.op_type == "GlobalMaxPool" ||
-                      node.op_type == "GlobalAveragePool") {
-                auto input_name = node.input_name_list.at(0);
-                auto input_dims = find_value(variable_dims_table, input_name);
-                auto output_dims = input_dims;
-                output_dims.at(2) = 1;
-                output_dims.at(3) = 1;
-                variable_dims_table.insert(
-                  {node.output_name_list.at(0), output_dims});
-            } else if(node.op_type == "FC") {
-                auto input_name = node.input_name_list.at(0);
-                auto input_dims = find_value(variable_dims_table, input_name);
-                auto batch_size = get_batch_size_from_variable_dims(
-                  find_value(variable_dims_table, input_name));
-                auto weight_dims =
-                  find_value(parameter_table, node.input_name_list.at(1))
-                    .dims();
-                auto input_size =
-                  std::accumulate(input_dims.begin() + 1, input_dims.end(), 1,
-                                  std::multiplies<void>());
-                if(input_size != weight_dims[1]) {
-                    throw dimension_mismatch(
-                      node.op_type, node.output_name_list.front(),
-                      "input[1] and weight[1]", std::to_string(input_size),
-                      std::to_string(weight_dims[1]));
-                }
-                std::vector<int> output_dims{batch_size, weight_dims[0]};
-                variable_dims_table.insert(
-                  {node.output_name_list.at(0), output_dims});
-            } else if(node.op_type == "Gemm") {
-                auto input_name = node.input_name_list.at(0);
-                auto input_dims = find_value(variable_dims_table, input_name);
-                auto batch_size = get_batch_size_from_variable_dims(
-                  find_value(variable_dims_table, input_name));
-                auto weight_dims =
-                  find_value(parameter_table, node.input_name_list.at(1))
-                    .dims();
-                auto trans_a = optional_attribute_int(node, "transA", 0);
-                if(trans_a) {
-                    throw unsupported_operator_attribute(
-                      node.op_type, node.output_name_list.front(), "transA",
-                      std::to_string(trans_a), "0");
-                }
-                auto trans_b = optional_attribute_int(node, "transB", 0);
-                if(!trans_b) {
-                    throw unsupported_operator_attribute(
-                      node.op_type, node.output_name_list.front(), "transB",
-                      std::to_string(trans_b), "1");
-                }
-                auto input_size =
-                  std::accumulate(input_dims.begin() + 1, input_dims.end(), 1,
-                                  std::multiplies<void>());
-                if(input_size != weight_dims[1]) {
-                    throw dimension_mismatch(
-                      node.op_type, node.output_name_list.front(),
-                      "input[1] and weight[1]", std::to_string(input_size),
-                      std::to_string(weight_dims[1]));
-                }
-                std::vector<int> output_dims{batch_size, weight_dims[0]};
-                variable_dims_table.insert(
-                  {node.output_name_list.at(0), output_dims});
-            } else if(std::find(supported_operator_list.begin(),
-                                supported_operator_list.end(), node.op_type) !=
-                      supported_operator_list
-                        .end()) { // check if supported operator
-                auto input_name = node.input_name_list.at(0);
-                auto output_dims = find_value(variable_dims_table, input_name);
-                variable_dims_table.insert(
-                  {node.output_name_list.at(0), output_dims});
-            }
-            else {
-                throw unsupported_operator(node.op_type);
-            }
-        }
-        return variable_dims_table;
-    } // namespace menoh_impl
 
 } // namespace menoh_impl

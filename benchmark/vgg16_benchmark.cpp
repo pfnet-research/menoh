@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     cmdline::parser a;
     a.add<std::string>("input", '\0', "input_data");
     a.add<std::string>("model", '\0', "onnx model path", false,
-                       "../data/VGG16.onnx");
+                       "../data/vgg16.onnx");
     a.parse_check(argc, argv);
 
     constexpr auto category_num = 1000;
@@ -25,8 +25,8 @@ int main(int argc, char** argv) {
     auto onnx_model_path = a.get<std::string>("model");
 
     // Aliases to onnx's node input and output tensor name
-    auto conv1_1_in_name = "140326425860192";
-    auto softmax_out_name = "140326200803680";
+    auto conv1_1_in_name = "Input_0";
+    auto softmax_out_name = "Softmax_0";
 
     // Load ONNX model data
     auto model_data = menoh::make_model_data_from_onnx(onnx_model_path);
@@ -35,15 +35,16 @@ int main(int argc, char** argv) {
     menoh::variable_profile_table_builder vpt_builder;
     vpt_builder.add_input_profile(conv1_1_in_name, menoh::dtype_t::float_,
                                   {batch_size, 3, 224, 224});
-    vpt_builder.add_output_profile(softmax_out_name, menoh::dtype_t::float_);
+    vpt_builder.add_output_name(softmax_out_name);
     auto vpt = vpt_builder.build_variable_profile_table(model_data);
 
     // Build model
     menoh::model_builder model_builder(vpt);
-#ifdef ANDROID_ARM
+#ifdef ENABLE_ARMNN
     auto model = model_builder.build_model(model_data, "armnn");
-#else
-    auto model = model_builder.build_model(model_data, "mkldnn");
+#endif
+#ifdef ENABLE_MKLDNN
+    auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
 #endif
     model_data
       .reset(); // you can delete model_data explicitly after model building

@@ -5,14 +5,13 @@
 #include <fstream>
 #include <functional>
 #include <numeric>
-#include <random>
 #include <unordered_map>
 #include <utility>
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include <external/onnx/onnx/onnx.pb.h>
+#include <onnx/onnx.pb.h>
 
 #include <menoh/array.hpp>
 #include <menoh/dtype.hpp>
@@ -23,25 +22,7 @@
 
 namespace menoh_impl {
 
-    onnx::ModelProto load_onnx_model_proto(std::string const& filename) {
-        namespace gpio = ::google::protobuf::io;
-
-        std::ifstream ifs(filename, std::ios::binary);
-        if(!ifs) {
-            throw invalid_filename(filename);
-        }
-        gpio::IstreamInputStream iis(&ifs);
-        gpio::CodedInputStream cis(&iis);
-        cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
-                               std::numeric_limits<int>::max());
-        onnx::ModelProto onnx_model;
-        if(!onnx_model.ParseFromCodedStream(&cis)) {
-            throw onnx_parse_error(filename);
-        }
-        return onnx_model;
-    }
-
-    auto tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt) {
+    dtype_t tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt) {
         if(tpdt == onnx::TensorProto_DataType_FLOAT) {
             return dtype_t::float_;
         }
@@ -185,15 +166,13 @@ namespace menoh_impl {
         return node_list;
     }
 
-    model_data load_onnx(std::string const& filename) {
-        auto onnx_model = load_onnx_model_proto(filename);
-
+    model_data make_model_from_onnx(onnx::ModelProto& onnx_model) {
         // onnx opset version check
         if(onnx_model.opset_import_size() != 0) {
             int version = onnx_model.opset_import(0).version();
             if(MENOH_SUPPORTED_ONNX_OPSET_VERSION < version) {
                 throw unsupported_onnx_opset_version(
-                  filename, version, MENOH_SUPPORTED_ONNX_OPSET_VERSION);
+                  version, MENOH_SUPPORTED_ONNX_OPSET_VERSION);
             }
         }
 
@@ -201,10 +180,6 @@ namespace menoh_impl {
 
         trim_dropout(node_list);
         trim_reshape(node_list);
-
-        std::random_device rd;
-        std::mt19937 g(rd());
-        std::shuffle(node_list.begin(), node_list.end(), g);
 
         std::vector<std::string> all_parameter_name_list;
         all_parameter_name_list.reserve(
@@ -228,6 +203,40 @@ namespace menoh_impl {
           extract_parameter_name_and_array_list_from_onnx_graph(
             *onnx_model.mutable_graph(), model_parameter_name_list);
         return model_data{node_list, parameter_table};
+    }
+
+    model_data make_model_data_from_onnx_file(std::string const& filename) {
+        namespace gpio = ::google::protobuf::io;
+
+        std::ifstream ifs(filename, std::ios::binary);
+        if(!ifs) {
+            throw invalid_filename(filename);
+        }
+        gpio::IstreamInputStream iis(&ifs);
+        gpio::CodedInputStream cis(&iis);
+        cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
+                               std::numeric_limits<int>::max());
+        onnx::ModelProto onnx_model;
+        if(!onnx_model.ParseFromCodedStream(&cis)) {
+            throw onnx_parse_error(filename);
+        }
+        return make_model_from_onnx(onnx_model);
+    }
+
+    model_data
+    make_model_data_from_onnx_data_on_memory(const uint8_t* onnx_data,
+                                             int32_t size) {
+        namespace gpio = ::google::protobuf::io;
+        gpio::ArrayInputStream ais(onnx_data, size);
+        gpio::CodedInputStream cis(&ais);
+        cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
+                               std::numeric_limits<int>::max());
+        onnx::ModelProto onnx_model;
+        if(!onnx_model.ParseFromCodedStream(&cis) ||
+           !cis.ConsumedEntireMessage()) {
+            throw onnx_parse_error("parse binary onnx data on memory");
+        }
+        return make_model_from_onnx(onnx_model);
     }
 
     std::vector<std::string>

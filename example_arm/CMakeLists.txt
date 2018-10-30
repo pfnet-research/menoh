@@ -22,4 +22,12 @@ target_link_libraries(vgg16_example_in_c_arm menoh ${OpenCV_LIBS})
 add_executable(vgg16_example_in_cpp_arm vgg16_example_in_cpp_arm.cpp)
 target_link_libraries(vgg16_example_in_cpp_arm menoh ${OpenCV_LIBS})
 
+# Build vgg19_example_in_cpp
+add_executable(vgg19_example_in_cpp vgg19_example_in_cpp.cpp)
+target_link_libraries(vgg19_example_in_cpp menoh ${OpenCV_LIBS})
+
+# Build resnet50_example_in_cpp
+add_executable(resnet50_example_in_cpp resnet50_example_in_cpp.cpp)
+target_link_libraries(resnet50_example_in_cpp menoh ${OpenCV_LIBS})
+
 

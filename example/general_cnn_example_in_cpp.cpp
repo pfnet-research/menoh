@@ -15,28 +15,14 @@
 
 #include "../external/cmdline.h"
 
-auto crop_and_resize(cv::Mat mat, cv::Size const& size) {
-    auto short_edge = std::min(mat.size().width, mat.size().height);
-    cv::Rect roi;
-    roi.x = (mat.size().width - short_edge) / 2;
-    roi.y = (mat.size().height - short_edge) / 2;
-    roi.width = roi.height = short_edge;
-    cv::Mat cropped = mat(roi);
-    cv::Mat resized;
-    cv::resize(cropped, resized, size);
-    return resized;
-}
-
-auto reorder_to_nchw(cv::Mat const& mat) {
+auto reorder_to_chw(cv::Mat const& mat) {
     assert(mat.channels() == 3);
     std::vector<float> data(mat.channels() * mat.rows * mat.cols);
     for(int y = 0; y < mat.rows; ++y) {
         for(int x = 0; x < mat.cols; ++x) {
-            // INFO cv::imread loads image BGR
             for(int c = 0; c < mat.channels(); ++c) {
                 data[c * (mat.rows * mat.cols) + y * mat.cols + x] =
-                  static_cast<float>(
-                    mat.data[y * mat.step + x * mat.elemSize() + c]);
+                  mat.at<cv::Vec3f>(y, x)[c];
             }
         }
     }
@@ -85,9 +71,10 @@ int main(int argc, char** argv) {
     a.add<std::string>("input_image", '\0', "input image path");
     a.add<int>("image_size", '\0', "input image width and height size");
     a.add<std::string>("model", '\0', "onnx model path");
-    a.add<float>("scale", '\0', "input scale");
+    a.add<float>("reverse_scale", '\0', "input reverse scale");
     a.add<std::string>("input_variable_name", '\0', "output variable name");
     a.add<std::string>("output_variable_name", '\0', "output variable name");
+    a.add<int>("is_subtract_imagenet_average", '\0', "output variable name");
     a.parse_check(argc, argv);
 
     auto height = a.get<int>("image_size");
@@ -102,9 +89,18 @@ int main(int argc, char** argv) {
         throw std::runtime_error("Invalid input image path: " +
                                  input_image_path);
     }
-    auto scale = a.get<float>("scale");
-    image_mat = crop_and_resize(std::move(image_mat), cv::Size(width, height));
-    auto image_data = reorder_to_nchw(image_mat);
+
+    // Preprocess
+    bool is_subtract_imagenet_average =
+      a.get<int>("is_subtract_imagenet_average");
+    auto reverse_scale = a.get<float>("reverse_scale");
+    cv::resize(image_mat, image_mat, cv::Size(width, height));
+    image_mat.convertTo(image_mat, CV_32FC3);
+    if(is_subtract_imagenet_average) {
+        image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
+    }
+    image_mat /= reverse_scale;
+    auto image_data = reorder_to_chw(image_mat);
 
     // Aliases to onnx's node input and output tensor name
     auto conv1_1_in_name = a.get<std::string>("input_variable_name");
@@ -118,7 +114,7 @@ int main(int argc, char** argv) {
     menoh::variable_profile_table_builder vpt_builder;
     vpt_builder.add_input_profile(conv1_1_in_name, menoh::dtype_t::float_,
                                   {batch_size, channel_num, height, width});
-    vpt_builder.add_output_profile(softmax_out_name, menoh::dtype_t::float_);
+    vpt_builder.add_output_name(softmax_out_name);
 
     // Build variable_profile_table and get variable dims (if needed)
     auto vpt = vpt_builder.build_variable_profile_table(model_data);

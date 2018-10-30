@@ -2,10 +2,10 @@
 #define MENOH_MODEL_DATA_HPP
 
 #include <algorithm>
+#include <iterator>
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <iterator>
 
 #include <menoh/array.hpp>
 #include <menoh/graph.hpp>

@@ -1,32 +1,50 @@
+# Options
+option(LINK_STATIC_LIBGCC "Link static libgcc to libmenoh" OFF)
+option(LINK_STATIC_LIBSTDCXX "Link static libstdc++ to libmenoh" OFF)
+
+# Note: The libraries can be static (.a) or shared (.so)
+if(NOT DEFINED PROTOBUF_INCLUDE_DIRS)
+    message(FATAL_ERROR "PROTOBUF_INCLUDE_DIRS is not found")
+endif()
 
 if (ENABLE_MKLDNN)
-    add_subdirectory(mkldnn)
+    if(NOT DEFINED MKLDNN_LIBRARIES)
+        message(FATAL_ERROR "MKLDNN_LIBRARIES is not found")
+    endif()
+
     file(GLOB MKLDNN_SOURCES "mkldnn/*.cpp")
 endif()  
 
 if(ENABLE_ARMNN)
-    add_subdirectory(armnn)
     file(GLOB ARM_SOURCES "armnn/*.cpp")
 endif()
 
 file(GLOB SOURCES "./*.cpp")
 
-add_library(menoh ${SOURCES} ${ONNX_PROTO_SRC} ${ONNX_PROTO_HEADER} ${MKLDNN_SOURCES} ${ARM_SOURCES})
+# Create a object library for generating shared library
+add_library(menoh_objlib OBJECT ${SOURCES} ${MKLDNN_SOURCES} ${ARM_SOURCES})
 
-if(ENABLE_ARMNN)
-  target_link_libraries(menoh ${ACL_LIBRARY})
-  target_link_libraries(menoh ${ARMNN_LIBRARY})
-  target_link_libraries(menoh boost_system boost_thread)
+add_dependencies(menoh_objlib gen_onnx_proto) # custom target defined in onnx
+target_include_directories(menoh_objlib PUBLIC $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
+
+set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+include(ConfigureMenoh)
+
+# menoh
+add_library(menoh SHARED $<TARGET_OBJECTS:menoh_objlib>)
+if(NOT APPLE AND NOT MSVC)
+    # Remove private symbols (Note: it works in MINGW but not in MSVC)
+    set_property(
+        TARGET menoh APPEND_STRING PROPERTY
+            LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif()
 
-if (ENABLE_MKLDNN)
-  target_link_libraries(menoh ${MKLDNN_LIBRARY})
-endif()
+menoh_link_libraries(menoh PRIVATE)
 
-target_link_libraries(menoh ${PROTOBUF_LIBRARY})
-
-set_source_files_properties(${ONNX_PROTO_SRC}    PROPERTIES GENERATED TRUE)
-set_source_files_properties(${ONNX_PROTO_HEADER} PROPERTIES GENERATED TRUE)
+# menoh_test_target: only used in `test` subdirectory
+add_library(menoh_test_target SHARED $<TARGET_OBJECTS:menoh_objlib>)
+menoh_link_libraries(menoh_test_target PRIVATE)
 
 install(TARGETS menoh
     RUNTIME DESTINATION "bin"
