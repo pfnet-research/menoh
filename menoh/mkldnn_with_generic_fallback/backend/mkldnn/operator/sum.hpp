@@ -3,6 +3,8 @@
 
 #include <algorithm>
 
+#include <menoh/graph.hpp> // for dimension_mismatch error
+
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/formatted_array.hpp>
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/memory_cache.hpp>
 #include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/operator/output_management.hpp>
@@ -10,7 +12,7 @@
 
 #include <mkldnn.hpp>
 
-#include <iostream>
+#include <sstream>
 
 namespace menoh_impl {
     namespace mkldnn_with_generic_fallback_backend {
@@ -47,8 +49,32 @@ namespace menoh_impl {
                      [first = input_memory_list.at(0)](auto const& e) {
                          return extract_dims(e) == extract_dims(first);
                      })) {
-                    throw std::runtime_error(
-                      "broadcasting is not supported yet");
+
+                    auto different_input_memory = std::find_if(
+                      input_memory_list.begin(), input_memory_list.end(),
+                      [first = input_memory_list.at(0)](auto const& e) {
+                          return extract_dims(e) != extract_dims(first);
+                      });
+                    auto index = static_cast<int>(different_input_memory -
+                                                  input_memory_list.begin());
+                    auto different_dims = extract_dims(*different_input_memory);
+                    auto dims_to_string = [](std::vector<int> const& dims) {
+                        std::stringstream ss;
+                        ss << "(";
+                        for(auto d : dims) {
+                            ss << d << " ";
+                        }
+                        ss << ")";
+                        return ss.str();
+                    };
+                    throw dimension_mismatch(
+                      node.op_type, node.output_name_list.front(),
+                      "input[" + std::to_string(index) +
+                        "] has different shape from "
+                        "the input[0]'s. broadcast "
+                        "is not supported yet",
+                      dims_to_string(different_dims),
+                      dims_to_string(extract_dims(input_memory_list.at(0))));
                 }
                 std::vector<mkldnn::memory::primitive_desc>
                   input_memory_pd_list;
