@@ -36,6 +36,10 @@ namespace menoh_impl {
               
                 // Softmax
                 procedure_factory_table_.emplace("Softmax", make_softmax);
+
+                // Sum and Add
+                procedure_factory_table_.emplace("Sum", make_sum);
+                procedure_factory_table_.emplace("Add", make_sum);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>

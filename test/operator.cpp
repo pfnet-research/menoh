@@ -286,6 +286,15 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_softmax_example, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_softmax_large_number, eps);
 
+    // Sum and Add
+    TEST_OP(mkldnn_with_generic_fallback, test_sum_example, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_sum_one_input, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_sum_two_inputs, eps);
+    // TEST_OP(mkldnn_with_generic_fallback, test_add, eps); // ndims=3 is not
+    // implemented yet (mkldnn will support soon)
+    // TEST_OP(mkldnn_with_generic_fallback, test_add_bcast, eps); //broadcast
+    // is not implemented yet
+
     // Transpose
     TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_0, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_1, eps);
