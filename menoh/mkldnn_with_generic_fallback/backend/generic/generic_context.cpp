@@ -9,6 +9,7 @@ namespace menoh_impl {
                 procedure_factory_table_.emplace("Relu", make_relu);
                 procedure_factory_table_.emplace("Mul", make_mul);
                 procedure_factory_table_.emplace("Sigmoid", make_sigmoid);
+                procedure_factory_table_.emplace("Transpose", make_transpose);
             }
 
             optional<std::tuple<std::vector<procedure>, int>>
