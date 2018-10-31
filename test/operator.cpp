@@ -206,8 +206,12 @@ namespace {
     // TEST_OP(mkldnn, test_conv_with_strides_padding, eps);
     // TEST_OP_SQUASH_DIMS(mkldnn, test_convtranspose, eps); // not found
     // TEST_OP(mkldnn, test_gemm_nobroadcast, eps);
-    // TEST_OP(mkldnn, test_globalaveragepool, eps);
-    // TEST_OP(mkldnn, test_globalmaxpool, eps);
+    TEST_OP(mkldnn, test_globalaveragepool, eps);
+    TEST_OP(mkldnn, test_globalaveragepool_precomputed, eps);
+    TEST_OP(mkldnn, test_globalmaxpool, eps);
+    TEST_OP(mkldnn, test_globalmaxpool_precomputed, eps);
+    //TEST_OP(mkldnn, test_globalaveragepool, eps);
+    //TEST_OP(mkldnn, test_globalmaxpool, eps);
     TEST_OP(mkldnn, test_maxpool_2d_default, eps);
     TEST_OP_SQUASH_DIMS(mkldnn, test_softmax_axis_1, eps);
     // TEST_OP_SQUASH_DIMS(mkldnn, test_sum_one_input, eps);
@@ -241,6 +245,13 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_sigmoid_example, eps);
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_tanh, eps);
 
+    //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+
+    // Mul
+    TEST_OP(mkldnn_with_generic_fallback, test_mul, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_mul_bcast, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_mul_example, eps);
+  
     // Pool
     //TEST_OP(mkldnn_with_generic_fallback, test_averagepool_1d_default, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_averagepool_2d_default, eps);
@@ -283,6 +294,16 @@ namespace {
     // implemented yet (mkldnn will support soon)
     // TEST_OP(mkldnn_with_generic_fallback, test_add_bcast, eps); //broadcast
     // is not implemented yet
+
+    // Transpose
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_0, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_1, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_2, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_3, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_4, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_5, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_default, eps);
+
 
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP
