@@ -63,6 +63,6 @@ int main(int argc, char** argv) {
         usecs.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start));
     }
 
-    auto total_usec = std::accumulate(usecs.begin(), usecs.end(), std::chrono::microseconds());
+    auto total_usec = std::accumulate(usecs.begin(), usecs.end(), std::chrono::microseconds::zero());
     std::cout << total_usec.count() / usecs.size() * 0.001 << " msec" << std::endl;
 }
