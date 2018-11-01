@@ -44,7 +44,14 @@ extern "C" {
 /*! @ingroup vpt
  */
 enum menoh_dtype_constant {
-    menoh_dtype_float,
+    menoh_dtype_float, // float32
+    menoh_dtype_float16,
+    menoh_dtype_float32 = menoh_dtype_float,
+    menoh_dtype_float64 = menoh_dtype_float16 + 1,
+    menoh_dtype_int8,
+    menoh_dtype_int16,
+    menoh_dtype_int32,
+    menoh_dtype_int64,
 };
 /*! @ingroup vpt
  */

@@ -20,7 +20,14 @@ namespace menoh_impl {
 
     enum class dtype_t {
         undefined = -1,
-        float_ = menoh_dtype_float
+        float_ = menoh_dtype_float,
+        float16 = menoh_dtype_float16,
+        float32 = menoh_dtype_float32,
+        float64 = menoh_dtype_float64,
+        int8 = menoh_dtype_int8,
+        int16 = menoh_dtype_int16,
+        int32 = menoh_dtype_int32,
+        int64 = menoh_dtype_int64,
         // TODO more types
     };
     static_assert(dtype_t::undefined != dtype_t::float_, "");
@@ -38,8 +45,28 @@ namespace menoh_impl {
     struct dtype_to_type {};
 
     template <>
-    struct dtype_to_type<dtype_t::float_> {
+    struct dtype_to_type<dtype_t::float32> { // including dtype_t::float_
         using type = float;
+    };
+
+    template <>
+    struct dtype_to_type<dtype_t::int8> {
+        using type = std::int8_t;
+    };
+
+    template <>
+    struct dtype_to_type<dtype_t::int16> {
+        using type = std::int16_t;
+    };
+
+    template <>
+    struct dtype_to_type<dtype_t::int32> {
+        using type = std::int32_t;
+    };
+
+    template <>
+    struct dtype_to_type<dtype_t::int64> {
+        using type = std::int64_t;
     };
 
     template <dtype_t d>
