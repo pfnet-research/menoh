@@ -14,6 +14,7 @@ int main(int argc, char** argv) {
     a.add<std::string>("input", '\0', "input_data");
     a.add<std::string>("model", '\0', "onnx model path", false,
                        "../data/vgg16.onnx");
+    a.add<int>("iteration", '\0', "number of iterations", false, 1);
     a.parse_check(argc, argv);
 
     constexpr auto category_num = 1000;
@@ -50,14 +51,18 @@ int main(int argc, char** argv) {
       static_cast<float*>(model.get_buffer_handle(softmax_out_name));
     */
 
-    auto start = clock::now();
+    std::vector<std::chrono::microseconds> usecs;
 
-    // Run inference
-    model.run();
+    for (int i = 0; i < a.get<int>("iteration"); ++i) {
+        auto start = clock::now();
 
-    auto end = clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                       start)
-                   .count()
-              << std::endl;
+        // Run inference
+        model.run();
+
+        auto end = clock::now();
+        usecs.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start));
+    }
+
+    auto total_usec = std::accumulate(usecs.begin(), usecs.end(), std::chrono::microseconds::zero());
+    std::cout << total_usec.count() / usecs.size() * 0.001 << " msec" << std::endl;
 }
