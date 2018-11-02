@@ -16,7 +16,8 @@ namespace menoh_impl {
 
         mkldnn::memory::data_type
         dtype_to_mkldnn_memory_data_type(dtype_t dtype) {
-            if(dtype == dtype_t::float_) {
+            // float16 and float64 is not supported by MKLDNN
+            if(dtype == dtype_t::float32) {
                 return mkldnn::memory::data_type::f32;
             }
             if(dtype == dtype_t::int8) {

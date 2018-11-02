@@ -45,8 +45,18 @@ namespace menoh_impl {
     struct dtype_to_type {};
 
     template <>
+    struct dtype_to_type<dtype_t::float16> {
+        using type = std::int16_t;
+    };
+
+    template <>
     struct dtype_to_type<dtype_t::float32> { // including dtype_t::float_
         using type = float;
+    };
+
+    template <>
+    struct dtype_to_type<dtype_t::float64> {
+        using type = double;
     };
 
     template <>

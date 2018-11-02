@@ -138,6 +138,8 @@ namespace menoh_impl {
             } else if(d == menoh_impl::dtype_t::int64) {
                 data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int64>(
                   total_size, tensor);
+            } else {
+                throw invalid_dtype(std::to_string(tensor.data_type()));
             }
             parameter_name_and_array_list.push_back(
               {tensor.name(),

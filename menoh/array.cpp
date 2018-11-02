@@ -15,11 +15,17 @@ namespace menoh_impl {
     std::shared_ptr<void> allocate_data(dtype_t d,
                                         std::vector<int> const& dims) {
         auto total_size = calc_total_size(dims);
-        if(d == dtype_t::float_ || d == dtype_t::float32) {
+        if(d == dtype_t::float16) {
             // libc++ workaround
             // Below 2 lines are equal to `return std::unique_ptr<float[]>(new
             // float[total_size]);`
+            auto u = std::make_unique<std::int16_t[]>(total_size);
+            return std::shared_ptr<void>(u.release(), u.get_deleter());
+        } else if(d == dtype_t::float32) {
             auto u = std::make_unique<float[]>(total_size);
+            return std::shared_ptr<void>(u.release(), u.get_deleter());
+        } else if(d == dtype_t::float64) {
+            auto u = std::make_unique<double[]>(total_size);
             return std::shared_ptr<void>(u.release(), u.get_deleter());
         } else if(d == dtype_t::int8) {
             auto u = std::make_unique<std::int8_t[]>(total_size);
@@ -36,7 +42,7 @@ namespace menoh_impl {
         }
 
         throw invalid_dtype(std::to_string(static_cast<int>(d)));
-    }
+    } // namespace menoh_impl
 
     array::array(dtype_t d, std::vector<int> const& dims)
       : array(d, dims, allocate_data(d, dims)) {}
