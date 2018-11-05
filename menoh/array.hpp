@@ -90,7 +90,7 @@ namespace menoh_impl {
     template <dtype_t dtype>
     dtype_to_type_t<dtype>* end(array const& a) {
         assert(a.dtype() == dtype);
-        return static_cast<dtype_to_type_t<dtype>*>(a.data());
+        return static_cast<dtype_to_type_t<dtype>*>(a.data()) + total_size(a);
     }
 
     template <dtype_t dtype>
