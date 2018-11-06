@@ -81,6 +81,24 @@ namespace menoh_impl {
 
     array zeros(dtype_t d, std::vector<int> const& dims);
 
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>* begin(array const& a) {
+        assert(a.dtype() == dtype);
+        return static_cast<dtype_to_type_t<dtype>*>(a.data());
+    }
+
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>* end(array const& a) {
+        assert(a.dtype() == dtype);
+        return static_cast<dtype_to_type_t<dtype>*>(a.data()) + total_size(a);
+    }
+
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>& at(array const& a, std::size_t i) {
+        assert(a.dtype() == dtype);
+        return *(static_cast<dtype_to_type_t<dtype>*>(a.data()) + i);
+    }
+
 } // namespace menoh_impl
 
 #endif // MENOH_ARRAY_HPP

@@ -44,8 +44,18 @@ namespace menoh_impl {
 
             mkldnn::memory::data_type
             dtype_to_mkldnn_memory_data_type(dtype_t dtype) {
-                if(dtype == dtype_t::float_) {
+                // float16 and float64 is not supported by MKLDNN
+                if(dtype == dtype_t::float32) {
                     return mkldnn::memory::data_type::f32;
+                }
+                if(dtype == dtype_t::int8) {
+                    return mkldnn::memory::data_type::s8;
+                }
+                if(dtype == dtype_t::int16) {
+                    return mkldnn::memory::data_type::s16;
+                }
+                if(dtype == dtype_t::int32) {
+                    return mkldnn::memory::data_type::s32;
                 }
                 throw invalid_dtype(std::to_string(static_cast<int>(dtype)));
             }
@@ -54,6 +64,15 @@ namespace menoh_impl {
               mkldnn::memory::data_type mem_data_type) {
                 if(mem_data_type == mkldnn::memory::data_type::f32) {
                     return dtype_t::float_;
+                }
+                if(mem_data_type == mkldnn::memory::data_type::s8) {
+                    return dtype_t::int8;
+                }
+                if(mem_data_type == mkldnn::memory::data_type::s16) {
+                    return dtype_t::int16;
+                }
+                if(mem_data_type == mkldnn::memory::data_type::s32) {
+                    return dtype_t::int32;
                 }
                 throw invalid_dtype(
                   std::to_string(static_cast<int>(mem_data_type)));

@@ -25,6 +25,14 @@ namespace menoh_impl {
     dtype_t tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt) {
         if(tpdt == onnx::TensorProto_DataType_FLOAT) {
             return dtype_t::float_;
+        } else if(tpdt == onnx::TensorProto_DataType_INT8) {
+            return dtype_t::int8;
+        } else if(tpdt == onnx::TensorProto_DataType_INT16) {
+            return dtype_t::int16;
+        } else if(tpdt == onnx::TensorProto_DataType_INT32) {
+            return dtype_t::int32;
+        } else if(tpdt == onnx::TensorProto_DataType_INT64) {
+            return dtype_t::int64;
         }
         throw invalid_dtype(std::to_string(tpdt));
     }
@@ -75,6 +83,25 @@ namespace menoh_impl {
         return needed_parameter_name_set;
     }
 
+    template <menoh_impl::dtype_t dtype>
+    auto move_tensor_from_onnx_data(int total_size, onnx::TensorProto& tensor) {
+        // libc++ workaround
+        // Below 2 lines are equal to `data =
+        // std::unique_ptr<float_t[]>(new float_t[total_size]);`
+        using dtype_type = dtype_to_type_t<dtype>;
+        auto u = std::make_unique<dtype_type[]>(total_size);
+        auto data = std::shared_ptr<void>(u.release(), u.get_deleter());
+        // TODO other format: float_data
+        assert(tensor.has_raw_data());
+        assert(tensor.raw_data().length() ==
+               static_cast<decltype(tensor.raw_data().length())>(
+                 total_size * size_in_bytes<dtype>));
+        std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
+                  static_cast<char*>(data.get()));
+        delete tensor.release_raw_data();
+        return data;
+    }
+
     auto extract_parameter_name_and_array_list_from_onnx_graph(
       onnx::GraphProto& graph,
       std::vector<std::string> const& needed_parameter_name_list) {
@@ -93,33 +120,24 @@ namespace menoh_impl {
             auto total_size = std::accumulate(dims.begin(), dims.end(), 1,
                                               std::multiplies<int>());
 
-            // FIXME workaround for Reshape-5
-            if(tensor.data_type() == onnx::TensorProto_DataType_INT64) {
-                parameter_name_and_array_list.push_back(
-                  {tensor.name(),
-                   menoh_impl::array(dtype_t::float_, std::move(dims))});
-            }
-            // end workaround
-
             dtype_t d = tensor_proto_data_type_to_dtype(tensor.data_type());
 
             std::shared_ptr<void> data;
             if(d == menoh_impl::dtype_t::float_) {
-                using float_t =
-                  menoh_impl::dtype_to_type_t<menoh_impl::dtype_t::float_>;
-                // libc++ workaround
-                // Below 2 lines are equal to `data =
-                // std::unique_ptr<float_t[]>(new float_t[total_size]);`
-                auto u = std::make_unique<float_t[]>(total_size);
-                data = std::shared_ptr<void>(u.release(), u.get_deleter());
-                // TODO other format: float_data
-                assert(tensor.has_raw_data());
-                assert(tensor.raw_data().length() ==
-                       static_cast<decltype(tensor.raw_data().length())>(
-                         total_size * 4));
-                std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
-                          static_cast<char*>(data.get()));
-                delete tensor.release_raw_data();
+                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::float_>(
+                  total_size, tensor);
+            } else if(d == menoh_impl::dtype_t::int8) {
+                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int8>(
+                  total_size, tensor);
+            } else if(d == menoh_impl::dtype_t::int16) {
+                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int16>(
+                  total_size, tensor);
+            } else if(d == menoh_impl::dtype_t::int32) {
+                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int32>(
+                  total_size, tensor);
+            } else if(d == menoh_impl::dtype_t::int64) {
+                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int64>(
+                  total_size, tensor);
             } else {
                 throw invalid_dtype(std::to_string(tensor.data_type()));
             }

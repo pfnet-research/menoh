@@ -70,7 +70,16 @@ namespace menoh {
     };
     /** @} */
 
-    enum class dtype_t { float_ = menoh_dtype_float };
+    enum class dtype_t {
+        float_ = menoh_dtype_float, // float32
+        float16 = menoh_dtype_float16,
+        float32 = menoh_dtype_float32,
+        float64 = menoh_dtype_float64,
+        int8 = menoh_dtype_int8,
+        int16 = menoh_dtype_int16,
+        int32 = menoh_dtype_int32,
+        int64 = menoh_dtype_int64,
+    };
 
     class variable_profile_table;
 
