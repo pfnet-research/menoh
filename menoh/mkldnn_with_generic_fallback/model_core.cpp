@@ -4,7 +4,6 @@
 #include <cassert>
 #include <memory>
 
-#include <menoh/mkldnn_with_generic_fallback/computation_node_factory.hpp>
 #include <menoh/mkldnn_with_generic_fallback/context.hpp>
 
 #include <menoh/mkldnn/utility.hpp>
