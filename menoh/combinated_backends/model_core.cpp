@@ -4,7 +4,8 @@
 #include <cassert>
 #include <memory>
 
-#include <menoh/mkldnn_with_generic_fallback/context.hpp>
+#include <menoh/combinated_backends/backend/generic/generic_context.hpp>
+#include <menoh/combinated_backends/backend/mkldnn/mkldnn_context.hpp>
 
 #include <menoh/mkldnn/utility.hpp>
 
@@ -18,6 +19,40 @@
 
 namespace menoh_impl {
     namespace combinated_backends {
+
+        model_core make_model_core(
+          std::unordered_map<std::string, array> const& input_table,
+          std::unordered_map<std::string, array> const& output_table,
+          std::unordered_map<std::string, array_profile> const&
+            output_profile_table,
+          menoh_impl::model_data const& model_data,
+          backend_config const& config) {
+            std::vector<std::pair<std::string, std::unique_ptr<context>>>
+              context_list;
+            auto c = nlohmann::json::parse(config);
+            if(c.find("backends") != c.end()) {
+                auto backends = c["backends"];
+                for(auto backend : backends) {
+                    if(backend.find("type") == backend.end()) {
+                        throw invalid_backend_config_error("type not found");
+                    }
+                    if(backend["type"].get<std::string>() == "mkldnn") {
+                        context_list.emplace_back(
+                          "mkldnn",
+                          std::make_unique<combinated_backends::mkldnn_backend::
+                                             mkldnn_context>());
+                    } else if(backend["type"].get<std::string>() == "generic") {
+                        context_list.emplace_back(
+                          "generic", std::make_unique<
+                                       combinated_backends::generic_backend::
+                                         generic_context>());
+                    }
+                }
+            }
+            return model_core(std::move(context_list), input_table,
+                              output_table, output_profile_table, model_data,
+                              config);
+        }
 
         model_core::model_core(
           std::vector<std::pair<std::string, std::unique_ptr<context>>>
@@ -43,14 +78,13 @@ namespace menoh_impl {
                     if(log_output == "stdout") {
                         logger_->rdbuf(std::cout.rdbuf());
                     } else if(log_output == "file") {
-                        logger_.reset(new std::ofstream(
-                          "combinated_backends_log.txt"));
+                        logger_.reset(
+                          new std::ofstream("combinated_backends_log.txt"));
                     } else {
                         throw invalid_backend_config_error(
                           "invalid value of \"log_output\": " + log_output);
                     }
-                    *logger_ << "combinated_backends log"
-                             << std::endl;
+                    *logger_ << "combinated_backends log" << std::endl;
                 }
             }
 
