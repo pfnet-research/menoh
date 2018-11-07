@@ -52,16 +52,30 @@ namespace {
         auto total_size =
           std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<int>());
         assert(tensor.has_raw_data());
-        assert(
-          tensor.raw_data().length() ==
-          static_cast<decltype(tensor.raw_data().length())>(total_size * 4));
+        if(tensor.data_type() == onnx::TensorProto_DataType_FLOAT) {
+            assert(tensor.raw_data().length() ==
+                   static_cast<decltype(tensor.raw_data().length())>(
+                     total_size * 4));
 
-        auto data = std::make_unique<char[]>(total_size * 4);
-        std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
-                  data.get());
-        // TODO other dtype
-        return named_array_data{tensor.name(), menoh::dtype_t::float_,
-                                std::move(dims), std::move(data)};
+            auto data = std::make_unique<char[]>(total_size * 4);
+            std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
+                      data.get());
+            // TODO other dtype
+            return named_array_data{tensor.name(), menoh::dtype_t::float32,
+                                    std::move(dims), std::move(data)};
+        }
+        if(tensor.data_type() == onnx::TensorProto_DataType_INT64) {
+            assert(tensor.raw_data().length() ==
+                   static_cast<decltype(tensor.raw_data().length())>(
+                     total_size * 8));
+
+            auto data = std::make_unique<char[]>(total_size * 8);
+            std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
+                      data.get());
+            // TODO other dtype
+            return named_array_data{tensor.name(), menoh::dtype_t::int64,
+                                    std::move(dims), std::move(data)};
+        }
     }
 
     class OperatorTest : public ::testing::Test {
@@ -210,8 +224,8 @@ namespace {
     TEST_OP(mkldnn, test_globalaveragepool_precomputed, eps);
     TEST_OP(mkldnn, test_globalmaxpool, eps);
     TEST_OP(mkldnn, test_globalmaxpool_precomputed, eps);
-    //TEST_OP(mkldnn, test_globalaveragepool, eps);
-    //TEST_OP(mkldnn, test_globalmaxpool, eps);
+    // TEST_OP(mkldnn, test_globalaveragepool, eps);
+    // TEST_OP(mkldnn, test_globalmaxpool, eps);
     TEST_OP(mkldnn, test_maxpool_2d_default, eps);
     TEST_OP_SQUASH_DIMS(mkldnn, test_softmax_axis_1, eps);
     // TEST_OP_SQUASH_DIMS(mkldnn, test_sum_one_input, eps);
@@ -277,6 +291,13 @@ namespace {
     //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_3d_default, eps);
     //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_with_argmax_2d_precomputed_pads, eps);
     //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_with_argmax_2d_precomputed_strides, eps);
+
+    // Reshape
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_extended_dims, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_negative_dim, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_one_dim, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_reduced_dims, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_reordered_dims, eps);
 
     // Softmax
     //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_0, eps);

@@ -341,6 +341,33 @@ add_variable_to_table(output(0), dtype_of(input(0)),
         dims_of(input(0)), dims_of(input(1))));
 '''))
     code_list.append(make_completion_code("Relu"))
+    code_list.append(make_completion_code("Reshape", [], '''
+auto found = std::find_if(model_data.parameter_name_and_array_list.begin(),
+                          model_data.parameter_name_and_array_list.end(),
+                          [shape_name=node.input_name_list.at(1)](
+                            auto const& p){ return p.first == shape_name; });
+assert(found != model_data.parameter_name_and_array_list.end());
+auto shape = found->second;
+std::vector<int> new_dims(menoh_impl::begin<dtype_t::int64>(shape),
+                          menoh_impl::end<dtype_t::int64>(shape));
+for(unsigned int i = 0; i < new_dims.size(); ++i) {
+    if(new_dims.at(i) == 0) {
+        assert(i < ndims_of(input(0)));
+        new_dims.at(i) = dims_of(input(0)).at(i);
+    }
+    auto found =
+      std::find(new_dims.begin(), new_dims.end(), -1);
+    if(found != new_dims.end()) {
+        auto other_size =
+          -std::accumulate(new_dims.begin(), new_dims.end(),
+                           1, std::multiplies<>());
+        auto total_size = calc_total_size(dims_of(input(0)));
+        assert(total_size % other_size == 0);
+        *found = total_size / other_size;
+    }
+}
+add_variable_to_table(output(0), dtype_of(input(0)), new_dims);
+'''))
     code_list.append(make_completion_code("Sigmoid"))
     code_list.append(make_completion_code("Softmax", [("axis", "int", "1")]))
     code_list.append(make_completion_code("Sum"))
