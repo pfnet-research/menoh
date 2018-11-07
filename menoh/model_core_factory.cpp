@@ -1,7 +1,7 @@
 #include <menoh/model_core.hpp>
 #include <menoh/model_core_factory.hpp>
 
-#include <menoh/combinated_backends/model_core.hpp>
+#include <menoh/composite_backend/model_core.hpp>
 #include <menoh/mkldnn/model_core.hpp>
 
 namespace menoh_impl {
@@ -17,11 +17,11 @@ namespace menoh_impl {
             return std::make_unique<mkldnn_backend::model_core>(
               mkldnn_backend::make_model_core(
                 input_table, required_output_table, model_data, config));
-        } else if(backend_name == "combinated_backends") {
-            return std::make_unique<
-              combinated_backends::model_core>(combinated_backends::make_model_core(
-              input_table, required_output_table,
-              output_profile_table, model_data, config));
+        } else if(backend_name == "composite_backend") {
+            return std::make_unique<composite_backend::model_core>(
+              composite_backend::make_model_core(
+                input_table, required_output_table, output_profile_table,
+                model_data, config));
         }
 
         throw invalid_backend_name(backend_name);
