@@ -79,6 +79,23 @@ namespace menoh_impl {
                           input_memory_cache_list;
                         for(auto const& input_name : node.input_name_list) {
                             do {
+                                // search in self variable table
+                                {
+                                    auto found =
+                                      variable_memory_cache_table_.find(
+                                        input_name);
+                                    if(found !=
+                                       variable_memory_cache_table_.end()) {
+                                        *logger << input_name
+                                                << " is found from self "
+                                                   "variable table"
+                                                << std::endl;
+                                        input_memory_cache_list.push_back(
+                                          found->second);
+                                        break;
+                                    }
+                                }
+
                                 // search in common parameter table
                                 {
                                     auto found =
@@ -98,23 +115,6 @@ namespace menoh_impl {
                                           "already same named variable exist");
                                         input_memory_cache_list.push_back(
                                           std::ref(result_pair.first->second));
-                                        break;
-                                    }
-                                }
-
-                                // search in self variable table
-                                {
-                                    auto found =
-                                      variable_memory_cache_table_.find(
-                                        input_name);
-                                    if(found !=
-                                       variable_memory_cache_table_.end()) {
-                                        *logger << input_name
-                                                << " is found from self "
-                                                   "variable table"
-                                                << std::endl;
-                                        input_memory_cache_list.push_back(
-                                          found->second);
                                         break;
                                     }
                                 }

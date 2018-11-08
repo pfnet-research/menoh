@@ -14,7 +14,6 @@
 #include <onnx/onnx.pb.h>
 
 #include <menoh/array.hpp>
-#include <menoh/dtype.hpp>
 #include <menoh/exception.hpp>
 #include <menoh/graph.hpp>
 #include <menoh/model_data.hpp>
