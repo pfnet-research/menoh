@@ -3,10 +3,10 @@
 
 #include <menoh/array.hpp>
 #include <menoh/graph.hpp> // for dimension_mismatch error
-#include <menoh/mkldnn_with_generic_fallback/procedure.hpp>
+#include <menoh/composite_backend/procedure.hpp>
 
 namespace menoh_impl {
-    namespace mkldnn_with_generic_fallback_backend {
+    namespace composite_backend {
         namespace generic_backend {
             inline procedure
             make_reshape(node const& node, std::vector<array> const& input_list,
@@ -26,7 +26,7 @@ namespace menoh_impl {
             }
 
         } // namespace generic_backend
-    }     // namespace mkldnn_with_generic_fallback_backend
+    }     // namespace composite_backend
 } // namespace menoh_impl
 
 #endif // MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_GENERIC_OPERATOR_RESHAPE_HPP
