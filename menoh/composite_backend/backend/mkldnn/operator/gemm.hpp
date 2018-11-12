@@ -1,5 +1,5 @@
-#ifndef MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_GEMM_HPP
-#define MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_GEMM_HPP
+#ifndef MENOH_IMPL_COMPOSITE_BACKEND_BACKEND_MKLDNN_OPERATOR_GEMM_HPP
+#define MENOH_IMPL_COMPOSITE_BACKEND_BACKEND_MKLDNN_OPERATOR_GEMM_HPP
 
 #include <menoh/composite_backend/backend/mkldnn/formatted_array.hpp>
 #include <menoh/composite_backend/backend/mkldnn/memory_cache.hpp>
@@ -120,4 +120,4 @@ namespace menoh_impl {
     }     // namespace composite_backend
 } // namespace menoh_impl
 
-#endif // MENOH_IMPL_MKLDNN_WITH_GENERIC_FALLBACK_BACKEND_BACKEND_MKLDNN_OPERATOR_GEMM_HPP
+#endif // MENOH_IMPL_COMPOSITE_BACKEND_BACKEND_MKLDNN_OPERATOR_GEMM_HPP
