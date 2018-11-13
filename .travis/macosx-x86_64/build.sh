@@ -17,7 +17,6 @@ g++ --version
 
 # install prerequisites
 brew update
-brew cask uninstall oclint # oclint conflicts with gcc
 brew upgrade python
 
 export PATH=/usr/local/opt/python/libexec/bin:$PATH
