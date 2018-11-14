@@ -97,6 +97,12 @@ typedef int32_t menoh_error_code;
 MENOH_API const char* menoh_get_last_error_message();
 /** @} */
 
+/*! @ingroup vpt
+ */
+/*! \breaf Element size of given menoh_dtype.
+ */
+menoh_error_code MENOH_API menoh_dtype_size(menoh_dtype dtype, int32_t *dst_size);
+
 /*! @addtogroup model_data Model data types and operations
  * @{ */
 /*! \struct menoh_model_data
