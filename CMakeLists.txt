@@ -92,7 +92,8 @@ endif()
 
 if (ENABLE_TENSORRT)
 
-    set(TENSORRT_DIR /usr/local/TensorRT-5.0.0.10)
+#    set(TENSORRT_DIR /usr/local/TensorRT-5.0.0.10)
+    set(TENSORRT_DIR /usr/local/TensorRT-5.0.2.6)
 
     add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda/include -I ${TENSORRT_DIR}/include )
     link_directories(${TENSORRT_DIR}/lib)
