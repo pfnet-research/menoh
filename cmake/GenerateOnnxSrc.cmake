@@ -5,7 +5,10 @@ if(NOT EXISTS "${ONNX_OUTPUT_DIR}")
 endif()
 
 set(ONNX_SRC_DIR ${EXTERNAL_DIR}/onnx)
-execute_process(COMMAND git submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+execute_process(COMMAND git submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} RESULT_VARIABLE TEST_ERROR)
+if(TEST_ERROR)
+    message(FATAL_ERROR "`git submodule update --init ${ONNX_SRC_DIR}` failed, returned ${TEST_ERROR}")
+endif()
 
 set(ONNX_PROTO_HEADER ${ONNX_OUTPUT_DIR}/onnx/onnx.pb.h)
 set(ONNX_PROTO_SRC ${ONNX_OUTPUT_DIR}/onnx/onnx.pb.cc)

@@ -91,13 +91,15 @@ if(ENABLE_MKLDNN)
 endif()
 
 if (ENABLE_TENSORRT)
+	find_package(TensorRT)
+    if (NOT TENSORRT_FOUND)
+	message(FATAL_ERROR "TensorRT is not found")
+    endif()
 
-#    set(TENSORRT_DIR /usr/local/TensorRT-5.0.0.10)
-    set(TENSORRT_DIR /usr/local/TensorRT-5.0.2.6)
+    include_directories(${TENSORRT_INCLUDE_DIRS})
 
-    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda/include -I ${TENSORRT_DIR}/include )
-    link_directories(${TENSORRT_DIR}/lib)
-    link_directories(/usr/local/cuda/lib64)
+    find_package(CUDA "10" REQUIRED)
+    include_directories("${CUDA_INCLUDE_DIRS}")
 
     if(ENABLE_BENCHMARK)
         message(STATUS "# add_subdirectory\(benchmark\)")
