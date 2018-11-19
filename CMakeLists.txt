@@ -36,11 +36,11 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
   if(ENABLE_TENSORRT)
-    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra -DTENSORRT_DEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra -DTENSORRT -DTENSORRT_DEBUG")
   else()
-    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra -DTENSORRT")
   endif()
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DTENSORRT")
 endif()
 
 # Configure to use the new `libstdc++` ABI

@@ -103,23 +103,26 @@ namespace menoh_impl {
             template<typename Type>
             bool HasParsedConstTensor(const std::string & nodeName) const;
 
-            ParsedMenohOperationPtr ParseConst(           const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseFC(              const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseConv2D(          const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseConcat(          const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseIdentity(        const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseLrn(             const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseMatMul(          const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseMul(             const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParsePlaceholder(     const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseRelu(            const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseSigmoid(         const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseSoftmax(         const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseTanh(            const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseMaxPool(         const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseAvgPool(         const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParsePooling2d(       const menoh_impl::node& node, const menoh_impl::graph& graph,
-                                                          PoolingType pooltype);
+            ParsedMenohOperationPtr ParseConst(             const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseBatchNormalization(const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseFC(                const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseGemm(              const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseConv2D(            const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseConcat(            const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseIdentity(          const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseLrn(               const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseMatMul(            const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseMul(               const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseSum(               const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParsePlaceholder(       const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseRelu(              const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseSigmoid(           const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseSoftmax(           const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseTanh(              const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseMaxPool(           const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseAvgPool(           const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParsePooling2d(         const menoh_impl::node& node, const menoh_impl::graph& graph,
+                                                            PoolingType pooltype);
 
             ParsedMenohOperationPtr AddActivationLayer(   const menoh_impl::node& node, ActivationType activationType);
 	  

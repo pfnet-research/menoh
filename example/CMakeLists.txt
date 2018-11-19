@@ -22,3 +22,7 @@ if (ENABLE_TENSORRT)
     add_executable(vgg16_example_in_tensorrt_cpp vgg16_example_in_tensorrt_cpp.cpp)
     target_link_libraries(vgg16_example_in_tensorrt_cpp menoh ${OpenCV_LIBS})
 endif()
+
+# Build resnet50_example_in_cpp
+add_executable(resnet50_example_in_cpp resnet50_example_in_cpp.cpp)
+target_link_libraries(resnet50_example_in_cpp menoh ${OpenCV_LIBS})

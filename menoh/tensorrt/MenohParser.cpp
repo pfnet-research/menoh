@@ -591,45 +591,126 @@ namespace menoh_impl {
             }
         }
 
+        ParsedMenohOperationPtr MenohParser::ParseBatchNormalization(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+            boost::ignore_unused(graph);
+            std::string name = GetNodeName(node);
+
+            std::vector<OutputOfConstNodeDef> nodes = GetMenohInputNodes(node);
+            unsigned int numInputs = static_cast<unsigned int>(nodes.size());
+            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, numInputs);
+
+            if (!HasParsedConstTensor<float>(GetNodeName(inputs[1].m_IndexedValue->GetNode()))
+             || !HasParsedConstTensor<float>(GetNodeName(inputs[2].m_IndexedValue->GetNode()))
+             || !HasParsedConstTensor<float>(GetNodeName(inputs[3].m_IndexedValue->GetNode()))
+             || !HasParsedConstTensor<float>(GetNodeName(inputs[4].m_IndexedValue->GetNode())))
+            {
+                throw ParseException("TensorRT only supports BatchNormalization layers with constant weights");
+            }
+
+            auto epsilon = optional_attribute_float(node, "epsilon", 1e-5f);
+
+            ParsedConstMenohOperation<float>* scaleNode =
+                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[1].m_IndexedValue);
+            MenohVector<float> scaleTensorData;
+            ConstTensor scaleTensor = scaleNode->GetConstTensor(scaleTensorData);
+
+            ParsedConstMenohOperation<float>* biasNode =
+                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[2].m_IndexedValue);
+            MenohVector<float> biasTensorData;
+            ConstTensor biasTensor = biasNode->GetConstTensor(biasTensorData);
+
+            ParsedConstMenohOperation<float>* meanNode =
+                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[3].m_IndexedValue);
+            MenohVector<float> meanTensorData;
+            ConstTensor meanTensor = meanNode->GetConstTensor(meanTensorData);
+
+            ParsedConstMenohOperation<float>* varianceNode =
+                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[4].m_IndexedValue);
+            MenohVector<float> varianceTensorData;
+            ConstTensor varianceTensor = varianceNode->GetConstTensor(varianceTensorData);
+
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+
+            Weights combined_bias_weights{ biasTensor.GetDataType(), biasTensorData.data(), biasTensorData.size()};
+            Weights combined_scale_weights{ scaleTensor.GetDataType(), scaleTensorData.data(), scaleTensorData.size()};
+
+            size_t nweight = input0->getDimensions().d[0];
+            for( size_t i=0; i<nweight; ++i ) {
+                float scale    = (static_cast<float const*>(scaleTensorData.data())[i]);
+                float bias     = (static_cast<float const*>(biasTensorData.data())[i]);
+                float mean     = (static_cast<float const*>(meanTensorData.data())[i]);
+                float variance = (static_cast<float const*>(varianceTensorData.data())[i]);
+                float& combined_scale_ref = const_cast<float*>(
+                    static_cast<float const*>(combined_scale_weights.values))[i];
+                float& combined_bias_ref  = const_cast<float*>(
+                    static_cast<float const*>(combined_bias_weights.values))[i];
+                combined_scale_ref = scale / sqrtf(variance + epsilon);
+                combined_bias_ref  = bias - mean * combined_scale_ref;
+            }
+  
+            IScaleLayer* scale1;
+            {
+                const Weights power{DataType::kFLOAT, nullptr, 0};
+
+                scale1 = m_Network->addScale(*input0, ScaleMode::kCHANNEL, combined_bias_weights, combined_scale_weights, power);
+                assert(scale1);
+                scale1->setName(GetPrefixNodeName(node).c_str());
+
+                std::string pname("tensor_"+name);
+                scale1->getOutput(0)->setName(pname.c_str());
+                SetLayer(scale1);
+            }
+
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, scale1);
+        }
+
         ParsedMenohOperationPtr MenohParser::ParseConv2D(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 3);
+
+            std::vector<OutputOfConstNodeDef> nodes = GetMenohInputNodes(node);
+            unsigned int numInputs = static_cast<unsigned int>(nodes.size());
+            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, numInputs);
 
             if (!HasParsedConstTensor<float>(GetNodeName(inputs[1].m_IndexedValue->GetNode()))
-             || !HasParsedConstTensor<float>(GetNodeName(inputs[2].m_IndexedValue->GetNode())))
+                || (numInputs == 3 && !HasParsedConstTensor<float>(GetNodeName(inputs[2].m_IndexedValue->GetNode()))))
             {
                 throw ParseException("TensorRT only supports Convolution layers with constant weights and biases");
             }
 
             ParsedConstMenohOperation<float>* weightNode =
                 boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[1].m_IndexedValue);
-            ParsedConstMenohOperation<float>* biasNode   = 
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[2].m_IndexedValue);
-            
             MenohVector<float> weightTensorData;
             ConstTensor weightTensor = weightNode->GetConstTensor(weightTensorData);
+
+            ParsedConstMenohOperation<float>* biasNode   = 
+                (numInputs == 3) ? boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[2].m_IndexedValue)
+                                 : nullptr;
             MenohVector<float> biasTensorData;
-            ConstTensor biasTensor   = biasNode->GetConstTensor(biasTensorData);
+            ConstTensor biasTensor = (numInputs == 3) ? biasNode->GetConstTensor(biasTensorData) : ConstTensor();
+
+            DataType biasType = (numInputs == 3) ? biasNode->GetConstTensor(biasTensorData).GetDataType() : DataType::kFLOAT;
 
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
-
 
 #ifdef TENSORRT_DEBUG
 	    std::cout << "     weight(" << weightTensor.GetNumDimensions() << ") = "
 		      << weightTensor.GetShape()[0] << ", " << weightTensor.GetShape()[1];
 	    std::cout << ", " << weightTensor.GetShape()[2] << ", " << weightTensor.GetShape()[3] << std::endl;
-	    std::cout << "       bias(" << biasTensor.GetNumDimensions() << ") = " << biasTensor.GetShape()[0] << std::endl;
+            if( numInputs == 3 )
+                std::cout << "       bias(" << biasTensor.GetNumDimensions() << ") = " << biasTensor.GetShape()[0] << std::endl;
 #endif
-            
+                
             ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
             Weights weight{weightTensor.GetDataType(), weightTensorData.data(), weightTensorData.size()};
-            Weights bias{biasTensor.GetDataType(), biasTensorData.data(), biasTensorData.size()};
+            Weights bias{biasType, biasTensorData.data(), biasTensorData.size()};
+
+            int nbOutputMaps = weightTensor.GetShape()[0]; 
 
             IConvolutionLayer* conv1;
             conv1 = m_Network->addConvolution(*input0, 
-                                              bias.count, DimsHW{kernel_shape[0], kernel_shape[1]}, weight, bias);
+                                              nbOutputMaps, DimsHW{kernel_shape[0], kernel_shape[1]}, weight, bias);
             assert(conv1);
             conv1->setName(GetPrefixNodeName(node).c_str());
             conv1->setStride(DimsHW{strides[0], strides[1]});
@@ -705,6 +786,27 @@ namespace menoh_impl {
             return std::make_unique<ParsedMatMulMenohOperation>(this, node);
         }
 
+        ParsedMenohOperationPtr MenohParser::ParseSum(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+            boost::ignore_unused(graph);
+            std::string name = GetNodeName(node);
+	    
+            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input1 = inputs[1].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[1].m_Index);
+#ifdef TENSORRT_DEBUG
+            std::cout << "           input0.name = " << input0->getName() << std::endl;
+            std::cout << "           input1.name = " << input1->getName() << std::endl;
+#endif            
+            IElementWiseLayer* add1;
+            add1 = m_Network->addElementWise(*input0, *input1, ElementWiseOperation::kSUM);
+            assert(add1);
+            add1->setName(GetPrefixNodeName(node).c_str());
+            add1->getOutput(0)->setName(name.c_str());
+            SetLayer(add1);
+
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, add1);
+        }  
+
         ParsedMenohOperationPtr MenohParser::ParseMul(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
@@ -777,8 +879,6 @@ namespace menoh_impl {
 
             IScaleLayer* scale1;
             {
-                const float powerParam = 1;
-                const float scaleParam = 1;
                 const Weights power{DataType::kFLOAT, nullptr, 0};
                 const Weights shift{DataType::kFLOAT, nullptr, 0};
                 const Weights scale{DataType::kFLOAT, nullptr, 0};
@@ -887,7 +987,7 @@ namespace menoh_impl {
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name  = " << input0->getName() << std::endl;
 #endif
-
+#if 1
             IPoolingLayer* pool;
             pool = m_Network->addPooling(*input0, pooltype, DimsHW{kernel_shape[0], kernel_shape[1]});
             assert(pool);
@@ -899,6 +999,25 @@ namespace menoh_impl {
             pool->getOutput(0)->setName(pname.c_str());
             SetLayer(pool);
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, pool);
+#else 
+            IScaleLayer* scale1;
+            {
+                const float powerParam = 1;
+                const float scaleParam = 1;
+                const Weights power{DataType::kFLOAT, nullptr, 0};
+                const Weights shift{DataType::kFLOAT, nullptr, 0};
+                const Weights scale{DataType::kFLOAT, nullptr, 0};
+
+                scale1 = m_Network->addScale(*input0, ScaleMode::kUNIFORM, shift, scale, power);
+                assert(scale1);
+                scale1->setName(GetPrefixNodeName(node).c_str());
+
+                std::string pname("tensor_"+name);
+                scale1->getOutput(0)->setName(pname.c_str());
+                SetLayer(scale1);
+            }
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, scale1);
+#endif
         }
 
         ILayer* MenohParser::AddFullyConnectedLayer(const menoh_impl::node& matMulNodeDef, 
@@ -1011,9 +1130,85 @@ namespace menoh_impl {
             return full;
         }
 
+        ParsedMenohOperationPtr MenohParser::ParseGemm(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+            boost::ignore_unused(graph);
+            std::string name = GetNodeName(node);
+            
+            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 3);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+#ifdef TENSORRT_DEBUG
+            ITensor* input1 = inputs[1].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[1].m_Index);
+            ITensor* input2 = inputs[2].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[2].m_Index);
+
+            std::cout << "           input0.name = " << input0->getName() << std::endl;
+            std::cout << "           input1.name = " << input1->getName() << std::endl;
+            std::cout << "           input2.name = " << input2->getName() << std::endl;
+#endif            
+            ParsedConstMenohOperation<float>* weightNode = nullptr;
+            ParsedConstMenohOperation<float>* biasNode   = nullptr;
+
+            weightNode = boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[1].m_IndexedValue);
+            biasNode   = boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[2].m_IndexedValue);
+
+            MenohVector<float> weightTensorData;
+            ConstTensor weightTensor = weightNode->GetConstTensor(weightTensorData);
+            Weights weight{weightTensor.GetDataType(), weightTensorData.data(), weightTensorData.size()};
+            MenohVector<float> biasTensorData;
+            ConstTensor biasTensor  = biasNode->GetConstTensor(biasTensorData);
+            Weights bias{biasTensor.GetDataType(), biasTensorData.data(), biasTensorData.size()};
+            if (weightTensor.GetShape()[0] != biasTensor.GetShape()[0])
+            {
+                throw ParseException("shape of weight and bias do not match");
+            }
+
+            auto alpha = optional_attribute_float(node, "alpha", 1.f);
+            if(alpha != 1) {
+                throw failed_to_configure_operator(
+                  node.op_type, node.output_name_list.at(0),
+                  "alpha of Gemm must be 1 but given: " +
+                    std::to_string(alpha));
+            }
+            auto beta = optional_attribute_float(node, "beta", 1.f);
+            if(beta != 1) {
+                throw failed_to_configure_operator(
+                  node.op_type, node.output_name_list.at(0),
+                  "beta of Gemm must be 1 but given: " + std::to_string(alpha));
+            }
+
+            auto trans_a = optional_attribute_int(node, "transA", 0);
+            if(trans_a) {
+                throw failed_to_configure_operator(
+                  node.op_type, node.output_name_list.at(0),
+                  "transA of Gemm must be 0 but given: " +
+                    std::to_string(alpha));
+            }
+            auto trans_b = optional_attribute_int(node, "transB", 0);
+            if(!trans_b) {
+                throw failed_to_configure_operator(
+                  node.op_type, node.output_name_list.at(0),
+                  "transB of Gemm must be 0 but given: " +
+                    std::to_string(alpha));
+            }
+      
+            IFullyConnectedLayer* full;
+            full = m_Network->addFullyConnected(*input0, bias.count, weight, bias);
+            assert(full);
+            std::string fullname(std::string("Gemm:")+name);
+            full->setName(fullname.c_str());
+            //full->setName(name);
+            std::string pname("tensor_"+std::string(name));
+            full->getOutput(0)->setName(pname.c_str());
+            SetLayer(full);
+
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, full);
+        }
+
         void MenohParser::LoadNode(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             std::string name = GetNodeName(node);
 	    
+#ifdef TENSORRT_DEBUG
+            std::cout << std::endl << "    LoadNode(" << node.op_type << ") : " << name << std::endl;
+#endif            
             // get the type of the node (assume float)
 
             const std::string& operation = node.op_type;
@@ -1165,7 +1360,10 @@ namespace menoh_impl {
         const std::map<std::string, MenohParser::OperationParsingFunction> MenohParser::ms_OperationNameToParsingFunctions = {
           { "Const",                 &MenohParser::ParseConst },
           { "FC",                    &MenohParser::ParseFC },
+          { "Gemm",                  &MenohParser::ParseGemm },
           { "Identity",              &MenohParser::ParseIdentity },
+          { "Sum",                   &MenohParser::ParseSum },
+          { "BatchNormalization",    &MenohParser::ParseBatchNormalization },
           { "Conv",                  &MenohParser::ParseConv2D },
           { "ConcatV2",              &MenohParser::ParseConcat },
           { "LRN",                   &MenohParser::ParseLrn },
@@ -1177,7 +1375,7 @@ namespace menoh_impl {
           { "Softmax",               &MenohParser::ParseSoftmax },
           { "Tanh",                  &MenohParser::ParseTanh },
           { "MaxPool",               &MenohParser::ParseMaxPool },
-          { "AvgPool",               &MenohParser::ParseAvgPool },
+          { "AveragePool",           &MenohParser::ParseAvgPool },
         };
 
     } // namespace tensorrt_backend
