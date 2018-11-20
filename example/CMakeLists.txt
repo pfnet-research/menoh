@@ -26,3 +26,8 @@ endif()
 # Build resnet50_example_in_cpp
 add_executable(resnet50_example_in_cpp resnet50_example_in_cpp.cpp)
 target_link_libraries(resnet50_example_in_cpp menoh ${OpenCV_LIBS})
+
+# Build inception_v2_onnx_example_in_cpp
+add_executable(inception_v2_example_in_cpp inception_v2_example_in_cpp.cpp)
+target_link_libraries(inception_v2_example_in_cpp menoh ${OpenCV_LIBS})
+
