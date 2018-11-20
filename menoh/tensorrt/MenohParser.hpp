@@ -45,14 +45,6 @@ namespace menoh_impl {
 
         using ParsedMenohOperationPtr = std::unique_ptr<ParsedMenohOperation>;
         
-        ///
-        /// WithOutputTensorIndex wraps a value and an index. The purpose of
-        /// this template is to signify that in Tensorflow the input name of
-        /// a layer has the convention of 'inputTensorName:#index' where the
-        /// #index can be omitted and it implicitly means the 0. output of
-        /// the referenced layer. By supporting this notation we can handle
-        /// layers with multiple outputs, such as Split.
-        ///
         template <typename T>
         struct WithOutputTensorIndex
         {
@@ -107,12 +99,14 @@ namespace menoh_impl {
             ParsedMenohOperationPtr ParseBatchNormalization(const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseFC(                const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseGemm(              const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseUnsqueeze(         const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseConv2D(            const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseConcat(            const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseIdentity(          const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseLrn(               const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseMatMul(            const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseMul(               const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseAdd(               const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseSum(               const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParsePlaceholder(       const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseRelu(              const menoh_impl::node& node, const menoh_impl::graph& graph);
@@ -132,13 +126,11 @@ namespace menoh_impl {
 
             void Cleanup();
 
-            /// The network we're building. Gets cleared after it is passed to the user
             INetworkDefinition* m_Network;
 
             using OperationParsingFunction = ParsedMenohOperationPtr(MenohParser::*)(
 						                     const menoh_impl::node& node, const menoh_impl::graph& graph);
 
-            /// map of TensorFlow operation names to parsing member functions
             static const std::map<std::string, OperationParsingFunction> ms_OperationNameToParsingFunctions;
 
             std::map<std::string, TensorShape> m_InputShapes;
@@ -146,16 +138,13 @@ namespace menoh_impl {
             ILayer* m_Layer;
             std::map<const char*, ILayer*> m_LayerMap;
 
-            /// map of nodes extracted from the Graph to speed up parsing
             std::unordered_map<std::string, const node*> m_NodesByName;
             std::unordered_map<std::string, array> m_ParamByName;
 
             std::unordered_map<std::string, ParsedMenohOperationPtr> m_ParsedMenohOperations;
 
-            /// maps input layer names to their corresponding ids and tensor infos
             std::unordered_map<std::string, BindingPointInfo> m_NetworkInputsBindingInfo;
 
-            /// maps output layer names to their corresponding ids and tensor infos
             std::unordered_map<std::string, BindingPointInfo> m_NetworkOutputsBindingInfo;                
         };
     

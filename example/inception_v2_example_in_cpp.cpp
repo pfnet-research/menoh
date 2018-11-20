@@ -119,7 +119,11 @@ int main(int argc, char** argv) {
                                          static_cast<void*>(image_data.data()));
 
     // Build model
+#ifdef TENSORRT 
+    auto model = model_builder.build_model(model_data, "tensorrt");
+#else
     auto model = model_builder.build_model(model_data, "mkldnn");
+#endif
     model_data
       .reset(); // you can delete model_data explicitly after model building
 

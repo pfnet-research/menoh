@@ -180,7 +180,7 @@ auto strides = get<ints>(node.attribute_table.at("strides"));
 static_cast<void>(strides); // maybe unused
 
         
-add_variable_to_table(output(0), dtype_of(input(0)),
+add_variable_to_table(output(0), dtype_of(input(0)), 
     calc_2d_output_dims(
         dims_of(input(0)), dims_of(input(0)).at(1),
         kernel_shape, strides, pads));
@@ -907,6 +907,42 @@ for(unsigned int i = 0; i < new_dims.size(); ++i) {
     }
 }
 add_variable_to_table(output(0), dtype_of(input(0)), new_dims);
+
+    }
+}
+else
+
+
+if(node.op_type == "Unsqueeze") {
+    
+    
+{
+    auto found = node.attribute_table.find("axes");
+    if(found == node.attribute_table.end()) {
+        
+assert(!"attribute not found: axes");
+
+    }
+}
+
+    
+    {
+        
+auto axes = get<ints>(node.attribute_table.at("axes"));
+static_cast<void>(axes); // maybe unused
+
+        
+auto input_dims = dims_of(input(0));
+auto output_dims_size = input_dims.size() + axes.size();
+std::vector<int> output_dims(output_dims_size);
+        std::set<int> axes_set(axes.begin(), axes.end());
+for(unsigned int i = 0, j = 0; i < output_dims_size; ++i) {
+    if( axes_set.count(i) == 0 )
+        output_dims.at(i) = input_dims.at(j++);
+    else
+        output_dims.at(i) = 1;
+}
+add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 
     }
 }
