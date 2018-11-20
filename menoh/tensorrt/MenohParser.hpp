@@ -115,9 +115,12 @@ namespace menoh_impl {
             ParsedMenohOperationPtr ParseTanh(              const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseMaxPool(           const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseAvgPool(           const menoh_impl::node& node, const menoh_impl::graph& graph);
+            ParsedMenohOperationPtr ParseGlobalAvgPool(     const menoh_impl::node& node, const menoh_impl::graph& graph);
+
             ParsedMenohOperationPtr ParsePooling2d(         const menoh_impl::node& node, const menoh_impl::graph& graph,
                                                             PoolingType pooltype);
-
+            ParsedMenohOperationPtr ParseGlobalPooling2d(   const menoh_impl::node& node, const menoh_impl::graph& graph,
+                                                            PoolingType pooltype);
             ParsedMenohOperationPtr AddActivationLayer(   const menoh_impl::node& node, ActivationType activationType);
 	  
             ILayer* AddFullyConnectedLayer(    const menoh_impl::node& matMulNodeDef, 
