@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     a.add<std::string>("input_image", 'i', "input image path", false,
                        "../data/Light_sussex_hen.jpg");
     a.add<std::string>("model", 'm', "onnx model path", false,
-                       "../data/inception_v2_opset_7.onnx");
+                       "../data/inception_v2/model  .onnx");
     a.add<std::string>("synset_words", 's', "synset words path", false,
                        "../data/synset_words.txt");
     a.parse_check(argc, argv);
