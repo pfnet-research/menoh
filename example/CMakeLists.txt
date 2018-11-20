@@ -32,3 +32,7 @@ target_link_libraries(squeezenet_example_in_cpp menoh ${OpenCV_LIBS})
 # Build inception_v2_example_in_cpp
 add_executable(inception_v2_example_in_cpp inception_v2_example_in_cpp.cpp)
 target_link_libraries(inception_v2_example_in_cpp menoh ${OpenCV_LIBS})
+
+# Build densnet121_example_in_cpp
+add_executable(densnet121_example_in_cpp densnet121_example_in_cpp.cpp)
+target_link_libraries(densnet121_example_in_cpp menoh ${OpenCV_LIBS})

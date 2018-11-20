@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     std::cout << "squeezenet example" << std::endl;
 
     const std::string in_name  = "data_0";
-    const std::string out_name = "softmaxout_1";
+    const std::string out_name = "fc6_1";
 
     const int batch_size = 1;
     const int channel_num = 3;
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     a.add<std::string>("input_image", 'i', "input image path", false,
                        "../data/Light_sussex_hen.jpg");
     a.add<std::string>("model", 'm', "onnx model path", false,
-                       "../data/squeezenet/model.onnx");
+                       "../data/densenet121/model.onnx");
     a.add<std::string>("synset_words", 's', "synset words path", false,
                        "../data/synset_words.txt");
     a.parse_check(argc, argv);
