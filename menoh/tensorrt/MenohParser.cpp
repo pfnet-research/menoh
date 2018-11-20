@@ -974,26 +974,13 @@ namespace menoh_impl {
         }
 
         ParsedMenohOperationPtr MenohParser::ParseMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-            return ParsePooling2d(node, graph, PoolingType::kMAX);
-        }
-
-        ParsedMenohOperationPtr MenohParser::ParseAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-            return ParsePooling2d(node, graph, PoolingType::kAVERAGE);
-        }          
-
-        ParsedMenohOperationPtr MenohParser::ParseGlobalAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-            return ParseGlobalPooling2d(node, graph, PoolingType::kAVERAGE);
-        }          
-
-        ParsedMenohOperationPtr MenohParser::ParsePooling2d(const menoh_impl::node& node, const menoh_impl::graph& graph, 
-                                                            PoolingType pooltype){
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
             if (inputs.size() != 1)
             {
-                throw ParseException("2D Pooling expects one input!");
+                throw ParseException("MaxPooling expects one input!");
             }
             ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
 
@@ -1020,7 +1007,7 @@ namespace menoh_impl {
             
             IPoolingLayer* pool;
             {
-                pool = m_Network->addPooling(*input0, pooltype, DimsHW{kernel_shape[0], kernel_shape[1]});
+                pool = m_Network->addPooling(*input0, PoolingType::kMAX, DimsHW{kernel_shape[0], kernel_shape[1]});
                 assert(pool);
                 pool->setName(GetPrefixNodeName(node).c_str());
                 pool->setStride(DimsHW{strides[0], strides[1]});
@@ -1033,17 +1020,88 @@ namespace menoh_impl {
                 SetLayer(pool);
             } 
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, pool);
+        }          
+
+        ParsedMenohOperationPtr MenohParser::ParseAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+ 
+            boost::ignore_unused(graph);
+            std::string name = GetNodeName(node);
+
+            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
+            if (inputs.size() != 1)
+            {
+                throw ParseException("AveragePooling expects one input!");
+            }
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+
+            std::vector<int> strides, kernel_shape, pads;
+            std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
+            DimsHW begin_pad{pads[0], pads[1]}, end_pad{(pads.size()<=2)? pads[0] : pads[2],
+                                                        (pads.size()<=2)? pads[1] : pads[3]};
+            
+#ifdef TENSORRT_DEBUG
+            std::cout << "           strides      = " << strides[0]      << ", " << strides[1]      << std::endl;
+            std::cout << "           kernel_shape = " << kernel_shape[0] << ", " << kernel_shape[1] << std::endl;
+            std::cout << "           pads         = " << pads[0]         << ", " << pads[1];
+            if( pads.size() >= 4 )
+                std::cout << ",  = " << pads[2]         << ", " << pads[3] << std::endl ;
+            else
+                std::cout << std::endl;
+            std::cout << "           input0.name  = " << input0->getName() << std::endl;
+#endif
+            IPoolingLayer* pool;
+            {
+                pool = m_Network->addPooling(*input0, PoolingType::kAVERAGE, DimsHW{kernel_shape[0], kernel_shape[1]});
+                assert(pool);
+                pool->setName(GetPrefixNodeName(node).c_str());
+                pool->setStride(DimsHW{strides[0],strides[1]});
+                pool->setPadding(begin_pad);  
+                std::string pname("tensor_"+name);
+                pool->getOutput(0)->setName(pname.c_str());
+                SetLayer(pool);
+            } 
+ 
+            DimsHW pre_crop(0,0), post_crop(0,0);
+            for( int i=0 ; i<2 ; i++ )
+            {
+                if( end_pad.d[i] == begin_pad.d[i] )
+                {
+                    // None
+                }
+                else if( end_pad.d[i] == begin_pad.d[i] + 1 )
+                {
+                    begin_pad.d[i] += strides[i];
+                    pre_crop.d[i] = 1;
+                }
+                else
+                {
+                    std::cerr << "Illeagl Pad " << std::endl;
+                    assert(0);
+                }
+            }
+
+            ILayer *layer = pool;
+            if( (!pre_crop.d[0] && !pre_crop.d[1]) || (!post_crop.d[0] && !post_crop.d[1]) )
+            {
+                layer = m_Network->addPadding(*pool->getOutput(0), DimsHW{-pre_crop.d[0], -pre_crop.d[1]}, 
+                                                                   DimsHW{-post_crop.d[0],-post_crop.d[1]});
+                assert(layer);
+                layer->setName(GetPrefixNodeName(node).c_str());
+                std::string pname("tensor_"+name);
+                layer->getOutput(0)->setName(pname.c_str());
+                SetLayer(layer);
+            }
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseGlobalPooling2d(const menoh_impl::node& node, const menoh_impl::graph& graph, 
-                                                                  PoolingType pooltype){
+        ParsedMenohOperationPtr MenohParser::ParseGlobalMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 	    
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
             if (inputs.size() != 1)
             {
-                throw ParseException("2D Pooling expects one input!");
+                throw ParseException("GlobalAveragePooling expects one input!");
             }
             ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
 
@@ -1053,8 +1111,40 @@ namespace menoh_impl {
             IPoolingLayer* pool;
             {
                 Dims dims = input0->getDimensions();
+                if( dims.nbDims != 3 )
+                    assert(0);
                 DimsHW kernel_shape({dims.d[1], dims.d[2]});
-                pool = m_Network->addPooling(*input0, pooltype, kernel_shape);
+                pool = m_Network->addPooling(*input0, PoolingType::kMAX, kernel_shape);
+                assert(pool);
+                pool->setName(GetPrefixNodeName(node).c_str());
+                std::string pname("tensor_"+name);
+                pool->getOutput(0)->setName(pname.c_str());
+                SetLayer(pool);
+            } 
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, pool);
+        }
+        
+        ParsedMenohOperationPtr MenohParser::ParseGlobalAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+            boost::ignore_unused(graph);
+            std::string name = GetNodeName(node);
+	    
+            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
+            if (inputs.size() != 1)
+            {
+                throw ParseException("GlobalAveragePooling expects one input!");
+            }
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+
+#ifdef TENSORRT_DEBUG
+            std::cout << "           input0.name  = " << input0->getName() << std::endl;
+#endif
+            IPoolingLayer* pool;
+            {
+                Dims dims = input0->getDimensions();
+                if( dims.nbDims != 3 )
+                    assert(0);
+                DimsHW kernel_shape({dims.d[1], dims.d[2]});
+                pool = m_Network->addPooling(*input0, PoolingType::kAVERAGE, kernel_shape);
                 assert(pool);
                 pool->setName(GetPrefixNodeName(node).c_str());
                 std::string pname("tensor_"+name);
