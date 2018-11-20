@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
 
     // Build model
     auto model = model_builder.build_model(
-      model_data, "combinated_backends",
+      model_data, "composite_backend",
       R"({"backends":[{"type":"mkldnn"}, {"type":"generic"}], "log_output":"stdout"})");
     model_data
       .reset(); // you can delete model_data explicitly after model building
