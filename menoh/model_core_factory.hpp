@@ -22,12 +22,13 @@ namespace menoh_impl {
 
     struct model_data;
 
-    std::unique_ptr<menoh_impl::model_core>
-    make_model_core(std::unordered_map<std::string, array> const& input_table,
-                    std::unordered_map<std::string, array> const& output_table,
-                    menoh_impl::model_data const& model_data,
-                    std::string const& backend_name,
-                    backend_config const& config = backend_config());
+    std::unique_ptr<menoh_impl::model_core> make_model_core(
+      std::unordered_map<std::string, array> const& input_table,
+      std::unordered_map<std::string, array> const& required_output_table,
+      std::unordered_map<std::string, array_profile> const&
+        output_profile_table,
+      menoh_impl::model_data const& model_data, std::string const& backend_name,
+      backend_config const& config = backend_config());
 
 } // namespace menoh_impl
 

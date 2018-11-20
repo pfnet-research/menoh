@@ -11,7 +11,7 @@
 #define MENOH_API
 #endif
 
-#define MENOH_SUPPORTED_ONNX_OPSET_VERSION 7
+#define MENOH_SUPPORTED_ONNX_OPSET_VERSION 8
 
 #ifndef MENOH_ERROR_MESSAGE_MAX_LENGTH
 #define MENOH_ERROR_MESSAGE_MAX_LENGTH 1024
@@ -44,7 +44,14 @@ extern "C" {
 /*! @ingroup vpt
  */
 enum menoh_dtype_constant {
-    menoh_dtype_float,
+    menoh_dtype_float, // float32
+    menoh_dtype_float16,
+    menoh_dtype_float32 = menoh_dtype_float,
+    menoh_dtype_float64 = menoh_dtype_float16 + 1,
+    menoh_dtype_int8,
+    menoh_dtype_int16,
+    menoh_dtype_int32,
+    menoh_dtype_int64,
 };
 /*! @ingroup vpt
  */
@@ -79,6 +86,8 @@ enum menoh_error_code_constant {
     menoh_error_code_same_named_parameter_already_exist,
     menoh_error_code_same_named_attribute_already_exist,
     menoh_error_code_invalid_backend_config_error,
+    menoh_error_code_input_not_found_error,
+    menoh_error_code_output_not_found_error,
 };
 typedef int32_t menoh_error_code;
 /*! \brief Users can get detailed message about last error.
@@ -87,6 +96,12 @@ typedef int32_t menoh_error_code;
  */
 MENOH_API const char* menoh_get_last_error_message();
 /** @} */
+
+/*! @ingroup vpt
+ */
+/*! \breaf Element size of given menoh_dtype.
+ */
+menoh_error_code MENOH_API menoh_dtype_size(menoh_dtype dtype, int32_t *dst_size);
 
 /*! @addtogroup model_data Model data types and operations
  * @{ */
@@ -121,7 +136,6 @@ menoh_error_code MENOH_API menoh_make_model_data_from_onnx_data_on_memory(
 menoh_error_code MENOH_API
 menoh_make_model_data(menoh_model_data_handle* dst_handle);
 /*! \brief Add a new parameter in model_data
- *
  * \note Duplication of parameter_name is not allowed and it throws error.
  */
 menoh_error_code MENOH_API menoh_model_data_add_parameter(
@@ -159,7 +173,7 @@ menoh_error_code MENOH_API menoh_model_data_add_attribute_float_to_current_node(
  */
 menoh_error_code MENOH_API menoh_model_data_add_attribute_ints_to_current_node(
   menoh_model_data_handle model_data, const char* attribute_name, int32_t size,
-  const int* value);
+  const int32_t* value);
 /*! \brief Add a new float array attribute to latest added node in model_data
  *
  * \note Duplication of attribute_name is not allowed and it throws error.
@@ -201,6 +215,7 @@ void MENOH_API menoh_delete_variable_profile_table_builder(
 /*! \brief Add input profile
  *
  * Input profile contains name, dtype and dims.
+ * \note Users can free dims buffer after calling this function.
  */
 menoh_error_code MENOH_API
 menoh_variable_profile_table_builder_add_input_profile(
@@ -211,6 +226,7 @@ menoh_variable_profile_table_builder_add_input_profile(
  *
  * Input profile contains name, dtype and dims (num, size). This 2D input is
  * conventional batched 1D inputs.
+ * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_input_profile() instead
  */
 MENOH_DEPRECATED_ATTRIBUTE(
   "please use menoh_variable_profile_table_builder_add_input_profile() instead")
@@ -224,6 +240,7 @@ menoh_variable_profile_table_builder_add_input_profile_dims_2(
  * Input profile contains name, dtype and dims (num, channel, height, width).
  * This 4D input is conventional batched image inputs. Image input is
  * 3D(channel, height, width).
+ * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_input_profile() instead
  */
 MENOH_DEPRECATED_ATTRIBUTE(
   "please use menoh_variable_profile_table_builder_add_input_profile() instead")
@@ -233,11 +250,23 @@ menoh_variable_profile_table_builder_add_input_profile_dims_4(
   menoh_dtype dtype, int32_t num, int32_t channel, int32_t height,
   int32_t width);
 
+/*! \brief Add output name
+ *
+ * dims amd dtype of output are calculated automatically
+ * when calling of menoh_build_variable_profile_table.
+ */
+menoh_error_code MENOH_API menoh_variable_profile_table_builder_add_output_name(
+  menoh_variable_profile_table_builder_handle builder, const char* name);
+
 /*! \brief Add output profile
  *
  * Output profile contains name and dtype. Its dims are calculated automatically
  * when calling of menoh_build_variable_profile_table.
+ * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_output_name() instead
  */
+MENOH_DEPRECATED_ATTRIBUTE(
+  "please use menoh_variable_profile_table_builder_add_output_name() instead. "
+  "dtype is totally ignored.")
 menoh_error_code MENOH_API
 menoh_variable_profile_table_builder_add_output_profile(
   menoh_variable_profile_table_builder_handle builder, const char* name,
@@ -254,6 +283,10 @@ typedef struct menoh_variable_profile_table*
   menoh_variable_profile_table_handle;
 
 /*! \brief Factory function for variable_profile_table
+ *
+ * \note this function throws menoh_input_not_found_error when no nodes have given input name.
+ * \note this function throws menoh_output_not_found_error when no nodes have given output name.
+ * \note this function throws menoh_variable_not_found_error when needed variable for model execution does not exist.
  */
 menoh_error_code MENOH_API menoh_build_variable_profile_table(
   const menoh_variable_profile_table_builder_handle builder,

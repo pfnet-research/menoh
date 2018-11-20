@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
     menoh::variable_profile_table_builder vpt_builder;
     vpt_builder.add_input_profile(in_name, menoh::dtype_t::float_,
                                   {batch_size, channel_num, height, width});
-    vpt_builder.add_output_profile(out_name, menoh::dtype_t::float_);
+    vpt_builder.add_output_name(out_name);
 
     // Build variable_profile_table and get variable dims (if needed)
     auto vpt = vpt_builder.build_variable_profile_table(model_data);

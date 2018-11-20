@@ -13,7 +13,8 @@ int main(int argc, char** argv) {
     cmdline::parser a;
     a.add<std::string>("input", '\0', "input_data");
     a.add<std::string>("model", '\0', "onnx model path", false,
-                       "../data/VGG16.onnx");
+                       "../data/vgg16.onnx");
+    a.add<int>("iteration", '\0', "number of iterations", false, 1);
     a.parse_check(argc, argv);
 
     constexpr auto category_num = 1000;
@@ -25,8 +26,8 @@ int main(int argc, char** argv) {
     auto onnx_model_path = a.get<std::string>("model");
 
     // Aliases to onnx's node input and output tensor name
-    auto conv1_1_in_name = "140326425860192";
-    auto softmax_out_name = "140326200803680";
+    auto conv1_1_in_name = "Input_0";
+    auto softmax_out_name = "Softmax_0";
 
     // Load ONNX model data
     auto model_data = menoh::make_model_data_from_onnx(onnx_model_path);
@@ -35,12 +36,12 @@ int main(int argc, char** argv) {
     menoh::variable_profile_table_builder vpt_builder;
     vpt_builder.add_input_profile(conv1_1_in_name, menoh::dtype_t::float_,
                                   {batch_size, 3, 224, 224});
-    vpt_builder.add_output_profile(softmax_out_name, menoh::dtype_t::float_);
+    vpt_builder.add_output_name(softmax_out_name);
     auto vpt = vpt_builder.build_variable_profile_table(model_data);
 
     // Build model
     menoh::model_builder model_builder(vpt);
-    //    auto model = model_builder.build_model(model_data, "mkldnn");
+    //auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
     auto model = model_builder.build_model(model_data, "tensorrt");
     model_data
       .reset(); // you can delete model_data explicitly after model building
@@ -51,14 +52,18 @@ int main(int argc, char** argv) {
       static_cast<float*>(model.get_buffer_handle(softmax_out_name));
     */
 
-    auto start = clock::now();
+    std::vector<std::chrono::microseconds> usecs;
 
-    // Run inference
-    model.run();
+    for (int i = 0; i < a.get<int>("iteration"); ++i) {
+        auto start = clock::now();
 
-    auto end = clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                       start)
-                   .count()
-              << std::endl;
+        // Run inference
+        model.run();
+
+        auto end = clock::now();
+        usecs.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start));
+    }
+
+    auto total_usec = std::accumulate(usecs.begin(), usecs.end(), std::chrono::microseconds::zero());
+    std::cout << total_usec.count() / usecs.size() * 0.001 << " msec" << std::endl;
 }

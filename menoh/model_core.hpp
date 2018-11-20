@@ -26,7 +26,7 @@ namespace menoh_impl {
                                std::string const& dims_size)
           : exception(menoh_error_code_unsupported_input_dims,
                       "menoh unsupported input dims error: " + name +
-                        "has dims size: " + dims_size) {}
+                        " has dims size: " + dims_size) {}
     };
 
     class backend_error : public exception {

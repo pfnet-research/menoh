@@ -1,5 +1,6 @@
 #include <menoh/mkldnn/model_core.hpp>
 
+#include <iostream>
 #include <functional>
 #include <iterator>
 #include <tuple>
@@ -198,7 +199,6 @@ namespace menoh_impl {
             primitive_factory_table.insert({"Softmax", make_softmax_primitive});
             primitive_factory_table.insert({"Sum", make_sum_primitive});
             // TODO other primitives
-
             auto graph = make_graph(model_data.node_list);
             auto parameter_table = std::unordered_map<std::string, array>(
               model_data.parameter_name_and_array_list.begin(),

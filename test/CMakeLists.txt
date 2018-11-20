@@ -3,8 +3,14 @@ enable_testing()
 # GTest setup
 set(GTEST_DIR "lib/googletest")
 execute_process(COMMAND git submodule update --init -- test/${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-message(STATUS "# add_subdirectory\(${GTEST_DIR}\)")
-add_subdirectory(${GTEST_DIR})
+
+message(STATUS "Adding ${GTEST_DIR}")
+
+# Prevent overriding the parent project's compiler/linker settings on Windows
+# See https://github.com/google/googletest/blob/master/googletest/README.md#visual-studio-dynamic-vs-static-runtimes
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+add_subdirectory(${GTEST_DIR} EXCLUDE_FROM_ALL)
 
 # filesystem setup
 set(FILESYSTEM_DIR "lib/filesystem")
@@ -17,20 +23,20 @@ add_executable(menoh_test
     node.cpp
     graph.cpp
     onnx.cpp
-    mkldnn.cpp
 
     operator.cpp
-    model.cpp
     mkldnn_with_generic_fallback_backend.cpp
     model_data.cpp
+    attribute_completion_and_shape_inference.cpp
     #vgg16.cpp
-
 )
 
+target_include_directories(menoh_test PUBLIC $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
+
 if(LINK_STATIC_LIBPROTOBUF)
-  target_link_libraries(menoh_test gtest_main menoh_test_target)
+    target_link_libraries(menoh_test gtest_main menoh_test_target)
 else()
-  target_link_libraries(menoh_test gtest_main menoh_test_target ${PROTOBUF_LIBRARY})
+    target_link_libraries(menoh_test gtest_main menoh_test_target ${PROTOBUF_LIBRARIES})
 endif()
 
 if(UNIX AND NOT APPLE)

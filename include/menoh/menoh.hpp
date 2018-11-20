@@ -70,7 +70,16 @@ namespace menoh {
     };
     /** @} */
 
-    enum class dtype_t { float_ = menoh_dtype_float };
+    enum class dtype_t {
+        float_ = menoh_dtype_float, // float32
+        float16 = menoh_dtype_float16,
+        float32 = menoh_dtype_float32,
+        float64 = menoh_dtype_float64,
+        int8 = menoh_dtype_int8,
+        int16 = menoh_dtype_int16,
+        int32 = menoh_dtype_int32,
+        int64 = menoh_dtype_int64,
+    };
 
     class variable_profile_table;
 
@@ -280,13 +289,23 @@ namespace menoh {
                 dims.size(), dims.data()));
         }
 
-        //! Add output profile. That profile contains name, dtype.
-        /*! dims of output is calculated automatically.
+        //! Add a name of required output
+        /*! dtype and dims of output are calculated automatically.
          */
-        void add_output_profile(std::string const& name, dtype_t dtype) {
+        void add_output_name(std::string const& name) {
             MENOH_CPP_API_ERROR_CHECK(
-              menoh_variable_profile_table_builder_add_output_profile(
-                impl_.get(), name.c_str(), static_cast<menoh_dtype>(dtype)));
+              menoh_variable_profile_table_builder_add_output_name(
+                impl_.get(), name.c_str()));
+        }
+
+        //! Add output profile. That profile contains name and dtype
+        /*! dims of output are calculated automatically.
+         * \note This function is deprecated. Given dtype is totally ignored and
+         * inferenced by dtype of input. Use add_output_name() instead.
+         */
+        [[deprecated("Use add_output_name() instead")]]
+        void add_output_profile(std::string const& name, dtype_t) {
+            add_output_name(name);
         }
 
         //! Factory function for variable_profile_table.

@@ -8,6 +8,8 @@ macro(menoh_link_libraries TARGET_NAME SCOPE)
         target_link_libraries(${TARGET_NAME} ${SCOPE} -static-libstdc++)
     endif()
 
+    target_link_libraries(${TARGET_NAME} ${SCOPE} onnx) # onnx also contains protobuf
+
     if(ENABLE_MKLDNN)
         if(NOT ${SCOPE})
             # PUBLIC will add transitive dependencies (`mklml_intel` and `iomp5`) to the link interface
@@ -19,10 +21,6 @@ macro(menoh_link_libraries TARGET_NAME SCOPE)
     endif()
 
     if(ENABLE_TENSORRT)
-        link_directories(/usr/local/cuda/lib64)
-        target_link_libraries(${TARGET_NAME} ${SCOPE} nvinfer)
-        target_link_libraries(${TARGET_NAME} ${SCOPE} cudart)
+	target_link_libraries(${TARGET_NAME} ${SCOPE} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARIES})
     endif()
-
-    target_link_libraries(${TARGET_NAME} ${SCOPE} ${PROTOBUF_LIBRARIES})
 endmacro()

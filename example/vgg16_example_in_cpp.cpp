@@ -15,14 +15,14 @@
 
 #include "../external/cmdline.h"
 
-auto reorder_to_chw(cv::Mat const& mat) {
+auto reorder_bgr_hwc_to_rgb_chw(cv::Mat const& mat) {
     assert(mat.channels() == 3);
     std::vector<float> data(mat.channels() * mat.rows * mat.cols);
     for(int y = 0; y < mat.rows; ++y) {
         for(int x = 0; x < mat.cols; ++x) {
             for(int c = 0; c < mat.channels(); ++c) {
                 data[c * (mat.rows * mat.cols) + y * mat.cols + x] =
-                  mat.at<cv::Vec3f>(y, x)[c];
+                  mat.at<cv::Vec3f>(y, x)[2 - c];
             }
         }
     }
@@ -67,9 +67,9 @@ int main(int argc, char** argv) {
     // Aliases to onnx's node input and output tensor name
     // Please use [Netron](https://github.com/lutzroeder/Netron)
     // See Menoh tutorial for more information.
-    const std::string conv1_1_in_name = "140326425860192";
-    const std::string fc6_out_name = "140326200777584";
-    const std::string softmax_out_name = "140326200803680";
+    const std::string conv1_1_in_name = "Input_0";
+    const std::string fc6_out_name = "Gemm_0";
+    const std::string softmax_out_name = "Softmax_0";
 
     const int batch_size = 1;
     const int channel_num = 3;
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     a.add<std::string>("input_image", 'i', "input image path", false,
                        "../data/Light_sussex_hen.jpg");
     a.add<std::string>("model", 'm', "onnx model path", false,
-                       "../data/VGG16.onnx");
+                       "../data/vgg16.onnx");
     a.add<std::string>("synset_words", 's', "synset words path", false,
                        "../data/synset_words.txt");
     a.parse_check(argc, argv);
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
     cv::resize(image_mat, image_mat, cv::Size(width, height));
     image_mat.convertTo(image_mat, CV_32FC3);
     image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
-    auto image_data = reorder_to_chw(image_mat);
+    auto image_data = reorder_bgr_hwc_to_rgb_chw(image_mat);
 
     // Load ONNX model data
     auto model_data = menoh::make_model_data_from_onnx(onnx_model_path);
@@ -110,14 +110,16 @@ int main(int argc, char** argv) {
     menoh::variable_profile_table_builder vpt_builder;
     vpt_builder.add_input_profile(conv1_1_in_name, menoh::dtype_t::float_,
                                   {batch_size, channel_num, height, width});
-    vpt_builder.add_output_profile(fc6_out_name, menoh::dtype_t::float_);
-    vpt_builder.add_output_profile(softmax_out_name, menoh::dtype_t::float_);
+    vpt_builder.add_output_name(fc6_out_name);
+    vpt_builder.add_output_name(softmax_out_name);
 
     // Build variable_profile_table and get variable dims (if needed)
     auto vpt = vpt_builder.build_variable_profile_table(model_data);
     auto fc6_dims = vpt.get_variable_profile(fc6_out_name).dims;
     std::vector<float> fc6_out_data(std::accumulate(
       fc6_dims.begin(), fc6_dims.end(), 1, std::multiplies<int32_t>()));
+
+    model_data.optimize(vpt);
 
     // Make model_builder and attach extenal memory buffer
     // Variables which are not attached external memory buffer here are attached
@@ -129,7 +131,9 @@ int main(int argc, char** argv) {
       fc6_out_name, static_cast<void*>(fc6_out_data.data()));
 
     // Build model
-    auto model = model_builder.build_model(model_data, "mkldnn");
+    auto model = model_builder.build_model(
+      model_data, "combinated_backends",
+      R"({"backends":[{"type":"mkldnn"}, {"type":"generic"}], "log_output":"stdout"})");
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
@@ -139,7 +143,9 @@ int main(int argc, char** argv) {
       static_cast<float*>(softmax_output_var.buffer_handle);
 
     // Run inference
-    model.run();
+    try {
+        model.run();
+    } catch(std::exception const& e) { std::cout << e.what() << std::endl; }
 
     // Get output
     for(int i = 0; i < 10; ++i) {

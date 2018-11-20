@@ -11,6 +11,21 @@
 
 namespace menoh_impl {
 
+    class array_profile {
+    public:
+        array_profile() = default;
+
+        array_profile(dtype_t dtype, std::vector<int> const& dims)
+          : dtype_(dtype), dims_(dims) {}
+
+        dtype_t dtype() const { return dtype_; }
+        auto const& dims() const { return dims_; }
+
+    private:
+        dtype_t dtype_ = dtype_t::undefined;
+        std::vector<int> dims_;
+    };
+
     class array {
     public:
         array() = default;
@@ -22,14 +37,25 @@ namespace menoh_impl {
 
         array(dtype_t d, std::vector<int> const& dims);
 
+        array(array_profile const& profile, void* data_handle)
+          : array(profile.dtype(), profile.dims(), data_handle) {}
+
+        array(array_profile const& profile, std::shared_ptr<void> const& data)
+          : array(profile.dtype(), profile.dims(), data) {}
+
+        explicit array(array_profile const& profile)
+          : array(profile.dtype(), profile.dims()) {}
+
         dtype_t dtype() const { return dtype_; }
         auto const& dims() const { return dims_; }
+
         auto* data() const { return data_handle_; }
         bool has_ownership() const { return static_cast<bool>(data_); }
 
     private:
         dtype_t dtype_ = dtype_t::undefined;
         std::vector<int> dims_;
+
         std::shared_ptr<void> data_;
         void* data_handle_ = nullptr;
     };
@@ -54,6 +80,24 @@ namespace menoh_impl {
     }
 
     array zeros(dtype_t d, std::vector<int> const& dims);
+
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>* begin(array const& a) {
+        assert(a.dtype() == dtype);
+        return static_cast<dtype_to_type_t<dtype>*>(a.data());
+    }
+
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>* end(array const& a) {
+        assert(a.dtype() == dtype);
+        return static_cast<dtype_to_type_t<dtype>*>(a.data()) + total_size(a);
+    }
+
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>& at(array const& a, std::size_t i) {
+        assert(a.dtype() == dtype);
+        return *(static_cast<dtype_to_type_t<dtype>*>(a.data()) + i);
+    }
 
 } // namespace menoh_impl
 

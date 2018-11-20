@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(MENOH_MAJOR_VERSION 1)
 set(MENOH_MINOR_VERSION 1)
-set(MENOH_PATCH_VERSION 0)
+set(MENOH_PATCH_VERSION 1)
 
 # Options
 option(ENABLE_MKLDNN    "Use MKLDNN"      OFF)
@@ -59,11 +59,48 @@ mark_as_advanced(DOWNLOAD_LOCATION)
 # Enable ExternalProject_Add
 include(ExternalProject)
 
-# Setup protobuf
-include(SetupProtobuf)
+# Setup protobuf (it is used in ONNX and Menoh)
+if(LINK_STATIC_LIBPROTOBUF)
+    # Note: We can't use `set(PROTOBUF_BUILD_SHARED_LIBS OFF)` in `FindProtobuf` module
+    # because `libprotobuf.a` produced by the package manager is not PIC. So we need to
+    # build it by ourselves.
+    if(UNIX OR MINGW)
+        include(BuildProtobuf)
+    else()
+        message(FATAL_ERROR "LINK_STATIC_LIBPROTOBUF is supported only in UNIX-like environments")
+    endif()
+else()
+    # Note: It may conflict with the loading mechanism in onnx's CMake configuration.
+    # See external/onnx/CMakeLists.txt for more details.
+    include(FindProtobuf)
+    find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)
+    # Note: `protobuf::protoc` is not supported in CMake 3.9.4 or older
+    if(NOT TARGET protobuf::protoc)
+        find_program(Protobuf_PROTOC_EXECUTABLE
+            NAMES protoc
+            DOC "The Google Protocol Buffers Compiler")
+        add_executable(protobuf::protoc IMPORTED)
+        if(EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
+            set_target_properties(protobuf::protoc PROPERTIES
+                IMPORTED_LOCATION "${Protobuf_PROTOC_EXECUTABLE}")
+        endif()
+    endif()
+endif()
 
-# Generate source codes from ONNX protobuf schema
-include(GenerateOnnxSrc)
+# Build libonnx.a
+message(STATUS "Adding external/onnx")
+
+set(ONNX_SRC_DIR ${EXTERNAL_DIR}/onnx)
+execute_process(COMMAND git submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+# see https://github.com/onnx/onnx/pull/1466
+message(STATUS "Patching to external/onnx")
+configure_file(${EXTERNAL_DIR}/onnx-v1.3.0-patch_CMakeLists.txt ${EXTERNAL_DIR}/onnx/CMakeLists.txt COPYONLY)
+
+# TODO: enable the following option when it is ready for migrating to onnx-ml
+#set(ONNX_ML 1)
+add_subdirectory(external/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
+include_directories("${ONNX_INCLUDE_DIRS}")
 
 if(ENABLE_MKLDNN)
     # Setup MKLDNN
@@ -91,13 +128,15 @@ if(ENABLE_MKLDNN)
 endif()
 
 if (ENABLE_TENSORRT)
+    find_package(TensorRT)
+    if (NOT TENSORRT_FOUND)
+	message(FATAL_ERROR "TensorRT is not found")
+    endif()
 
-#    set(TENSORRT_DIR /usr/local/TensorRT-5.0.0.10)
-    set(TENSORRT_DIR /usr/local/TensorRT-5.0.2.6)
+    include_directories(${TENSORRT_INCLUDE_DIRS})
 
-    add_definitions(-DENABLE_TENSORRT -I /usr/local/cuda/include -I ${TENSORRT_DIR}/include )
-    link_directories(${TENSORRT_DIR}/lib)
-    link_directories(/usr/local/cuda/lib64)
+    find_package(CUDA "10" REQUIRED)
+    include_directories("${CUDA_INCLUDE_DIRS}")
 
     if(ENABLE_BENCHMARK)
         message(STATUS "# add_subdirectory\(benchmark\)")
@@ -108,12 +147,13 @@ if (ENABLE_TENSORRT)
         message(STATUS "# add_subdirectory\(example\)")
         add_subdirectory(example)
     endif()
+
 endif()
 
-message(STATUS "# add_subdirectory\(menoh\)")
+message(STATUS "Adding menoh")
 add_subdirectory(menoh)
 
-message(STATUS "# add_subdirectory\(include\)")
+message(STATUS "Adding include")
 add_subdirectory(include)
 
 if(SHOW_ALL_VARIABLES)
