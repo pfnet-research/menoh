@@ -1,3 +1,4 @@
+include(ExternalProject)
 set(PROTOBUF_VERSION_STATIC "3.6.1")
 set(PROTOBUF_HASH MD5=406d5b8636576b1c86730ca5cbd1e576)
 

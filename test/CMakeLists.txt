@@ -1,8 +1,6 @@
-enable_testing()
-
 # GTest setup
 set(GTEST_DIR "lib/googletest")
-execute_process(COMMAND git submodule update --init -- test/${GTEST_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- "${GTEST_DIR}" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 message(STATUS "Adding ${GTEST_DIR}")
 
@@ -14,8 +12,8 @@ add_subdirectory(${GTEST_DIR} EXCLUDE_FROM_ALL)
 
 # filesystem setup
 set(FILESYSTEM_DIR "lib/filesystem")
-execute_process(COMMAND git submodule update --init -- test/${FILESYSTEM_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-include_directories("${FILESYSTEM_DIR}")
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- "${FILESYSTEM_DIR}" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+#include_directories("${FILESYSTEM_DIR}")
 
 add_executable(menoh_test
     np_io.cpp
@@ -31,7 +29,11 @@ add_executable(menoh_test
     #vgg16.cpp
 )
 
-target_include_directories(menoh_test PUBLIC $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
+target_include_directories(menoh_test PUBLIC
+    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
+    "${PROJECT_SOURCE_DIR}"
+    "${PROJECT_SOURCE_DIR}/include"
+    "${FILESYSTEM_DIR}")
 
 if(LINK_STATIC_LIBPROTOBUF)
     target_link_libraries(menoh_test gtest_main menoh_test_target)
@@ -45,4 +47,4 @@ if(UNIX AND NOT APPLE)
             LINK_FLAGS "-Wl,--disable-new-dtags")
 endif()
 
-add_test(NAME menoh_test COMMAND menoh_test)
+#add_test(NAME menoh_test COMMAND menoh_test)
