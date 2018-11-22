@@ -640,18 +640,16 @@ namespace menoh_impl {
                 combined_bias_ref  = bias - mean * combined_scale_ref;
             }
   
-            IScaleLayer* scale1;
+            IScaleLayer* scale;
             {
-                scale1 = m_Network->addScale(*input0, ScaleMode::kCHANNEL, combined_bias_weights, combined_scale_weights, {});
-                assert(scale1);
-                scale1->setName(GetPrefixNodeName(node).c_str());
-
+                scale = m_Network->addScale(*input0, ScaleMode::kCHANNEL, combined_bias_weights, combined_scale_weights, {});
+                assert(scale);
+                scale->setName(GetPrefixNodeName(node).c_str());
                 std::string pname("tensor_"+name);
-                scale1->getOutput(0)->setName(pname.c_str());
-                SetLayer(scale1);
+                scale->getOutput(0)->setName(pname.c_str());
+                SetLayer(scale);
             }
-
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, scale1);
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, scale);
         }
 
         ParsedMenohOperationPtr MenohParser::ParseConv2D(const menoh_impl::node& node, const menoh_impl::graph& graph) {
@@ -684,34 +682,52 @@ namespace menoh_impl {
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
 
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+
 #ifdef TENSORRT_DEBUG
 	    std::cout << "     weight(" << weightTensor.GetNumDimensions() << ") = "
 		      << weightTensor.GetShape()[0] << ", " << weightTensor.GetShape()[1];
 	    std::cout << ", " << weightTensor.GetShape()[2] << ", " << weightTensor.GetShape()[3] << std::endl;
             if( numInputs == 3 )
                 std::cout << "       bias(" << biasTensor.GetNumDimensions() << ") = " << biasTensor.GetShape()[0] << std::endl;
+            std::cout << "           strides      = " << strides[0]      << ", " << strides[1]      << std::endl;
+            std::cout << "           kernel_shape = " << kernel_shape[0] << ", " << kernel_shape[1] << std::endl;
+            std::cout << "           pads         = " << pads[0]         << ", " << pads[1];
+            if( pads.size() >= 4 )
+                std::cout << ",  = " << pads[2]         << ", " << pads[3] << std::endl ;
+            else
+                std::cout << std::endl;
+            std::cout << "           input0.name  = " << input0->getName() << std::endl;
 #endif
-                
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+
+            DimsHW begin_pad{pads[0], pads[1]}, end_pad{(pads.size()<=2)? pads[0] : pads[2],
+                                                        (pads.size()<=2)? pads[1] : pads[3]};
+            if( (begin_pad.h() != end_pad.h()) || (begin_pad.w() != end_pad.w()) )
+            {
+                auto layer = m_Network->addPadding(*input0, begin_pad, end_pad );
+                input0 = layer->getOutput(0);
+            }
+
             Weights weight{weightTensor.GetDataType(), weightTensorData.data(), weightTensorData.size()};
             Weights bias{biasType, biasTensorData.data(), biasTensorData.size()};
-
             int nbOutputMaps = weightTensor.GetShape()[0]; 
 
-            IConvolutionLayer* conv1;
+            IConvolutionLayer* conv;
             {
-                conv1 = m_Network->addConvolution(*input0, 
+                conv = m_Network->addConvolution(*input0, 
                                                   nbOutputMaps, DimsHW{kernel_shape[0], kernel_shape[1]}, weight, bias);
-                assert(conv1);
-                conv1->setName(GetPrefixNodeName(node).c_str());
-                conv1->setStride(DimsHW{strides[0], strides[1]});
-                conv1->setPadding(DimsHW{pads[0], pads[1]});
-
+                assert(conv);
+                conv->setName(GetPrefixNodeName(node).c_str());
+                conv->setStride(DimsHW{strides[0], strides[1]});
+                if( (begin_pad.h() == end_pad.h()) || (begin_pad.w() == end_pad.w()) )
+                {
+                    conv->setPadding(begin_pad);
+                }    
                 std::string pname("tensor_"+name);
-                conv1->getOutput(0)->setName(pname.c_str());
-                SetLayer(conv1);   
+                conv->getOutput(0)->setName(pname.c_str());
+                SetLayer(conv);   
             }
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, conv1);
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, conv);
         }  
  
         ParsedMenohOperationPtr MenohParser::ParseConcat(const menoh_impl::node& node, const menoh_impl::graph& graph) {
@@ -747,8 +763,7 @@ namespace menoh_impl {
             }
             else
             {
-                std::cerr << "Concat not support : axis = " << axis << std::endl;
-                assert(0);
+                throw ParseException("TensorRT only supports Concat layers with legal axis");
             }
         }
 
@@ -756,19 +771,23 @@ namespace menoh_impl {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 
+            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+
             float alpha = ReadMandatoryNodeFloatAttribute(node, "alpha");
             float beta  = ReadMandatoryNodeFloatAttribute(node, "beta");
             float k     = ReadMandatoryNodeFloatAttribute(node, "bias");
-
-            int window = ReadMandatoryNodeUint32Attribute(node, "depth_radius");
+            int window  = ReadMandatoryNodeUint32Attribute(node, "depth_radius");
             window = window * 2 + 1;
 
-            ILRNLayer* lrn = m_Network->addLRN(*m_Layer->getOutput(0), window, alpha, beta, k);
-            assert(lrn);
-            lrn->setName(GetPrefixNodeName(node).c_str());
-
-            lrn->getOutput(0)->setName(name.c_str());
-            SetLayer(lrn);
+            ILRNLayer* lrn;
+            {
+                lrn = m_Network->addLRN(*input0, window, alpha, beta, k);
+                assert(lrn);
+                lrn->setName(GetPrefixNodeName(node).c_str());
+                lrn->getOutput(0)->setName(name.c_str());
+                SetLayer(lrn);
+            }
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, lrn);
         }
 
@@ -895,22 +914,21 @@ namespace menoh_impl {
 #endif
             }
 
-            IScaleLayer* scale1;
+            IScaleLayer* scale_l;
             {
                 const Weights power{DataType::kFLOAT, nullptr, 0};
                 const Weights shift{DataType::kFLOAT, nullptr, 0};
                 const Weights scale{DataType::kFLOAT, nullptr, 0};
 
-                scale1 = m_Network->addScale(*placeholder, ScaleMode::kUNIFORM, shift, scale, power);
-                assert(scale1);
-                scale1->setName(GetPrefixNodeName(node).c_str());
-
+                scale_l = m_Network->addScale(*placeholder, ScaleMode::kUNIFORM, shift, scale, power);
+                assert(scale_l);
+                scale_l->setName(GetPrefixNodeName(node).c_str());
                 std::string pname("tensor_"+name);
-                scale1->getOutput(0)->setName(pname.c_str());
-                SetLayer(scale1);
+                scale_l->getOutput(0)->setName(pname.c_str());
+                SetLayer(scale_l);
             }
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, scale1);
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, scale_l);
         }
 
         ParsedMenohOperationPtr MenohParser::ParseRelu(const menoh_impl::node& node, const menoh_impl::graph& graph) {
@@ -962,14 +980,13 @@ namespace menoh_impl {
             ISoftMaxLayer* softmax = m_Network->addSoftMax(*input0);
             assert(softmax);
             softmax->setName(GetPrefixNodeName(node).c_str());           
-                              
             std::string pname("tensor_"+name);
             softmax->getOutput(0)->setName(pname.c_str());
+            SetLayer(softmax);
 #ifdef TENSORRT_DEBUG
             std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
             std::cout << "           output.name = " << softmax->getOutput(0)->getName() << std::endl;
 #endif            
-            SetLayer(softmax);
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, softmax);
         }
 
@@ -1011,9 +1028,9 @@ namespace menoh_impl {
                 assert(pool);
                 pool->setName(GetPrefixNodeName(node).c_str());
                 pool->setStride(DimsHW{strides[0], strides[1]});
-                if( (begin_pad.h() == end_pad.h()) || (begin_pad.w() == end_pad.w()) )
+                if( (begin_pad.h() == end_pad.h()) && (begin_pad.w() == end_pad.w()) )
                 {
-                    pool->setPadding(DimsHW{pads[0], pads[1]});
+                    pool->setPadding(begin_pad);
                 }    
                 std::string pname("tensor_"+name);
                 pool->getOutput(0)->setName(pname.c_str());
@@ -1044,7 +1061,7 @@ namespace menoh_impl {
             std::cout << "           kernel_shape = " << kernel_shape[0] << ", " << kernel_shape[1] << std::endl;
             std::cout << "           pads         = " << pads[0]         << ", " << pads[1];
             if( pads.size() >= 4 )
-                std::cout << ",  = " << pads[2]         << ", " << pads[3] << std::endl ;
+                std::cout << ", " << pads[2]         << ", " << pads[3] << std::endl ;
             else
                 std::cout << std::endl;
             std::cout << "           input0.name  = " << input0->getName() << std::endl;
@@ -1055,12 +1072,12 @@ namespace menoh_impl {
                 assert(pool);
                 pool->setName(GetPrefixNodeName(node).c_str());
                 pool->setStride(DimsHW{strides[0],strides[1]});
-                pool->setPadding(begin_pad);  
                 std::string pname("tensor_"+name);
                 pool->getOutput(0)->setName(pname.c_str());
                 SetLayer(pool);
+                input0 = pool->getOutput(0);
             } 
- 
+
             DimsHW pre_crop(0,0), post_crop(0,0);
             for( int i=0 ; i<2 ; i++ )
             {
@@ -1068,7 +1085,7 @@ namespace menoh_impl {
                 {
                     // None
                 }
-                else if( end_pad.d[i] == begin_pad.d[i] + 1 )
+                else if( end_pad.d[i] == (begin_pad.d[i] + 1) )
                 {
                     begin_pad.d[i] += strides[i];
                     pre_crop.d[i] = 1;
@@ -1076,22 +1093,24 @@ namespace menoh_impl {
                 else
                 {
                     std::cerr << "Illeagl Pad " << std::endl;
-                    assert(0);
+                    throw ParseException("TensorRT only supports AvgPool layers with legal pads");
                 }
             }
 
-            ILayer *layer = pool;
-            if( (!pre_crop.d[0] && !pre_crop.d[1]) || (!post_crop.d[0] && !post_crop.d[1]) )
+            pool->setPadding(begin_pad);
+
+            if( !(!pre_crop.d[0] && !pre_crop.d[1]) || !(!post_crop.d[0] && !post_crop.d[1]) )
             {
-                layer = m_Network->addPadding(*pool->getOutput(0), DimsHW{-pre_crop.d[0], -pre_crop.d[1]}, 
-                                                                   DimsHW{-post_crop.d[0],-post_crop.d[1]});
+                auto layer = m_Network->addPadding(*input0, DimsHW{ -pre_crop.d[0], -pre_crop.d[1]}, 
+                                                            DimsHW{-post_crop.d[0],-post_crop.d[1]});
                 assert(layer);
                 layer->setName(GetPrefixNodeName(node).c_str());
                 std::string pname("tensor_"+name);
                 layer->getOutput(0)->setName(pname.c_str());
                 SetLayer(layer);
+                return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
             }
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, pool);
         }
 
         ParsedMenohOperationPtr MenohParser::ParseGlobalMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
@@ -1101,7 +1120,7 @@ namespace menoh_impl {
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
             if (inputs.size() != 1)
             {
-                throw ParseException("GlobalAveragePooling expects one input!");
+              throw ParseException("GlobalMaxPooling expects one input!");
             }
             ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
 
@@ -1142,7 +1161,7 @@ namespace menoh_impl {
             {
                 Dims dims = input0->getDimensions();
                 if( dims.nbDims != 3 )
-                    assert(0);
+                    throw ParseException("GlobalAvgPooling layser's input dimensions must be 3 (three).");
                 DimsHW kernel_shape({dims.d[1], dims.d[2]});
                 pool = m_Network->addPooling(*input0, PoolingType::kAVERAGE, kernel_shape);
                 assert(pool);
@@ -1220,6 +1239,7 @@ namespace menoh_impl {
             std::string pname("tensor_"+std::string(name));
             full->getOutput(0)->setName(pname.c_str());
             SetLayer(full);
+
             return full;
         }
 
@@ -1259,6 +1279,7 @@ namespace menoh_impl {
             std::string pname("tensor_"+std::string(name));
             full->getOutput(0)->setName(pname.c_str());
             SetLayer(full);
+
             return full;
         }
 
@@ -1354,13 +1375,12 @@ namespace menoh_impl {
             Dims new_shape;
             new_shape.nbDims = ndim_out;
             for( int i=0,j=0; i<new_shape.nbDims; ++i ) {
-                if( axes_set.count(i) == 0 ) {
+                if( axes_set.count(j) == 0 ) {
                     new_shape.d[i] = old_shape.d[j++];
                 } else {
                     new_shape.d[i] = 1;
                 }
             }         
-
             IShuffleLayer* shuffle;
             shuffle = m_Network->addShuffle(*input0);
             assert(shuffle);
@@ -1541,6 +1561,7 @@ namespace menoh_impl {
           { "Tanh",                  &MenohParser::ParseTanh },
           { "MaxPool",               &MenohParser::ParseMaxPool },
           { "AveragePool",           &MenohParser::ParseAvgPool },
+          { "GlobalMaxPool",         &MenohParser::ParseGlobalMaxPool },
           { "GlobalAveragePool",     &MenohParser::ParseGlobalAvgPool },
         };
 
