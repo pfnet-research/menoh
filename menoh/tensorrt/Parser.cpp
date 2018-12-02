@@ -27,7 +27,7 @@ using namespace nvinfer1;
 #include <menoh/tensorrt/Tensor.hpp>
 #include <menoh/tensorrt/TypesUtils.hpp>
 #include <menoh/tensorrt/Util.hpp>
-#include <menoh/tensorrt/MenohParser.hpp>
+#include <menoh/tensorrt/Parser.hpp>
 
 namespace menoh_impl {
     namespace tensorrt_backend {
@@ -42,8 +42,6 @@ namespace menoh_impl {
             }
         }
 
-        using LayerBindingId = int;
-        
         class TensorProto {
 
         public:
@@ -119,7 +117,7 @@ namespace menoh_impl {
 
         class SingleLayerParsedMenohOperation : public ParsedMenohOperation{
         public:
-            SingleLayerParsedMenohOperation(MenohParser* parser, const menoh_impl::node& node, ILayer* layer)
+            SingleLayerParsedMenohOperation(Parser* parser, const menoh_impl::node& node, ILayer* layer)
             : ParsedMenohOperation(parser, node)
             , m_Layer(layer)
             {
@@ -143,7 +141,7 @@ namespace menoh_impl {
 
         class DeferredSingleLayerParsedMenohOperation : public SingleLayerParsedMenohOperation {
         public:
-            DeferredSingleLayerParsedMenohOperation(MenohParser* parser, const menoh_impl::node& node)
+            DeferredSingleLayerParsedMenohOperation(Parser* parser, const menoh_impl::node& node)
             : SingleLayerParsedMenohOperation(parser, node, nullptr)
             {
             }
@@ -162,16 +160,16 @@ namespace menoh_impl {
         };
          
 
-        MenohParser::MenohParser()
+        Parser::Parser()
             : m_Network(){
         }
 
-        void MenohParser::SetLayer(ILayer* layer){
+        void Parser::SetLayer(ILayer* layer){
             m_LayerMap[layer->getName()] = layer;
             m_Layer = layer;
         }
 
-        const node* MenohParser::ResolveIdentityNode(const node* node){
+        const node* Parser::ResolveIdentityNode(const node* node){
             if (node->op_type != "Identity")
             {
                 return node;
@@ -195,7 +193,7 @@ namespace menoh_impl {
         }
 
         std::vector<OutputOfConstNodeDef>
-        MenohParser::GetMenohInputNodes(const menoh_impl::node& node) const {
+        Parser::GetMenohInputNodes(const menoh_impl::node& node) const {
 	    std::vector<OutputOfConstNodeDef> ret;
 
             if (node.op_type == "Const" || node.op_type == "Placeholder")
@@ -243,7 +241,7 @@ namespace menoh_impl {
         }
 
         std::vector<OutputOfParsedMenohOperation>
-        MenohParser::GetInputParsedMenohOperationsChecked(const menoh_impl::node& node, std::size_t expectedNumInputs){
+        Parser::GetInputParsedMenohOperationsChecked(const menoh_impl::node& node, std::size_t expectedNumInputs){
             std::string name = GetNodeName(node);
 
             std::vector<OutputOfConstNodeDef> nodes = GetMenohInputNodes(node);
@@ -277,7 +275,7 @@ namespace menoh_impl {
             return result;
         }  
 
-        ParsedMenohOperationPtr MenohParser::ParseFC(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseFC(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
 	    
             ILayer* layer = AddFullyConnectedLayer(node, GetNodeName(node).c_str());
@@ -286,7 +284,7 @@ namespace menoh_impl {
 
         class ParsedIdentityMenohOperation : public ParsedMenohOperation {
         public:
-            ParsedIdentityMenohOperation(MenohParser* parser, const menoh_impl::node& node, ParsedMenohOperation* representative)
+            ParsedIdentityMenohOperation(Parser* parser, const menoh_impl::node& node, ParsedMenohOperation* representative)
                 : ParsedMenohOperation(parser, node)
                 , m_Representative(representative)
             {
@@ -307,7 +305,7 @@ namespace menoh_impl {
             ParsedMenohOperation* m_Representative;
         };
 
-        ParsedMenohOperationPtr MenohParser::ParseIdentity(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseIdentity(const menoh_impl::node& node, const menoh_impl::graph& graph) {
 	    boost::ignore_unused(graph);
 
 	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
@@ -337,7 +335,7 @@ namespace menoh_impl {
         template <typename T>
         class ParsedConstMenohOperation : public DeferredSingleLayerParsedMenohOperation {
         public:
-            ParsedConstMenohOperation(MenohParser* parser, const menoh_impl::node& node,
+            ParsedConstMenohOperation(Parser* parser, const menoh_impl::node& node,
                                       const T* tensorData, const TensorInfo& tensorInfo)
                 : DeferredSingleLayerParsedMenohOperation(parser, node)
                 , m_Storage(tensorData, tensorInfo.GetNumElements())
@@ -468,7 +466,7 @@ namespace menoh_impl {
         template <template<typename> class OperatorType, typename T = int8_t>
         struct MakeMenohOperation {
             template<typename DataType, class... Args>
-            inline static std::unique_ptr<OperatorType<DataType>> Parse(MenohParser* parser, const menoh_impl::node& node,
+            inline static std::unique_ptr<OperatorType<DataType>> Parse(Parser* parser, const menoh_impl::node& node,
                 Args&&... args)
             {
                 return std::make_unique<OperatorType<DataType>>(parser, node, std::forward<Args>(args)...);
@@ -478,7 +476,7 @@ namespace menoh_impl {
         template <>
         struct MakeMenohOperation<ParsedConstMenohOperation> {
             template<typename DataType, class... Args>
-            inline static std::unique_ptr<ParsedConstMenohOperation<DataType>> Parse(MenohParser* parser,
+            inline static std::unique_ptr<ParsedConstMenohOperation<DataType>> Parse(Parser* parser,
 						      const menoh_impl::node& node,
 						      const MenohVector<int8_t>& tensorData,
 						      const TensorInfo& tensorInfo)
@@ -519,7 +517,7 @@ namespace menoh_impl {
             }
         };  
 
-        ParsedMenohOperationPtr MenohParser::ParseConst(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseConst(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 
@@ -570,7 +568,7 @@ namespace menoh_impl {
         }
 
         template<typename Type>
-        bool MenohParser::HasParsedConstTensor(const std::string & nodeName) const {
+        bool Parser::HasParsedConstTensor(const std::string & nodeName) const {
             auto it = m_ParsedMenohOperations.find(nodeName);
             if (it == m_ParsedMenohOperations.end() ||
                 dynamic_cast<ParsedConstMenohOperation<Type>*>(it->second.get()) == nullptr)
@@ -583,7 +581,7 @@ namespace menoh_impl {
             }
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseBatchNormalization(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseBatchNormalization(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 
@@ -652,7 +650,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, scale);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseConv2D(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseConv2D(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 
@@ -730,7 +728,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, conv);
         }  
  
-        ParsedMenohOperationPtr MenohParser::ParseConcat(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseConcat(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 	    
@@ -767,7 +765,7 @@ namespace menoh_impl {
             }
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseLrn(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseLrn(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 
@@ -791,25 +789,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, lrn);
         }
 
-        class ParsedMatMulMenohOperation : public DeferredSingleLayerParsedMenohOperation {
-        public:
-            ParsedMatMulMenohOperation(MenohParser* parser, const menoh_impl::node& node)
-                : DeferredSingleLayerParsedMenohOperation(parser, node) {
-            }
-
-            void CreateLayerDeferred() override {
-                BOOST_ASSERT(m_Layer == nullptr);
-                m_Layer = m_Parser->AddFullyConnectedLayer(m_Node, nullptr, GetNodeName(m_Node).c_str());
-            }
-        };
-
-        ParsedMenohOperationPtr MenohParser::ParseMatMul(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-            boost::ignore_unused(graph);
-
-            return std::make_unique<ParsedMatMulMenohOperation>(this, node);
-        }
-
-        ParsedMenohOperationPtr MenohParser::ParseSum(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseSum(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 	    
@@ -830,7 +810,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, add1);
         }  
 
-        ParsedMenohOperationPtr MenohParser::ParseMul(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseMul(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 	    
@@ -852,7 +832,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, mul);
         }  
 
-        ParsedMenohOperationPtr MenohParser::ParseAdd(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseAdd(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 	    
@@ -874,7 +854,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, add);
         }  
 
-        ParsedMenohOperationPtr MenohParser::ParsePlaceholder(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParsePlaceholder(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 	    
@@ -931,25 +911,25 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, scale_l);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseRelu(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseRelu(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
 
             return AddActivationLayer(node, ActivationType::kRELU);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseSigmoid(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseSigmoid(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
 
             return AddActivationLayer(node, ActivationType::kSIGMOID);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseTanh(const menoh_impl::node& node, const menoh_impl::graph& graph ) {
+        ParsedMenohOperationPtr Parser::ParseTanh(const menoh_impl::node& node, const menoh_impl::graph& graph ) {
             boost::ignore_unused(graph);
 
             return AddActivationLayer(node, ActivationType::kTANH);
         }
 
-        ParsedMenohOperationPtr MenohParser::AddActivationLayer(const menoh_impl::node& node, ActivationType activationType) {
+        ParsedMenohOperationPtr Parser::AddActivationLayer(const menoh_impl::node& node, ActivationType activationType) {
             std::string name = GetNodeName(node);
 
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
@@ -968,7 +948,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, activate);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseSoftmax(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseSoftmax(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 
@@ -990,7 +970,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, softmax);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 
@@ -1039,7 +1019,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, pool);
         }          
 
-        ParsedMenohOperationPtr MenohParser::ParseAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
  
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
@@ -1113,7 +1093,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, pool);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseGlobalMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseGlobalMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 	    
@@ -1143,7 +1123,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, pool);
         }
         
-        ParsedMenohOperationPtr MenohParser::ParseGlobalAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseGlobalAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
 	    
@@ -1173,7 +1153,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, pool);
         }
 
-        ILayer* MenohParser::AddFullyConnectedLayer(const menoh_impl::node& matMulNodeDef, 
+        ILayer* Parser::AddFullyConnectedLayer(const menoh_impl::node& matMulNodeDef, 
                                                     const menoh_impl::node* addNodeDef, const char* name){
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(matMulNodeDef, 1);
             ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
@@ -1243,7 +1223,7 @@ namespace menoh_impl {
             return full;
         }
 
-        ILayer* MenohParser::AddFullyConnectedLayer(const menoh_impl::node& node, const char* name){
+        ILayer* Parser::AddFullyConnectedLayer(const menoh_impl::node& node, const char* name){
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 3);
             ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 #ifdef TENSORRT_DEBUG
@@ -1283,7 +1263,7 @@ namespace menoh_impl {
             return full;
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseGemm(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseGemm(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
             
@@ -1355,7 +1335,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, full);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseUnsqueeze(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        ParsedMenohOperationPtr Parser::ParseUnsqueeze(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             boost::ignore_unused(graph);
             std::string name = GetNodeName(node);
             
@@ -1394,7 +1374,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerParsedMenohOperation>(this, node, shuffle);
         }
 
-        void MenohParser::LoadNode(const menoh_impl::node& node, const menoh_impl::graph& graph) {
+        void Parser::LoadNode(const menoh_impl::node& node, const menoh_impl::graph& graph) {
             std::string name = GetNodeName(node);
 	    
 #ifdef TENSORRT_DEBUG
@@ -1427,7 +1407,7 @@ namespace menoh_impl {
             }
         }
 
-        void MenohParser::LoadGraph(const menoh_impl::graph& graph,
+        void Parser::LoadGraph(const menoh_impl::graph& graph,
                                     std::unordered_map<std::string, array> const& parameter_table) {
 
             m_NodesByName.clear();
@@ -1504,7 +1484,7 @@ namespace menoh_impl {
             m_Network->markOutput(*m_Layer->getOutput(0));
         }
 
-        INetworkDefinition* MenohParser::CreateNetworkFromGraph(
+        INetworkDefinition* Parser::CreateNetworkFromGraph(
                                          IBuilder* builder,
                                          const menoh_impl::graph& graph,
                                          std::unordered_map<std::string, array> const& parameter_table,
@@ -1532,7 +1512,7 @@ namespace menoh_impl {
             return m_Network;
         }
 
-        void MenohParser::Cleanup(){
+        void Parser::Cleanup(){
             m_InputShapes.clear();
             m_RequestedOutputs.clear();
             m_NodesByName.clear();
@@ -1540,29 +1520,28 @@ namespace menoh_impl {
             m_ParsedMenohOperations.clear();
         }  
 
-        const std::map<std::string, MenohParser::OperationParsingFunction> MenohParser::ms_OperationNameToParsingFunctions = {
-          { "Const",                 &MenohParser::ParseConst },
-          { "FC",                    &MenohParser::ParseFC },
-          { "Gemm",                  &MenohParser::ParseGemm },
-          { "Unsqueeze",             &MenohParser::ParseUnsqueeze },
-          { "Identity",              &MenohParser::ParseIdentity },
-          { "Sum",                   &MenohParser::ParseSum },
-          { "BatchNormalization",    &MenohParser::ParseBatchNormalization },
-          { "Conv",                  &MenohParser::ParseConv2D },
-          { "Concat",                &MenohParser::ParseConcat },
-          { "LRN",                   &MenohParser::ParseLrn },
-          { "MatMul",                &MenohParser::ParseMatMul },
-          { "Mul",                   &MenohParser::ParseMul },
-          { "Add",                   &MenohParser::ParseAdd },
-          { "Placeholder",           &MenohParser::ParsePlaceholder },
-          { "Relu",                  &MenohParser::ParseRelu },
-          { "Sigmoid",               &MenohParser::ParseSigmoid },
-          { "Softmax",               &MenohParser::ParseSoftmax },
-          { "Tanh",                  &MenohParser::ParseTanh },
-          { "MaxPool",               &MenohParser::ParseMaxPool },
-          { "AveragePool",           &MenohParser::ParseAvgPool },
-          { "GlobalMaxPool",         &MenohParser::ParseGlobalMaxPool },
-          { "GlobalAveragePool",     &MenohParser::ParseGlobalAvgPool },
+        const std::map<std::string, Parser::OperationParsingFunction> Parser::ms_OperationNameToParsingFunctions = {
+          { "Const",                 &Parser::ParseConst },
+          { "FC",                    &Parser::ParseFC },
+          { "Gemm",                  &Parser::ParseGemm },
+          { "Unsqueeze",             &Parser::ParseUnsqueeze },
+          { "Identity",              &Parser::ParseIdentity },
+          { "Sum",                   &Parser::ParseSum },
+          { "BatchNormalization",    &Parser::ParseBatchNormalization },
+          { "Conv",                  &Parser::ParseConv2D },
+          { "Concat",                &Parser::ParseConcat },
+          { "LRN",                   &Parser::ParseLrn },
+          { "Mul",                   &Parser::ParseMul },
+          { "Add",                   &Parser::ParseAdd },
+          { "Placeholder",           &Parser::ParsePlaceholder },
+          { "Relu",                  &Parser::ParseRelu },
+          { "Sigmoid",               &Parser::ParseSigmoid },
+          { "Softmax",               &Parser::ParseSoftmax },
+          { "Tanh",                  &Parser::ParseTanh },
+          { "MaxPool",               &Parser::ParseMaxPool },
+          { "AveragePool",           &Parser::ParseAvgPool },
+          { "GlobalMaxPool",         &Parser::ParseGlobalMaxPool },
+          { "GlobalAveragePool",     &Parser::ParseGlobalAvgPool },
         };
 
     } // namespace tensorrt_backend

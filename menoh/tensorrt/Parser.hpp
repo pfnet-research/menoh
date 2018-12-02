@@ -18,13 +18,11 @@ namespace menoh_impl {
 
         using BindingPointInfo = std::pair<int, TensorInfo>;
 
-        using LayerBindingId = int;
-        
-        class MenohParser;
+        class Parser;
 
         class ParsedMenohOperation {
         public:
-            ParsedMenohOperation(MenohParser* parser, const node& node)
+            ParsedMenohOperation(Parser* parser, const node& node)
             : m_Parser(parser)
             , m_Node(node){}
 
@@ -39,7 +37,7 @@ namespace menoh_impl {
             }
 
         protected:
-            MenohParser* m_Parser;
+            Parser* m_Parser;
             const node& m_Node;
         };
 
@@ -64,9 +62,9 @@ namespace menoh_impl {
         using OutputOfConstNodeDef = WithOutputTensorIndex<const node*>;
         using OutputId = WithOutputTensorIndex<std::string>;
 
-        class MenohParser {
+        class Parser {
         public:
-            MenohParser();
+            Parser();
 
             INetworkDefinition* CreateNetworkFromGraph(
                                 IBuilder* builder,
@@ -104,7 +102,6 @@ namespace menoh_impl {
             ParsedMenohOperationPtr ParseConcat(            const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseIdentity(          const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseLrn(               const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseMatMul(            const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseMul(               const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseAdd(               const menoh_impl::node& node, const menoh_impl::graph& graph);
             ParsedMenohOperationPtr ParseSum(               const menoh_impl::node& node, const menoh_impl::graph& graph);
@@ -128,7 +125,7 @@ namespace menoh_impl {
 
             INetworkDefinition* m_Network;
 
-            using OperationParsingFunction = ParsedMenohOperationPtr(MenohParser::*)(
+            using OperationParsingFunction = ParsedMenohOperationPtr(Parser::*)(
 						                     const menoh_impl::node& node, const menoh_impl::graph& graph);
 
             static const std::map<std::string, OperationParsingFunction> ms_OperationNameToParsingFunctions;
