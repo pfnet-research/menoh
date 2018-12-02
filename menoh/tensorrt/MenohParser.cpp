@@ -26,8 +26,8 @@ using namespace nvinfer1;
 #include <menoh/tensorrt/Exception.hpp>
 #include <menoh/tensorrt/Tensor.hpp>
 #include <menoh/tensorrt/TypesUtils.hpp>
+#include <menoh/tensorrt/Util.hpp>
 #include <menoh/tensorrt/MenohParser.hpp>
-#include <menoh/tensorrt/TensorRTUtil.hpp>
 
 namespace menoh_impl {
     namespace tensorrt_backend {
@@ -125,7 +125,7 @@ namespace menoh_impl {
             {
             }
 
-            ITensor* ResolveTensorRTOutputSlot(unsigned int MenohOutputIndex) override
+            ITensor* ResolveOutputSlot(unsigned int MenohOutputIndex) override
             {
                 BOOST_ASSERT(m_Layer);
                 if ((int)MenohOutputIndex >= m_Layer->getNbOutputs())
@@ -148,13 +148,13 @@ namespace menoh_impl {
             {
             }
 
-            ITensor* ResolveTensorRTOutputSlot(unsigned int MenohOutputIndex) override
+            ITensor* ResolveOutputSlot(unsigned int MenohOutputIndex) override
             {
                 if (!m_Layer)
                 {
                     CreateLayerDeferred();
                 }
-                return SingleLayerParsedMenohOperation::ResolveTensorRTOutputSlot(MenohOutputIndex);
+                return SingleLayerParsedMenohOperation::ResolveOutputSlot(MenohOutputIndex);
             }
 
         private:
@@ -292,10 +292,10 @@ namespace menoh_impl {
             {
             }
 
-            virtual ITensor* ResolveTensorRTOutputSlot(unsigned int MenohOutputIndex) override
+            virtual ITensor* ResolveOutputSlot(unsigned int MenohOutputIndex) override
             {
                 BOOST_ASSERT(m_Representative);
-                return m_Representative->ResolveTensorRTOutputSlot(MenohOutputIndex);
+                return m_Representative->ResolveOutputSlot(MenohOutputIndex);
             }
 
             virtual ParsedMenohOperation* ResolveIdentityOperations() override
@@ -596,10 +596,10 @@ namespace menoh_impl {
              || !HasParsedConstTensor<float>(GetNodeName(inputs[3].m_IndexedValue->GetNode()))
              || !HasParsedConstTensor<float>(GetNodeName(inputs[4].m_IndexedValue->GetNode())))
             {
-                throw ParseException("TensorRT only supports BatchNormalization layers with constant weights");
+                throw ParseException("only supports BatchNormalization layers with constant weights");
             }
 
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 
             ParsedConstMenohOperation<float>* scaleNode =
                 boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[1].m_IndexedValue);
@@ -663,7 +663,7 @@ namespace menoh_impl {
             if (!HasParsedConstTensor<float>(GetNodeName(inputs[1].m_IndexedValue->GetNode()))
                 || (numInputs == 3 && !HasParsedConstTensor<float>(GetNodeName(inputs[2].m_IndexedValue->GetNode()))))
             {
-                throw ParseException("TensorRT only supports Convolution layers with constant weights and biases");
+                throw ParseException("only supports Convolution layers with constant weights and biases");
             }
 
             ParsedConstMenohOperation<float>* weightNode =
@@ -682,7 +682,7 @@ namespace menoh_impl {
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
 
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 
 #ifdef TENSORRT_DEBUG
 	    std::cout << "     weight(" << weightTensor.GetNumDimensions() << ") = "
@@ -738,7 +738,7 @@ namespace menoh_impl {
             unsigned int numInputs = static_cast<unsigned int>(nodes.size());
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, numInputs);
 
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 
             auto axis = get<int>(node.attribute_table.at("axis"));
             axis += (axis<0) ? input0->getDimensions().nbDims : (-1);
@@ -748,7 +748,7 @@ namespace menoh_impl {
                 std::vector<ITensor*> itensors;
                 for(unsigned int i=0 ; i<numInputs ; i++ )
                 {
-                    itensors.push_back(inputs[i].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[i].m_Index));
+                    itensors.push_back(inputs[i].m_IndexedValue->ResolveOutputSlot(inputs[i].m_Index));
                 }
 
                 IConcatenationLayer* concat;
@@ -763,7 +763,7 @@ namespace menoh_impl {
             }
             else
             {
-                throw ParseException("TensorRT only supports Concat layers with legal axis");
+                throw ParseException("only supports Concat layers with legal axis");
             }
         }
 
@@ -772,7 +772,7 @@ namespace menoh_impl {
             std::string name = GetNodeName(node);
 
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 
             float alpha = ReadMandatoryNodeFloatAttribute(node, "alpha");
             float beta  = ReadMandatoryNodeFloatAttribute(node, "beta");
@@ -814,8 +814,8 @@ namespace menoh_impl {
             std::string name = GetNodeName(node);
 	    
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
-            ITensor* input1 = inputs[1].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[1].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
+            ITensor* input1 = inputs[1].m_IndexedValue->ResolveOutputSlot(inputs[1].m_Index);
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name = " << input0->getName() << std::endl;
             std::cout << "           input1.name = " << input1->getName() << std::endl;
@@ -835,8 +835,8 @@ namespace menoh_impl {
             std::string name = GetNodeName(node);
 	    
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
-            ITensor* input1 = inputs[1].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[1].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
+            ITensor* input1 = inputs[1].m_IndexedValue->ResolveOutputSlot(inputs[1].m_Index);
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name = " << input0->getName() << std::endl;
             std::cout << "           input1.name = " << input1->getName() << std::endl;
@@ -857,8 +857,8 @@ namespace menoh_impl {
             std::string name = GetNodeName(node);
 	    
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
-            ITensor* input1 = inputs[1].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[1].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
+            ITensor* input1 = inputs[1].m_IndexedValue->ResolveOutputSlot(inputs[1].m_Index);
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name = " << input0->getName() << std::endl;
             std::cout << "           input1.name = " << input1->getName() << std::endl;
@@ -954,7 +954,7 @@ namespace menoh_impl {
 
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
 
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name = " << input0->getName() << std::endl;
 #endif            
@@ -973,7 +973,7 @@ namespace menoh_impl {
             std::string name = GetNodeName(node);
 
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name = " << input0->getName() << std::endl;
 #endif            
@@ -999,7 +999,7 @@ namespace menoh_impl {
             {
                 throw ParseException("MaxPooling expects one input!");
             }
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
@@ -1049,7 +1049,7 @@ namespace menoh_impl {
             {
                 throw ParseException("AveragePooling expects one input!");
             }
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
@@ -1093,7 +1093,7 @@ namespace menoh_impl {
                 else
                 {
                     std::cerr << "Illeagl Pad " << std::endl;
-                    throw ParseException("TensorRT only supports AvgPool layers with legal pads");
+                    throw ParseException("only supports AvgPool layers with legal pads");
                 }
             }
 
@@ -1122,7 +1122,7 @@ namespace menoh_impl {
             {
               throw ParseException("GlobalMaxPooling expects one input!");
             }
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name  = " << input0->getName() << std::endl;
@@ -1152,7 +1152,7 @@ namespace menoh_impl {
             {
                 throw ParseException("GlobalAveragePooling expects one input!");
             }
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name  = " << input0->getName() << std::endl;
@@ -1176,10 +1176,10 @@ namespace menoh_impl {
         ILayer* MenohParser::AddFullyConnectedLayer(const menoh_impl::node& matMulNodeDef, 
                                                     const menoh_impl::node* addNodeDef, const char* name){
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(matMulNodeDef, 1);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 #ifdef TENSORRT_DEBUG
-            ITensor* input1 = inputs[1].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[1].m_Index);
-            ITensor* input2 = inputs[2].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[2].m_Index);
+            ITensor* input1 = inputs[1].m_IndexedValue->ResolveOutputSlot(inputs[1].m_Index);
+            ITensor* input2 = inputs[2].m_IndexedValue->ResolveOutputSlot(inputs[2].m_Index);
 
             std::cout << "           input0.name = " << input0->getName() << std::endl;
             std::cout << "           input1.name = " << input1->getName() << std::endl;
@@ -1199,7 +1199,7 @@ namespace menoh_impl {
                 }
                 else
                 {
-                    throw ParseException("TensorRT only supports fully connected layers with constant bias");
+                    throw ParseException("only supports fully connected layers with constant bias");
                 }
             }
 
@@ -1215,7 +1215,7 @@ namespace menoh_impl {
             }
             else
             {
-                throw ParseException("TensorRT only supports fully connected layers with constant weights");
+                throw ParseException("only supports fully connected layers with constant weights");
             }
 
             MenohVector<float> weightTensorData;
@@ -1245,10 +1245,10 @@ namespace menoh_impl {
 
         ILayer* MenohParser::AddFullyConnectedLayer(const menoh_impl::node& node, const char* name){
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 3);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 #ifdef TENSORRT_DEBUG
-            ITensor* input1 = inputs[1].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[1].m_Index);
-            ITensor* input2 = inputs[2].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[2].m_Index);
+            ITensor* input1 = inputs[1].m_IndexedValue->ResolveOutputSlot(inputs[1].m_Index);
+            ITensor* input2 = inputs[2].m_IndexedValue->ResolveOutputSlot(inputs[2].m_Index);
 
             std::cout << "           input0.name = " << input0->getName() << std::endl;
             std::cout << "           input1.name = " << input1->getName() << std::endl;
@@ -1288,10 +1288,10 @@ namespace menoh_impl {
             std::string name = GetNodeName(node);
             
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 3);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 #ifdef TENSORRT_DEBUG
-            ITensor* input1 = inputs[1].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[1].m_Index);
-            ITensor* input2 = inputs[2].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[2].m_Index);
+            ITensor* input1 = inputs[1].m_IndexedValue->ResolveOutputSlot(inputs[1].m_Index);
+            ITensor* input2 = inputs[2].m_IndexedValue->ResolveOutputSlot(inputs[2].m_Index);
 
             std::cout << "           input0.name = " << input0->getName() << std::endl;
             std::cout << "           input1.name = " << input1->getName() << std::endl;
@@ -1360,7 +1360,7 @@ namespace menoh_impl {
             std::string name = GetNodeName(node);
             
             std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
-            ITensor* input0 = inputs[0].m_IndexedValue->ResolveTensorRTOutputSlot(inputs[0].m_Index);
+            ITensor* input0 = inputs[0].m_IndexedValue->ResolveOutputSlot(inputs[0].m_Index);
 #ifdef TENSORRT_DEBUG
             std::cout << "           input0.name = " << input0->getName() << std::endl;
 #endif            
@@ -1375,7 +1375,7 @@ namespace menoh_impl {
             Dims new_shape;
             new_shape.nbDims = ndim_out;
             for( int i=0,j=0; i<new_shape.nbDims; ++i ) {
-                if( axes_set.count(j) == 0 ) {
+                if( axes_set.count(i) == 0 ) {
                     new_shape.d[i] = old_shape.d[j++];
                 } else {
                     new_shape.d[i] = 1;
@@ -1476,7 +1476,7 @@ namespace menoh_impl {
                 m_RequestedOutputs.push_back(GetNodeName(*node));
 	    
             std::vector<const menoh_impl::node*> sortedNodes;
-            if (!tensorRTUtil::GraphTopologicalSort<const menoh_impl::node*>(
+            if (!Util::GraphTopologicalSort<const menoh_impl::node*>(
                 targetNodes,
                 [this](const menoh_impl::node* node)
                 {

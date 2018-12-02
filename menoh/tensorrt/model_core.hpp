@@ -3,7 +3,7 @@
 
 #include <menoh/backend_config.hpp>
 
-#include <menoh/tensorrt/TensorRTInference.hpp>
+#include <menoh/tensorrt/Inference.hpp>
 
 namespace menoh_impl {
     namespace tensorrt_backend {
@@ -18,7 +18,7 @@ namespace menoh_impl {
         private:
             virtual void do_run() override;
 
-            TensorRTInference m_inference;
+            Inference m_inference;
         };
 
         model_core make_model_core(

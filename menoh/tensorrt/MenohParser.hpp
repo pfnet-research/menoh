@@ -32,7 +32,7 @@ namespace menoh_impl {
 
             const node& GetNode() const { return m_Node; }
 
-            virtual ITensor* ResolveTensorRTOutputSlot(unsigned int MenohOutputIndex) = 0;
+            virtual ITensor* ResolveOutputSlot(unsigned int MenohOutputIndex) = 0;
 
             virtual ParsedMenohOperation* ResolveIdentityOperations(){
                 return this;

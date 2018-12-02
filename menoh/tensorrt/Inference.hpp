@@ -53,10 +53,10 @@ namespace menoh_impl {
 	        , model_data_(model_data) {}
         };
 
-        class TensorRTInference {
+        class Inference {
         public:
 
-            TensorRTInference( const Params& param );
+            Inference( const Params& param );
 
             void Run();
 

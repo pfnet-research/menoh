@@ -8,4 +8,6 @@ Menoh TensorRT backend
 
   test models
     VGG16
+    VGG19
     Resnet-50
+    SqueezeNet

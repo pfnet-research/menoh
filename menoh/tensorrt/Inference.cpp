@@ -15,7 +15,7 @@
 #include <NvInfer.h>
 #include <cuda_runtime_api.h>
 
-#include <menoh/tensorrt/TensorRTInference.hpp>
+#include <menoh/tensorrt/Inference.hpp>
 
 using namespace nvinfer1;
 
@@ -30,7 +30,6 @@ using namespace nvinfer1;
         }                                         \
     } while (0)
 
-// Logger for TensorRT info/warning/errors
 class Logger : public nvinfer1::ILogger
 {
 public:
@@ -80,7 +79,7 @@ namespace menoh_impl {
             void printLayerTimes()
             {
                 float totalTime = 0;
-                printf("\n=== TensorRT Profiling ===\n");
+                printf("\n=== Profiling ===\n");
                 for (size_t i = 0; i < mProfile.size(); i++)
                 {
                     printf("  %-40.40s %4.3f ms\n", mProfile[i].first.c_str(), mProfile[i].second / TIMING_ITERATIONS);
@@ -92,7 +91,7 @@ namespace menoh_impl {
       
         static Logger gLogger;
 
-        TensorRTInference::TensorRTInference( const Params& params )
+        Inference::Inference( const Params& params )
           : m_Parser()
           , batchSize(params.batchSize)
           , maxBatchSize(params.maxBatchSize)
@@ -190,7 +189,7 @@ namespace menoh_impl {
         // Build
         // ==========================================================
 
-        void TensorRTInference::Build( menoh_impl::graph& graph,
+        void Inference::Build( menoh_impl::graph& graph,
                                        std::unordered_map<std::string, array> const& parameter_table,
                                        std::map<std::string, TensorShape>& inputShapes,
                                        std::vector<std::string>& requestedOutputs ) {
@@ -233,9 +232,9 @@ namespace menoh_impl {
         // Run
         // ==========================================================
 
-        void TensorRTInference::Run() {
+        void Inference::Run() {
 #ifdef TENSORRT_DEBUG
-            std::cout << "TensorRTInference::Run::start" << std::endl;
+            std::cout << "Inference::Run::start" << std::endl;
 #endif
             using clock = std::chrono::high_resolution_clock;
             auto start = clock::now();
@@ -286,7 +285,7 @@ namespace menoh_impl {
             gProfiler.printLayerTimes();
             
 #ifdef TENSORRT_DEBUG
-            std::cout << "TensorRTInference::Run::done" << std::endl;          
+            std::cout << "Inference::Run::done" << std::endl;          
 #endif
         }
 
@@ -294,19 +293,19 @@ namespace menoh_impl {
         // support methods
         // ==========================================================
 
-        void TensorRTInference::AllocateMemory(void** buffer, int size) {
+        void Inference::AllocateMemory(void** buffer, int size) {
             CHECK(cudaMalloc(buffer, size));
         }
 
-        void TensorRTInference::PushMemory(void* buffer, float* input, int size, cudaStream_t stream) {
+        void Inference::PushMemory(void* buffer, float* input, int size, cudaStream_t stream) {
             CHECK(cudaMemcpyAsync(buffer, input, size, cudaMemcpyHostToDevice, stream));
         }
       
-        void TensorRTInference::PullMemory(void* buffer, float* output, int size, cudaStream_t stream) {
+        void Inference::PullMemory(void* buffer, float* output, int size, cudaStream_t stream) {
             CHECK(cudaMemcpyAsync(output, buffer, size, cudaMemcpyDeviceToHost, stream));
         }
       
-        void TensorRTInference::FreeMemory(void* buffer) {
+        void Inference::FreeMemory(void* buffer) {
             CHECK(cudaFree(buffer));
         }
   

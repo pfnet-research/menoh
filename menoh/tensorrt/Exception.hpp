@@ -7,7 +7,6 @@
 namespace menoh_impl {
 namespace tensorrt_backend {
 
-// base class for all ArmNN exceptions so that users can filter to just those
 class Exception : public std::exception
 {
 public:
