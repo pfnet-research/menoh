@@ -197,11 +197,11 @@ namespace menoh_impl {
             builder = createInferBuilder(gLogger);
             assert(builder); 
 
-            m_Network = m_Parser.CreateNetworkFromGraph( builder,
-                                                         graph,
-                                                         parameter_table,
-                                                         inputShapes,
-                                                         requestedOutputs );
+            m_Network = m_Parser.CreateNetwork( builder,
+                                                graph,
+                                                parameter_table,
+                                                inputShapes,
+                                                requestedOutputs );
             assert(m_Network); 
 
 #ifdef TENSORRT_DEBUG

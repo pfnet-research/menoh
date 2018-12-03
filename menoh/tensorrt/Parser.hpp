@@ -20,19 +20,19 @@ namespace menoh_impl {
 
         class Parser;
 
-        class ParsedMenohOperation {
+        class Operation {
         public:
-            ParsedMenohOperation(Parser* parser, const node& node)
+            Operation(Parser* parser, const node& node)
             : m_Parser(parser)
             , m_Node(node){}
 
-            virtual ~ParsedMenohOperation() {};
+            virtual ~Operation() {};
 
             const node& GetNode() const { return m_Node; }
 
-            virtual ITensor* ResolveOutputSlot(unsigned int MenohOutputIndex) = 0;
+            virtual ITensor* Output(unsigned int index) = 0;
 
-            virtual ParsedMenohOperation* ResolveIdentityOperations(){
+            virtual Operation* IdentityOperations(){
                 return this;
             }
 
@@ -41,108 +41,98 @@ namespace menoh_impl {
             const node& m_Node;
         };
 
-        using ParsedMenohOperationPtr = std::unique_ptr<ParsedMenohOperation>;
+        using OperationPtr = std::unique_ptr<Operation>;
         
         template <typename T>
         struct WithOutputTensorIndex
         {
-            T                m_IndexedValue;
+            T                m_Value;
             unsigned int     m_Index;
 
             WithOutputTensorIndex(const T & value, unsigned int index)
-            : m_IndexedValue{value}
+            : m_Value{value}
             , m_Index{index} {}
 
             WithOutputTensorIndex(T && value, unsigned int index)
-            : m_IndexedValue{value}
+            : m_Value{value}
             , m_Index{index} {}
         };
 
-        using OutputOfParsedMenohOperation = WithOutputTensorIndex<ParsedMenohOperation *>;
+        using OutputOfOperation = WithOutputTensorIndex<Operation *>;
         using OutputOfConstNodeDef = WithOutputTensorIndex<const node*>;
-        using OutputId = WithOutputTensorIndex<std::string>;
 
         class Parser {
         public:
             Parser();
 
-            INetworkDefinition* CreateNetworkFromGraph(
+            INetworkDefinition* CreateNetwork(
                                 IBuilder* builder,
                                 const graph& menoh_graph,
                                 std::unordered_map<std::string, array> const& parameter_table,
                                 const std::map<std::string, TensorShape>& inputShapes,
                                 const std::vector<std::string>& requestedOutputs);
 
+            INetworkDefinition* Network();
+          
         private:
             template <typename T>
-            friend class ParsedConstMenohOperation;
-            friend class ParsedMatMulMenohOperation;
+            friend class ConstOperation;
 
-            void SetLayer(ILayer* layer);
+            void SetLayer(ILayer* layer, const menoh_impl::node &node);
             
             void LoadGraph(const graph& menoh_graph,
                           std::unordered_map<std::string, array> const& parameter_table);
       
-            void LoadNode(const node& menoh_node, const graph& menoh_graph);
+            void LoadNode(const node& menoh_node);
 
-            const node* ResolveIdentityNode(const node* menoh_node);
-            std::vector<OutputOfConstNodeDef> GetMenohInputNodes(const node& menoh_node) const;
-            std::vector<OutputOfParsedMenohOperation> GetInputParsedMenohOperationsChecked(const node& menoh_node,
-                                                                                    std::size_t expectedNumInputs);
+            std::vector<OutputOfConstNodeDef> InputNodes(const node& menoh_node) const;
+            std::vector<OutputOfOperation> InputCheck(const node& menoh_node, std::size_t expectedNumInputs);
+            ITensor* GetTensor(std::vector<OutputOfOperation>& inputs, int index);
 
             template<typename Type>
             bool HasParsedConstTensor(const std::string & nodeName) const;
 
-            ParsedMenohOperationPtr ParseConst(             const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseBatchNormalization(const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseFC(                const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseGemm(              const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseUnsqueeze(         const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseConv2D(            const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseConcat(            const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseIdentity(          const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseLrn(               const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseMul(               const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseAdd(               const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseSum(               const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParsePlaceholder(       const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseRelu(              const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseSigmoid(           const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseSoftmax(           const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseTanh(              const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseMaxPool(           const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseAvgPool(           const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseGlobalMaxPool(     const menoh_impl::node& node, const menoh_impl::graph& graph);
-            ParsedMenohOperationPtr ParseGlobalAvgPool(     const menoh_impl::node& node, const menoh_impl::graph& graph);
+            OperationPtr ParseConst(             const menoh_impl::node& node);
+            OperationPtr ParseBatchNormalization(const menoh_impl::node& node);
+            OperationPtr ParseFC(                const menoh_impl::node& node);
+            OperationPtr ParseGemm(              const menoh_impl::node& node);
+            OperationPtr ParseUnsqueeze(         const menoh_impl::node& node);
+            OperationPtr ParseConv2D(            const menoh_impl::node& node);
+            OperationPtr ParseConcat(            const menoh_impl::node& node);
+            OperationPtr ParseIdentity(          const menoh_impl::node& node);
+            OperationPtr ParseLrn(               const menoh_impl::node& node);
+            OperationPtr ParseMul(               const menoh_impl::node& node);
+            OperationPtr ParseAdd(               const menoh_impl::node& node);
+            OperationPtr ParseSum(               const menoh_impl::node& node);
+            OperationPtr ParsePlaceholder(       const menoh_impl::node& node);
+            OperationPtr ParseRelu(              const menoh_impl::node& node);
+            OperationPtr ParseSigmoid(           const menoh_impl::node& node);
+            OperationPtr ParseSoftmax(           const menoh_impl::node& node);
+            OperationPtr ParseTanh(              const menoh_impl::node& node);
+            OperationPtr ParseMaxPool(           const menoh_impl::node& node);
+            OperationPtr ParseAvgPool(           const menoh_impl::node& node);
+            OperationPtr ParseGlobalMaxPool(     const menoh_impl::node& node);
+            OperationPtr ParseGlobalAvgPool(     const menoh_impl::node& node);
 
-            ParsedMenohOperationPtr AddActivationLayer(     const menoh_impl::node& node, ActivationType activationType);
-	  
-            ILayer* AddFullyConnectedLayer(    const menoh_impl::node& matMulNodeDef, 
-                                               const menoh_impl::node* addNodeDef, const char* armnnLayerName);
-            ILayer* AddFullyConnectedLayer(    const menoh_impl::node& node, const char* armnnLayerName);
+            OperationPtr AddActivationLayer(     const menoh_impl::node& node, ActivationType activationType);
 
             void Cleanup();
 
             INetworkDefinition* m_Network;
 
-            using OperationParsingFunction = ParsedMenohOperationPtr(Parser::*)(
-						                     const menoh_impl::node& node, const menoh_impl::graph& graph);
+            using ParseFunction = OperationPtr(Parser::*)(const menoh_impl::node& node);
 
-            static const std::map<std::string, OperationParsingFunction> ms_OperationNameToParsingFunctions;
+            static const std::map<std::string, ParseFunction> m_Functions;
 
-            std::map<std::string, TensorShape> m_InputShapes;
-            std::vector<std::string> m_RequestedOutputs;
-            ILayer* m_Layer;
-            std::map<const char*, ILayer*> m_LayerMap;
+            std::map<std::string, TensorShape>            m_InputShapes;
+            std::vector<std::string>                      m_Outputs;
+            ILayer*                                       m_Layer;
+            std::map<const char*, ILayer*>                m_LayerMap;
 
-            std::unordered_map<std::string, const node*> m_NodesByName;
-            std::unordered_map<std::string, array> m_ParamByName;
+            std::unordered_map<std::string, const node*>  m_Nodes;
+            std::unordered_map<std::string, array>        m_Params;
+            std::unordered_map<std::string, OperationPtr> m_Operations;
 
-            std::unordered_map<std::string, ParsedMenohOperationPtr> m_ParsedMenohOperations;
-
-            std::unordered_map<std::string, BindingPointInfo> m_NetworkInputsBindingInfo;
-
-            std::unordered_map<std::string, BindingPointInfo> m_NetworkOutputsBindingInfo;                
         };
     
     } // namespace tensorrt_backend

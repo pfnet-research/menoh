@@ -21,7 +21,7 @@
 #include <menoh/tensorrt/Tensor.hpp>
 #include <menoh/tensorrt/TypesUtils.hpp>
 
-#include <menoh/tensorrt/MenohParser.hpp>
+#include <menoh/tensorrt/Parser.hpp>
 
 namespace menoh_impl {
     namespace tensorrt_backend {
@@ -72,7 +72,7 @@ namespace menoh_impl {
             void PullMemory(void* buffer, float* output, int size, cudaStream_t stream);
             void FreeMemory(void* buffer);
 
-            MenohParser         m_Parser;
+            Parser              m_Parser;
             int                 batchSize;
             int                 maxBatchSize;
 
