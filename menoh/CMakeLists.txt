@@ -55,7 +55,7 @@ if(NOT APPLE AND NOT MSVC)
         TARGET menoh APPEND_STRING PROPERTY
             LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif()
-target_link_libraries(menoh PUBLIC ${MKLDNN_LIBRARIES} onnx)
+target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES} onnx)
 if(LINK_STATIC_LIBGCC)
     target_link_libraries(menoh PRIVATE -static-libgcc)
 endif()
@@ -65,7 +65,7 @@ endif()
 
 # menoh_test_target: only used in `test` subdirectory
 add_library(menoh_test_target $<TARGET_OBJECTS:menoh_objlib>)
-target_link_libraries(menoh_test_target PUBLIC ${MKLDNN_LIBRARIES} onnx)
+target_link_libraries(menoh_test_target PRIVATE ${MKLDNN_LIBRARIES} onnx)
 
 install(TARGETS menoh
     RUNTIME DESTINATION "bin"
