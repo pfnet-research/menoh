@@ -62,7 +62,7 @@ auto load_category_list(std::string const& synset_words_path) {
 }
 
 int main(int argc, char** argv) {
-    std::cout << "squeezenet example" << std::endl;
+    std::cout << "densnet121 example" << std::endl;
 
     const std::string in_name  = "data_0";
     const std::string out_name = "fc6_1";
