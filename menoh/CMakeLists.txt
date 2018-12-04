@@ -41,9 +41,9 @@ add_library(menoh_objlib OBJECT
 set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 add_dependencies(menoh_objlib gen_onnx_proto) # custom target defined in onnx
 target_include_directories(menoh_objlib PUBLIC
-    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:${ONNX_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:${MKLDNN_INCLUDE_DIR}>
 )
