@@ -8,7 +8,6 @@
 using namespace nvinfer1;
 
 #include <menoh/tensorrt/Exception.hpp>
-#include <menoh/tensorrt/GraphTopologicalSort.hpp>
 #include <menoh/tensorrt/Parser.hpp>
 
 namespace menoh_impl {
@@ -868,26 +867,11 @@ namespace menoh_impl {
                     throw ParseException("Couldn't find requested output node '" + name + "' in graph");
             }
 
-            std::vector<const menoh_impl::node*> sortedNodes;
-            if (!armnnUtils::GraphTopologicalSort<const menoh_impl::node*>(
-                outputNodes,
-                [this](const menoh_impl::node* node)
-                {
-                    auto outputs = InputNodes(*node);
-                    std::vector<const menoh_impl::node*> nodesOnly;
-                    for (const auto & o : outputs) {
-                        nodesOnly.push_back(o.m_Value);
-                    }
-                    return nodesOnly;
-                },
-                sortedNodes))
-            {
-                throw ParseException("Cycle detected in graph");
-            }
+            auto sorted_graph = make_graph(graph.node_list());
 
-            for (const auto& it : sortedNodes)
+            for( unsigned int i=0; i<sorted_graph.node_list().size(); ++i)
             {
-                LoadNode(*it);
+                 LoadNode(graph.node_list().at(i));
             }
 
 #ifdef TENSORRT_DEBUG
