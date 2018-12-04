@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
     auto synset_words_path = a.get<std::string>("synset_words");
 
     cv::Mat image_mat =
-      cv::imread(input_image_path.c_str(), CV_LOAD_IMAGE_COLOR);
+      cv::imread(input_image_path.c_str(), cv::IMREAD_COLOR);
     if(!image_mat.data) {
         throw std::runtime_error("Invalid input image path: " +
                                  input_image_path);
@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
 
     // Build model
     auto model = model_builder.build_model(
-      model_data, "combinated_backends",
+      model_data, "composite_backend",
       R"({"backends":[{"type":"mkldnn"}, {"type":"generic"}], "log_output":"stdout"})");
     model_data
       .reset(); // you can delete model_data explicitly after model building

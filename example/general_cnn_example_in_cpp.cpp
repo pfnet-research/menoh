@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     auto onnx_model_path = a.get<std::string>("model");
 
     cv::Mat image_mat =
-      cv::imread(input_image_path.c_str(), CV_LOAD_IMAGE_COLOR);
+      cv::imread(input_image_path.c_str(), cv::IMREAD_COLOR);
     if(!image_mat.data) {
         throw std::runtime_error("Invalid input image path: " +
                                  input_image_path);
