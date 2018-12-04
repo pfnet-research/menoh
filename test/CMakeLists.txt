@@ -30,9 +30,9 @@ add_executable(menoh_test
 )
 
 target_include_directories(menoh_test PUBLIC
-    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
     "${PROJECT_SOURCE_DIR}"
     "${PROJECT_SOURCE_DIR}/include"
+    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
     "${ONNX_INCLUDE_DIRS}"
     "${FILESYSTEM_DIR}")
 
