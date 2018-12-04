@@ -104,6 +104,7 @@ set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 
 if(${ENABLE_TEST})
     message(STATUS "Adding test")
+    enable_testing()
     add_subdirectory(test)
 endif()
 

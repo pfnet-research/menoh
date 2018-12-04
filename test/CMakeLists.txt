@@ -48,4 +48,4 @@ if(UNIX AND NOT APPLE)
             LINK_FLAGS "-Wl,--disable-new-dtags")
 endif()
 
-#add_test(NAME menoh_test COMMAND menoh_test)
+add_test(NAME menoh_test COMMAND menoh_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
