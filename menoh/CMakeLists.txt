@@ -45,6 +45,7 @@ target_include_directories(menoh_objlib PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${ONNX_INCLUDE_DIRS}>
+    $<BUILD_INTERFACE:${MKLDNN_INCLUDE_DIR}>
 )
 
 # menoh
