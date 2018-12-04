@@ -4,13 +4,13 @@
 #include <menoh/array.hpp>
 #include <menoh/exception.hpp>
 #include <menoh/graph.hpp>
-#include <menoh/json.hpp>
 #include <menoh/utility.hpp>
 
 #include <NvInfer.h>
 #include <cuda_runtime_api.h>
 
 #include <menoh/tensorrt/Inference.hpp>
+#include <menoh/tensorrt/Exception.hpp>
 
 using namespace nvinfer1;
 
@@ -94,6 +94,10 @@ namespace menoh_impl {
           , builder(nullptr)
           , engine(nullptr)
           , context(nullptr)
+          , input_name{}
+          , output_name{}
+          , m_Input{}
+          , m_Output{}
         {
             menoh_impl::model_data const& model_data = *(params.model_data_);
 
@@ -182,10 +186,6 @@ namespace menoh_impl {
             Build( graph, parameter_table, output_name );
         }
 
-        // ==========================================================
-        // Build
-        // ==========================================================
-
         void Inference::Build( menoh_impl::graph& graph,
                                std::unordered_map<std::string, array> const& parameter_table,
                                std::vector<std::string>& outputs ) {
@@ -207,18 +207,21 @@ namespace menoh_impl {
             builder->setFp16Mode(false);
             builder->setDebugSync(false);
 
-            {
-                std::cout << "buildCudaEngine::start" << std::endl;
-                using clock = std::chrono::high_resolution_clock;
-                auto start = clock::now();
-                engine = builder->buildCudaEngine(*m_Network);
-                auto end = clock::now();
-                std::cout << "buildCudaEngine = "
-                          << std::chrono::duration_cast<std::chrono::milliseconds>(end -start).count()/1000.0
-                          << " sec" << std::endl;
-                std::cout << "buildCudaEngine::done" << std::endl;
-                assert(engine);
-            }
+            std::cout << "buildCudaEngine::start" << std::endl;
+            using clock = std::chrono::high_resolution_clock;
+            auto start = clock::now();
+            engine = builder->buildCudaEngine(*m_Network);
+            assert(engine);
+            auto end = clock::now();
+            std::cout << "buildCudaEngine = "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(end -start).count()/1000.0
+                      << " sec" << std::endl;
+            std::cout << "buildCudaEngine::done" << std::endl;
+
+            context = engine->createExecutionContext();
+            assert(context);
+
+            context->setProfiler(&gProfiler);
         }
   
         // ==========================================================
@@ -226,16 +229,8 @@ namespace menoh_impl {
         // ==========================================================
 
         void Inference::Run() {
-#ifdef TENSORRT_DEBUG
+
             std::cout << "Inference::Run::start" << std::endl;
-#endif
-            using clock = std::chrono::high_resolution_clock;
-            auto start = clock::now();
-
-            context = engine->createExecutionContext();
-            assert(context);
-
-            context->setProfiler(&gProfiler);
 
             auto input_map  = m_Input[ input_name[0].c_str()];
             auto output_map = m_Output[output_name[0].c_str()];
@@ -246,6 +241,9 @@ namespace menoh_impl {
 #ifdef TENSORRT_DEBUG
             std::cout << "Run, input_size = " << input_size << ", output_size = " << output_size << std::endl;            
 #endif
+            using clock = std::chrono::high_resolution_clock;
+            auto start = clock::now();
+
             {
                 void* buffers[2];
                 CHECK(cudaMalloc(&buffers[0], input_size));
@@ -266,20 +264,26 @@ namespace menoh_impl {
                 CHECK(cudaFree(buffers[1]));
             }
 
-            context->destroy();
-            engine->destroy();
-            builder->destroy();
-
             auto end = clock::now();
             std::cout << "Run time = "
                       << std::chrono::duration_cast<std::chrono::milliseconds>(end -start).count()/1000.0
                       << " sec" << std::endl;
 
             gProfiler.printLayerTimes();
-            
-#ifdef TENSORRT_DEBUG
+
+            Clear();
+
             std::cout << "Inference::Run::done" << std::endl;          
-#endif
         }
+
+        void Inference::Clear(){
+            if(context)
+                context->destroy();
+            if(engine)
+                engine->destroy();
+            if(builder)
+                builder->destroy();
+        }
+
     } // namespace tensorrt_backend
 } // namespace menoh_impl

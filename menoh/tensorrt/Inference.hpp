@@ -5,7 +5,6 @@
 #include <menoh/model_core.hpp>
 #include <menoh/model_data.hpp>
 
-#include <menoh/tensorrt/Exception.hpp>
 #include <menoh/tensorrt/Parser.hpp>
 
 namespace menoh_impl {
@@ -13,19 +12,6 @@ namespace menoh_impl {
 
         struct Params
         {
-            int batchSize;
-            int maxBatchSize; 
-            std::unordered_map<std::string, array> const* input_table_;
-            std::unordered_map<std::string, array> const* output_table_;
-            menoh_impl::model_data const* model_data_;
-
-            Params()
-            : batchSize(1)
-	        , maxBatchSize(1)
-	        , input_table_(nullptr)
-	        , output_table_(nullptr)
-	        , model_data_(nullptr) {}
-
             Params(
                 std::unordered_map<std::string, array> const* input_table,
                 std::unordered_map<std::string, array> const* output_table,
@@ -36,25 +22,27 @@ namespace menoh_impl {
 	        , input_table_(input_table)
                 , output_table_(output_table)
 	        , model_data_(model_data) {}
+
+            int batchSize;
+            int maxBatchSize; 
+            std::unordered_map<std::string, array> const* input_table_;
+            std::unordered_map<std::string, array> const* output_table_;
+            menoh_impl::model_data const* model_data_;
         };
 
         class Inference {
         public:
 
-            Inference( const Params& param );
+            Inference(const Params& param);
 
             void Run();
+            void Clear();
 
         private:
 
-            void Build( graph& menoh_graph,
-                        std::unordered_map<std::string, array> const& parameter_table,
-                        std::vector<std::string>& outputs );
-
-            void AllocateMemory(void** buffer, int size);
-            void PushMemory(void* buffer, float* input,  int size, cudaStream_t stream);
-            void PullMemory(void* buffer, float* output, int size, cudaStream_t stream);
-            void FreeMemory(void* buffer);
+            void Build(graph& menoh_graph,
+                       std::unordered_map<std::string, array> const& parameter_table,
+                       std::vector<std::string>& outputs);
 
             Parser              m_Parser;
             int                 batchSize;
@@ -70,7 +58,6 @@ namespace menoh_impl {
 
             std::unordered_map<std::string, array> m_Input;
             std::unordered_map<std::string, array> m_Output;
-
         };
 
     } // namespace tensorrt_backend
