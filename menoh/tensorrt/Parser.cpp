@@ -375,8 +375,8 @@ namespace menoh_impl {
 
             ConstOperation<float>* weightNode = static_cast<ConstOperation<float>*>(inputs[1].m_Value);
             Weights& weight = weightNode->getWeights();
-            Weights bias{weight.type, nullptr, 0};
             
+            Weights bias{weight.type, nullptr, 0};
             if(numInputs == 3){
                 ConstOperation<float>* biasNode = static_cast<ConstOperation<float>*>(inputs[2].m_Value);
                 Weights& w_bias = biasNode->getWeights();
