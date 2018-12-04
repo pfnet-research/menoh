@@ -2,7 +2,6 @@
 #define EXCEPTION_HPP
 
 #include <string>
-#include <sstream>
 
 namespace menoh_impl {
 namespace tensorrt_backend {

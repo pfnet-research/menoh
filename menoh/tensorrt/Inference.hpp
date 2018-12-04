@@ -1,26 +1,11 @@
 #ifndef TENSORRT_INFERENCE_HPP
 #define TENSORRT_INFERENCE_HPP
 
-#include <string>
-#include <unordered_map>
-#include <vector>
-
 #include <menoh/array.hpp>
 #include <menoh/model_core.hpp>
 #include <menoh/model_data.hpp>
 
-#include <boost/assert.hpp>
-#include <boost/format.hpp>
-#include <boost/core/ignore_unused.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/numeric/conversion/cast.hpp>
-#include <boost/polymorphic_cast.hpp>
-#include <boost/exception/exception.hpp>
-#include <boost/exception/diagnostic_information.hpp>
-
-#include <menoh/tensorrt/Tensor.hpp>
-#include <menoh/tensorrt/TypesUtils.hpp>
-
+#include <menoh/tensorrt/Exception.hpp>
 #include <menoh/tensorrt/Parser.hpp>
 
 namespace menoh_impl {
@@ -64,8 +49,7 @@ namespace menoh_impl {
 
             void Build( graph& menoh_graph,
                         std::unordered_map<std::string, array> const& parameter_table,
-                        std::map<std::string, TensorShape>& inputShapes,
-                        std::vector<std::string>& requestedOutputs );
+                        std::vector<std::string>& outputs );
 
             void AllocateMemory(void** buffer, int size);
             void PushMemory(void* buffer, float* input,  int size, cudaStream_t stream);
@@ -81,8 +65,8 @@ namespace menoh_impl {
             ICudaEngine         *engine;
             IExecutionContext   *context;
 
-            std::vector<std::string> input_name_list;
-            std::vector<std::string> output_name_sorted_list;
+            std::vector<std::string> input_name;
+            std::vector<std::string> output_name;
 
             std::unordered_map<std::string, array> m_Input;
             std::unordered_map<std::string, array> m_Output;

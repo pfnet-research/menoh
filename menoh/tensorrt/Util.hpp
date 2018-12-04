@@ -1,7 +1,5 @@
 #pragma once
 
-#include <boost/assert.hpp>
-
 #include <functional>
 #include <map>
 #include <vector>
@@ -38,7 +36,7 @@ bool Visit(
         }
         else
         {
-            BOOST_ASSERT(false);
+            assert(0);
         }
     }
 

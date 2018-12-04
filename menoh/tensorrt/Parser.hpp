@@ -9,14 +9,20 @@
 #include <menoh/model_core.hpp>
 #include <menoh/model_data.hpp>
 
-#include "Tensor.hpp"
-
 using namespace nvinfer1;
 
 namespace menoh_impl {
     namespace tensorrt_backend {
 
-        using BindingPointInfo = std::pair<int, TensorInfo>;
+        constexpr unsigned int GetDataTypeSize(DataType dataType)
+        {
+            switch (dataType)
+            {
+                case DataType::kINT32:
+                case DataType::kFLOAT:     return 4U;
+                default:                   return 0U;
+            }
+        }
 
         class Parser;
 
@@ -62,15 +68,18 @@ namespace menoh_impl {
         using OutputOfConstNodeDef = WithOutputTensorIndex<const node*>;
 
         class Parser {
+
         public:
-            Parser();
+            Parser()
+              : m_Network()
+              , m_Layer()
+            {}
 
             INetworkDefinition* CreateNetwork(
                                 IBuilder* builder,
                                 const graph& menoh_graph,
                                 std::unordered_map<std::string, array> const& parameter_table,
-                                const std::map<std::string, TensorShape>& inputShapes,
-                                const std::vector<std::string>& requestedOutputs);
+                                const std::vector<std::string>& outputs);
 
             INetworkDefinition* Network();
           
@@ -80,18 +89,18 @@ namespace menoh_impl {
 
             void SetLayer(ILayer* layer, const menoh_impl::node &node);
             
-            void LoadGraph(const graph& menoh_graph,
-                          std::unordered_map<std::string, array> const& parameter_table);
-      
+            void LoadParameter(std::unordered_map<std::string, array> const& parameter_table);
             void LoadNode(const node& menoh_node);
+            void LoadGraph(const graph& menoh_graph);
 
             std::vector<OutputOfConstNodeDef> InputNodes(const node& menoh_node) const;
             std::vector<OutputOfOperation> InputCheck(const node& menoh_node, std::size_t expectedNumInputs);
-            ITensor* GetTensor(std::vector<OutputOfOperation>& inputs, int index);
-
+            ITensor* GetTensor(OutputOfOperation& input);
+          
             template<typename Type>
-            bool HasParsedConstTensor(const std::string & nodeName) const;
-
+            bool HasParsedConstTensor(const std::string& nodeName) const;
+            bool HasParsedConstTensor(OutputOfOperation& input);
+          
             OperationPtr ParseConst(             const menoh_impl::node& node);
             OperationPtr ParseBatchNormalization(const menoh_impl::node& node);
             OperationPtr ParseFC(                const menoh_impl::node& node);
@@ -114,25 +123,23 @@ namespace menoh_impl {
             OperationPtr ParseGlobalMaxPool(     const menoh_impl::node& node);
             OperationPtr ParseGlobalAvgPool(     const menoh_impl::node& node);
 
+            OperationPtr ParseElementWise(       const menoh_impl::node& node, ElementWiseOperation op);
+            OperationPtr ParseGlobalPool(        const menoh_impl::node& node, PoolingType type);
             OperationPtr AddActivationLayer(     const menoh_impl::node& node, ActivationType activationType);
 
             void Cleanup();
-
-            INetworkDefinition* m_Network;
 
             using ParseFunction = OperationPtr(Parser::*)(const menoh_impl::node& node);
 
             static const std::map<std::string, ParseFunction> m_Functions;
 
-            std::map<std::string, TensorShape>            m_InputShapes;
-            std::vector<std::string>                      m_Outputs;
+            INetworkDefinition*                           m_Network;
             ILayer*                                       m_Layer;
-            std::map<const char*, ILayer*>                m_LayerMap;
 
+            std::vector<std::string>                      m_Outputs;
             std::unordered_map<std::string, const node*>  m_Nodes;
             std::unordered_map<std::string, array>        m_Params;
             std::unordered_map<std::string, OperationPtr> m_Operations;
-
         };
     
     } // namespace tensorrt_backend
