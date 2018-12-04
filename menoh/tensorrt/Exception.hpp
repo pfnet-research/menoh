@@ -14,7 +14,7 @@ public:
     virtual const char* what() const noexcept override;
 
 private:
-    std::string m_Message;
+    std::string msg;
 };
 
 class InvalidArgumentException : public Exception

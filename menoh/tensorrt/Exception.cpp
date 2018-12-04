@@ -6,13 +6,13 @@ namespace menoh_impl {
 namespace tensorrt_backend {
 
 Exception::Exception(const std::string& message)
-: m_Message(message)
+: msg(message)
 {
 }
 
 const char* Exception::what() const noexcept
 {
-    return m_Message.c_str();
+    return msg.c_str();
 }
 
 } // namespace tensorrt_backend

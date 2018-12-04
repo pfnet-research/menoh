@@ -8,7 +8,7 @@
 using namespace nvinfer1;
 
 #include <menoh/tensorrt/Exception.hpp>
-#include <menoh/tensorrt/Util.hpp>
+#include <menoh/tensorrt/GraphTopologicalSort.hpp>
 #include <menoh/tensorrt/Parser.hpp>
 
 namespace menoh_impl {
@@ -869,7 +869,7 @@ namespace menoh_impl {
             }
 
             std::vector<const menoh_impl::node*> sortedNodes;
-            if (!Util::GraphTopologicalSort<const menoh_impl::node*>(
+            if (!armnnUtils::GraphTopologicalSort<const menoh_impl::node*>(
                 outputNodes,
                 [this](const menoh_impl::node* node)
                 {
