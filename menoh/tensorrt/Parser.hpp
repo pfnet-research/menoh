@@ -98,8 +98,8 @@ namespace menoh_impl {
             ITensor* GetTensor(OutputOfOperation& input);
           
             template<typename Type>
-            bool HasParsedConstTensor(const std::string& nodeName) const;
-            bool HasParsedConstTensor(OutputOfOperation& input);
+            bool HasParsedConst(const std::string& nodeName) const;
+            bool HasParsedConst(OutputOfOperation& input);
           
             OperationPtr ParseConst(             const menoh_impl::node& node);
             OperationPtr ParseBatchNormalization(const menoh_impl::node& node);

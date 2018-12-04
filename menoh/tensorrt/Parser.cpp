@@ -165,45 +165,32 @@ namespace menoh_impl {
             ConstOperation(Parser* parser, const menoh_impl::node& node,
                            const T* data, const DataType dataType, const Dims& dims, int64_t numElements)
               : SingleLayerOperation(parser, node, nullptr)
-                , name(NodeName(node))
-                , dimentions(dims)
-                , weights{dataType, data, numElements}
-            {
-            }
-
-            void CreateLayerDeferred()
-            {
-                assert(m_Layer == nullptr);
-                IConstantLayer* const1;
-                const1 = m_Parser->Network()->addConstant(dimentions, weights);
-                const1->setName(name.c_str());
-                const1->getOutput(0)->setName(TensorName(name).c_str());
-                m_Layer = const1;
-            }
-
-            Weights& getWeights() { 
-                return weights;
-            }
+              , dimentions(dims)
+              , weights{dataType, data, numElements}
+            {}
 
             Dims& getDims(){
                 return dimentions;
             }            
 
+            Weights& getWeights() { 
+                return weights;
+            }
+
         private:
-            std::string name;
             Dims dimentions;
             Weights weights;
         };      
 
         template<typename Type>
-        bool Parser::HasParsedConstTensor(const std::string & nodeName) const {
+        bool Parser::HasParsedConst(const std::string & nodeName) const {
             auto it = m_Operations.find(nodeName);
             return (it != m_Operations.end() &&
                     dynamic_cast<ConstOperation<Type>*>(it->second.get()) != nullptr);
         }
 
-        bool Parser::HasParsedConstTensor(OutputOfOperation& input) {
-            return HasParsedConstTensor<float>(NodeName(input.m_Value->GetNode()));
+        bool Parser::HasParsedConst(OutputOfOperation& input) {
+            return HasParsedConst<float>(NodeName(input.m_Value->GetNode()));
         }
 
         OperationPtr Parser::ParseConst(const menoh_impl::node& node) {
