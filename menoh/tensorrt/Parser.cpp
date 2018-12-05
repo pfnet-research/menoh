@@ -259,8 +259,8 @@ namespace menoh_impl {
             unsigned int numInputs = static_cast<unsigned int>(nodes.size());
             std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
 
-            if (!HasParsedConstTensor(inputs[1]) || !HasParsedConstTensor(inputs[2])
-             || !HasParsedConstTensor(inputs[3]) || !HasParsedConstTensor(inputs[4]))
+            if (!HasParsedConst(inputs[1]) || !HasParsedConst(inputs[2])
+             || !HasParsedConst(inputs[3]) || !HasParsedConst(inputs[4]))
             {
                 throw ParseException("only supports BatchNormalization layers with constant weights");
             }
@@ -340,8 +340,7 @@ namespace menoh_impl {
             unsigned int numInputs = static_cast<unsigned int>(nodes.size());
             std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
 
-            if (!HasParsedConstTensor(inputs[1])
-                || (numInputs == 3 && !HasParsedConstTensor(inputs[2])))
+            if (!HasParsedConst(inputs[1]) || (numInputs == 3 && !HasParsedConst(inputs[2])))
             {
                 throw ParseException("only supports Convolution layers with constant weights and biases");
             }
