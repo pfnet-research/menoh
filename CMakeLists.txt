@@ -7,8 +7,8 @@ set(MENOH_MINOR_VERSION 2)
 set(MENOH_PATCH_VERSION 0)
 
 # Options
-option(ENABLE_MKLDNN    "Use MKLDNN"      OFF)
-option(ENABLE_TENSORRT  "Use TensorRT"    ON)
+option(ENABLE_MKLDNN    "Use MKLDNN"      ON)
+option(ENABLE_TENSORRT  "Use TensorRT"    OFF)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
 
@@ -19,16 +19,21 @@ option(ENABLE_TEST      "Build test"      OFF)
 option(ENABLE_BENCHMARK "Build benchmark" ON)
 option(ENABLE_EXAMPLE   "Build example"   ON)
 
+option(BUILD_SHARED_LIBS "Build shared libs" ON)
+
 option(SHOW_ALL_VARIABLES "Debug: show all variables" OFF)
 
-# C++ setup
+## C++ setup
 set(CMAKE_CXX_STANDARD 14)
+
+## Build type
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     message(STATUS "CMAKE_BUILD_TYPE is unset, defaulting to Release")
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+## Compiler dependent options
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     # using Clang
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
@@ -43,23 +48,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DTENSORRT")
 endif()
 
-# Configure to use the new `libstdc++` ABI
+## Configure to use the new `libstdc++` ABI
 if(USE_OLD_GLIBCXX_ABI)
     message(STATUS "Set _GLIBCXX_USE_CXX11_ABI macro to 0")
     add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 endif()
 
-include_directories("${PROJECT_SOURCE_DIR}")
-include_directories("${PROJECT_SOURCE_DIR}/include")
-
-set(EXTERNAL_DIR ${CMAKE_SOURCE_DIR}/external)
+set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(DOWNLOAD_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/downloads CACHE PATH "A directory to save the downloaded files.")
 mark_as_advanced(DOWNLOAD_LOCATION)
 
-# Enable ExternalProject_Add
-include(ExternalProject)
-
-# Setup protobuf (it is used in ONNX and Menoh)
+## Setup protobuf (it is used in ONNX and Menoh)
 if(LINK_STATIC_LIBPROTOBUF)
     # Note: We can't use `set(PROTOBUF_BUILD_SHARED_LIBS OFF)` in `FindProtobuf` module
     # because `libprotobuf.a` produced by the package manager is not PIC. So we need to
@@ -87,11 +86,17 @@ else()
     endif()
 endif()
 
-# Build libonnx.a
+## Setup git
+find_package(Git)
+if(NOT GIT_FOUND)
+    message(FATAL_ERROR "git not found")
+endif()
+
+## Build libonnx.a
 message(STATUS "Adding external/onnx")
 
 set(ONNX_SRC_DIR ${EXTERNAL_DIR}/onnx)
-execute_process(COMMAND git submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # see https://github.com/onnx/onnx/pull/1466
 message(STATUS "Patching to external/onnx")
@@ -99,57 +104,24 @@ configure_file(${EXTERNAL_DIR}/onnx-v1.3.0-patch_CMakeLists.txt ${EXTERNAL_DIR}/
 
 # TODO: enable the following option when it is ready for migrating to onnx-ml
 #set(ONNX_ML 1)
-add_subdirectory(external/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
-include_directories("${ONNX_INCLUDE_DIRS}")
 
-if(ENABLE_MKLDNN)
-    # Setup MKLDNN
-    find_package(MKLDNN "0.14")
-    if (NOT MKLDNN_FOUND)
-        message(FATAL_ERROR "MKLDNN is not found")
-    endif()
+set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(${EXTERNAL_DIR}/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
+set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 
-    include_directories("${MKLDNN_INCLUDE_DIR}")
-
-    if(${ENABLE_TEST})
-        message(STATUS "# add_subdirectory\(test\)")
-        add_subdirectory(test)
-    endif()
-
-    if(${ENABLE_BENCHMARK})
-        message(STATUS "# add_subdirectory\(benchmark\)")
-        add_subdirectory(benchmark)
-    endif()
-
-    if(${ENABLE_EXAMPLE})
-        message(STATUS "# add_subdirectory\(example\)")
-        add_subdirectory(example)
-    endif()
+if(${ENABLE_TEST})
+    message(STATUS "Adding test")
+    enable_testing()
+    add_subdirectory(test)
 endif()
 
-if (ENABLE_TENSORRT)
-    find_package(TensorRT)
-    if (NOT TENSORRT_FOUND)
-	message(FATAL_ERROR "TensorRT is not found")
-    endif()
-
-    include_directories(${TENSORRT_INCLUDE_DIRS})
-
-    find_package(CUDA "10" REQUIRED)
-    include_directories("${CUDA_INCLUDE_DIRS}")
-
-    if(ENABLE_BENCHMARK)
-        message(STATUS "# add_subdirectory\(benchmark\)")
-        add_subdirectory(benchmark)
-    endif()
-
-    if(${ENABLE_EXAMPLE})
-        message(STATUS "# add_subdirectory\(example\)")
-        add_subdirectory(example)
-    endif()
-
+if(${ENABLE_EXAMPLE})
+    message(STATUS "# add_subdirectory\(example\)")
+    add_subdirectory(example)
 endif()
 
+## Build libmenoh
 message(STATUS "Adding menoh")
 add_subdirectory(menoh)
 

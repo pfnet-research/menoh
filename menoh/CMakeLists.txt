@@ -1,53 +1,103 @@
-# Options
-option(LINK_STATIC_LIBGCC "Link static libgcc to libmenoh" OFF)
-option(LINK_STATIC_LIBSTDCXX "Link static libstdc++ to libmenoh" OFF)
-
-# Note: The libraries can be static (.a) or shared (.so)
-if(NOT DEFINED PROTOBUF_LIBRARIES)
-    message(FATAL_ERROR "PROTOBUF_LIBRARIES is not found")
-endif()
-if (ENABLE_MKLDNN)
-    if(NOT DEFINED MKLDNN_LIBRARIES)
-        message(FATAL_ERROR "MKLDNN_LIBRARIES is not found")
-    endif()
-endif()
-
-if (ENABLE_MKLDNN)
-    file(GLOB MKLDNN_SOURCES "mkldnn/*.cpp")
-endif()
-
-if (ENABLE_TENSORRT)
-    add_definitions(-DENABLE_TENSORRT)
-    file(GLOB TENSORRT_SOURCES "tensorrt/*.cpp")
-endif()
-
-file(GLOB MENOH_SOURCES "./*.cpp")
-
-set(SOURCES ${ONNX_PROTO_SRC} ${ONNX_PROTO_HEADER} ${MKLDNN_SOURCES} ${TENSORRT_SOURCES} ${MENOH_SOURCES})
+option(LINK_STATIC_LIBGCC OFF)
+option(LINK_STATIC_LIBSTDCXX OFF)
 
 # Create a object library for generating shared library
-add_library(menoh_objlib OBJECT ${SOURCES})
-
+add_library(menoh_objlib OBJECT)
+set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 add_dependencies(menoh_objlib gen_onnx_proto) # custom target defined in onnx
-target_include_directories(menoh_objlib PUBLIC $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
+target_sources(menoh_objlib PRIVATE
+    array.cpp
+    dims.cpp
+    dtype.cpp
+    graph.cpp
+    menoh.cpp
+    model_core.cpp
+    model_core_factory.cpp
+    node.cpp
+    onnx.cpp
+)
+target_include_directories(menoh_objlib PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
+    $<BUILD_INTERFACE:${ONNX_INCLUDE_DIRS}>
+)
 
-set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-include(ConfigureMenoh)
-
-# menoh
-add_library(menoh SHARED $<TARGET_OBJECTS:menoh_objlib>)
+add_library(menoh $<TARGET_OBJECTS:menoh_objlib>)
 if(NOT APPLE AND NOT MSVC)
     # Remove private symbols (Note: it works in MINGW but not in MSVC)
-    set_property(
-        TARGET menoh APPEND_STRING PROPERTY
+    set_target_properties(
+        menoh PROPERTIES
             LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif()
-menoh_link_libraries(menoh PRIVATE)
+if(LINK_STATIC_LIBGCC)
+    target_link_libraries(menoh PRIVATE -static-libgcc)
+endif()
+if(LINK_STATIC_LIBSTDCXX)
+    target_link_libraries(menoh PRIVATE -static-libstdc++)
+endif()
+target_link_libraries(menoh PRIVATE onnx)
 
-# menoh_test_target: only used in `test` subdirectory
-add_library(menoh_test_target SHARED $<TARGET_OBJECTS:menoh_objlib>)
-menoh_link_libraries(menoh_test_target PRIVATE)
+add_library(menoh_test_target $<TARGET_OBJECTS:menoh_objlib>)
+target_link_libraries(menoh_test_target PRIVATE onnx)
+
+if(ENABLE_MKLDNN)
+    find_package(MKLDNN "0.14")
+    if(NOT MKLDNN_FOUND)
+        message(FATAL_ERROR "MKLDNN is not found")
+    endif()
+    target_sources(menoh_objlib PRIVATE
+        composite_backend/model_core.cpp
+        composite_backend/backend/generic/generic_context.cpp
+        composite_backend/backend/mkldnn/memory_cache.cpp
+        composite_backend/backend/mkldnn/mkldnn_context.cpp
+        composite_backend/backend/mkldnn/memory_conversion.cpp
+        mkldnn/utility.cpp
+        mkldnn/operator/conv_transpose.cpp
+        mkldnn/operator/softmax.cpp
+        mkldnn/operator/gemm.cpp
+        mkldnn/operator/eltwise.cpp
+        mkldnn/operator/lrn.cpp
+        mkldnn/operator/conv.cpp
+        mkldnn/operator/sum.cpp
+        mkldnn/operator/add.cpp
+        mkldnn/operator/concat.cpp
+        mkldnn/operator/pool.cpp
+        mkldnn/operator/fc.cpp
+        mkldnn/operator/batch_norm.cpp
+        mkldnn/model_core.cpp
+    )
+    target_compile_definitions(menoh_objlib PRIVATE ENABLE_MKLDNN)
+    target_include_directories(menoh_objlib PUBLIC
+        $<BUILD_INTERFACE:${MKLDNN_INCLUDE_DIR}>)
+
+    target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES})
+    target_link_libraries(menoh_test_target PRIVATE ${MKLDNN_LIBRARIES})
+endif()
+
+if(ENABLE_TENSORRT)
+    find_package(TensorRT REQUIRED)
+    if(NOT TENSORRT_FOUND)
+        message(FATAL_ERROR "TensorRT is not found")
+    endif()
+    find_package(CUDA REQUIRED)
+    if(NOT CUDA_FOUND)
+        message(FATAL_ERROR "CUDA is not found")
+    endif()
+    file(GLOB TENSORRT_SOURCES "tensorrt/*.cpp")
+    target_sources(menoh_objlib PRIVATE "${TENSORRT_SOURCES}")
+    target_compile_definitions(menoh_objlib PRIVATE ENABLE_TENSORRT)
+    target_include_directories(menoh_objlib PRIVATE
+        "${CUDA_INCLUDE_DIRS}"
+        "${TENSORRT_INCLUDE_DIRS}")
+
+    target_link_libraries(menoh PRIVATE
+        "${CUDA_LIBRARIES}"
+        "${TENSORRT_LIBRARIES}")
+    target_link_libraries(menoh_test_target PRIVATE
+        "${CUDA_LIBRARIES}"
+        "${TENSORRT_LIBRARIES}")
+endif()
 
 install(TARGETS menoh
     RUNTIME DESTINATION "bin"

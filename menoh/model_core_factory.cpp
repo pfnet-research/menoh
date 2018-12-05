@@ -4,9 +4,6 @@
 #if ENABLE_MKLDNN
 #include <menoh/composite_backend/model_core.hpp>
 #include <menoh/mkldnn/model_core.hpp>
-
-#include <menoh/mkldnn_with_generic_fallback/backend/generic/generic_context.hpp>
-#include <menoh/mkldnn_with_generic_fallback/backend/mkldnn/mkldnn_context.hpp>
 #endif
 
 #if ENABLE_TENSORRT
