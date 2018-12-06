@@ -13,7 +13,6 @@
 #include <menoh/utility.hpp>
 
 #include <armnnUtils/Permute.hpp>
-#include <armnnUtils/GraphTopologicalSort.hpp>
 
 #include <menoh/armnn/Inference.hpp>
 
@@ -22,7 +21,7 @@ using namespace armnn;
 namespace menoh_impl {
     namespace armnn_backend {
 
-        ArmnnInference::ArmnnInference( const Params& params )
+        Inference::Inference( const Params& params )
           : m_ComputeDevice(params.m_ComputeDevice)
           , m_Parser()
           , m_Runtime(armnn::IRuntime::Create(params.options))
@@ -64,7 +63,6 @@ namespace menoh_impl {
                 array arr;
                 std::tie(name, arr) = param;
                 auto dims = arr.dims();
-                inputShapes[name] = TensorShape(dims.size(), (const unsigned int*)dims.data());
                 input_name_list.push_back(name);
 #ifdef ARM_DEBUG
                 std::cout << " Param : " << name << ", dims(" << arr.dims().size() << ")  = ( ";
@@ -98,6 +96,7 @@ namespace menoh_impl {
                 m_Output[name] = arr;
             }            
 
+            std::vector<std::string> output_name_sorted_list;
             {
                 std::transform(output_table.begin(), output_table.end(),
                                std::back_inserter(output_name_sorted_list),
@@ -105,24 +104,20 @@ namespace menoh_impl {
                 std::sort(output_name_sorted_list.begin(),
                           output_name_sorted_list.end());
             }
-            std::vector<std::string> requestedOutputs{ output_name_sorted_list };
+
+            std::vector<std::string> outputs{ output_name_sorted_list };
 
             auto graph = make_graph(all_nodes);            
 
-            Build( graph, parameter_table, inputShapes, requestedOutputs );
+            Build( graph, parameter_table, outputs );
         }
         
-        // ==========================================================
-        // Build
-        // ==========================================================
-
-        void ArmnnInference::Build( menoh_impl::graph menoh_graph,
-                                    std::unordered_map<std::string, array> const& parameter_table,
-                                    std::map<std::string, armnn::TensorShape>& inputShapes,
-                                    std::vector<std::string>& requestedOutputs ) {
+        void Inference::Build( menoh_impl::graph graph,
+                               std::unordered_map<std::string, array> const& parameter_table,
+                               std::vector<std::string>& outputs ) {
 
             armnn::INetworkPtr network{nullptr, [](armnn::INetwork *){}};
-            network = m_Parser.CreateNetworkFromGraph( menoh_graph, parameter_table, inputShapes, requestedOutputs );
+            network = m_Parser.CreateNetworkFromGraph( graph, parameter_table, outputs );
 
             armnn::IOptimizedNetworkPtr optNet{nullptr, [](armnn::IOptimizedNetwork *){}};
 #ifdef ARM_DEBUG
@@ -141,16 +136,12 @@ namespace menoh_impl {
             }
 
             m_InputBindingInfo  = m_Parser.GetNetworkInputBindingInfo(input_name_list.at(0));
-            m_OutputBindingInfo = m_Parser.GetNetworkOutputBindingInfo(requestedOutputs.at(0));
+            m_OutputBindingInfo = m_Parser.GetNetworkOutputBindingInfo(outputs.at(0));
         }
 
-        // ==========================================================
-        // Run
-        // ==========================================================
-
-        void ArmnnInference::Run() {
+        void Inference::Run() {
 #ifdef ARM_DEBUG
-            std::cout << "ArmnnInference::Run::start" << std::endl;
+            std::cout << "Inference::Run::start" << std::endl;
 #endif
             bool m_EnableProfiling = true;
 
@@ -170,7 +161,7 @@ namespace menoh_impl {
                 // profiler->Print(std::cout);
             }
 #ifdef ARM_DEBUG
-            std::cout << "ArmnnInference::Run::done" << std::endl;          
+            std::cout << "Inference::Run::done" << std::endl;          
 #endif
             if (ret == armnn::Status::Failure)
             {

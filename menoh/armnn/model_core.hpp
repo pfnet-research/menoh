@@ -20,7 +20,7 @@ namespace menoh_impl {
         private:
             virtual void do_run() override;
 
-	    ArmnnInference m_inference;
+	    Inference m_inference;
         };
 
         model_core make_model_core(

@@ -30,21 +30,6 @@ namespace menoh_impl {
 
         struct Params
         {
- 	    armnn::IRuntime::CreationOptions options; // default options
-            std::vector<armnn::Compute> m_ComputeDevice;
-            bool m_EnableFp16TurboMode;
-	    std::unordered_map<std::string, array> const* input_table_;
- 	    std::unordered_map<std::string, array> const* output_table_;
-            menoh_impl::model_data const* model_data_;
-
-            Params()
-		: options()
-	        , m_ComputeDevice{armnn::Compute::CpuRef}
-	        , m_EnableFp16TurboMode(false)
-	        , input_table_(nullptr)
-	        , output_table_(nullptr)
-	        , model_data_(nullptr) {}
-
             Params(
 		std::unordered_map<std::string, array> const* input_table,
 		std::unordered_map<std::string, array> const* output_table,
@@ -57,12 +42,19 @@ namespace menoh_impl {
 	        , input_table_(input_table)
 		, output_table_(output_table)
 	        , model_data_(model_data) {}
+
+ 	    armnn::IRuntime::CreationOptions options; // default options
+            std::vector<armnn::Compute> m_ComputeDevice;
+            bool m_EnableFp16TurboMode;
+	    std::unordered_map<std::string, array> const* input_table_;
+ 	    std::unordered_map<std::string, array> const* output_table_;
+            menoh_impl::model_data const* model_data_;
         };
 
-        class ArmnnInference {
+        class Inference {
         public:
 
-	    ArmnnInference( const Params& param );
+	    Inference( const Params& param );
 
             void Run();
 
@@ -70,8 +62,7 @@ namespace menoh_impl {
 
             void Build( menoh_impl::graph menoh_graph,
                         std::unordered_map<std::string, array> const& parameter_table,
-                        std::map<std::string, TensorShape>& inputShapes,
-                        std::vector<std::string>& requestedOutputs );
+                        std::vector<std::string>& outputs );
 
             InputTensors MakeInputTensors(const std::pair<armnn::LayerBindingId, TensorInfo>& input,
                                           const array& inputTensorData) {
@@ -85,9 +76,6 @@ namespace menoh_impl {
 					                                % input.second.GetNumElements() % size));
                     } catch (const boost::exception& e)
                     {
-                        // Coverity fix: it should not be possible to get here but boost::str
-	                // and boost::format can both
-                        // throw uncaught exceptions - convert them to armnn exceptions and rethrow
                         throw armnn::Exception(diagnostic_information(e));
                     }
                 }
@@ -114,12 +102,11 @@ namespace menoh_impl {
             }
 
             std::vector<armnn::Compute> m_ComputeDevice;
-            MenohParser         m_Parser;
+            Parser              m_Parser;
 	    armnn::IRuntimePtr 	m_Runtime;
 	    armnn::NetworkId    m_NetworkIdentifier;
 
             std::vector<std::string> input_name_list;
-            std::vector<std::string> output_name_sorted_list;
 
             std::unordered_map<std::string, array> m_Input;
 	    std::unordered_map<std::string, array> m_Output;
@@ -130,4 +117,4 @@ namespace menoh_impl {
 
     } // namespace armnn_backend
 } // namespace menoh_impl
-#endif // ARMNN_INFERENCE_HPP
+#endif // INFERENCE_HPP

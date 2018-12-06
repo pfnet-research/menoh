@@ -12,12 +12,9 @@
 #include <menoh/graph.hpp>
 #include <menoh/utility.hpp>
 
-#include <boost/assert.hpp>
 #include <boost/format.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/log/trivial.hpp>
-#include <boost/numeric/conversion/cast.hpp>
-#include <boost/polymorphic_cast.hpp>
 
 #include <armnn/ArmNN.hpp>
 
@@ -62,7 +59,7 @@ namespace menoh_impl {
           unsigned int size_;
         };
 
-        std::string GetNodeName( const menoh_impl::node& node ) {
+        std::string NodeName( const menoh_impl::node& node ) {
 	    std::string name;
             for(auto it = node.input_name_list.begin(); it != node.input_name_list.end(); ++it) {
                 name += *it;
@@ -73,18 +70,23 @@ namespace menoh_impl {
             return name;
         }
 	
+        void dumpTensorInfo(TensorInfo& info) {
+	    std::cout << "   output = " << info.GetNumDimensions() << ", " << info.GetNumElements() << std::endl;
+	    std::cout << "   outputShape = ";
+	    for( unsigned int i=0 ; i<info.GetNumDimensions() ; i++ )
+	      std::cout << info.GetShape()[i] << " ";
+	    std::cout << std::endl;
+        }
+
         const armnn::PermutationVector NHWCToArmNN = { 0, 2, 3, 1 };
         const armnn::PermutationVector ArmNNToNHWC = { 0, 3, 1, 2 };
 
         IConnectableLayer* AddSwizzleLayer(INetwork& network, IOutputSlot& input, const PermutationVector& mapping,
             const std::string& name){
-            // Add swizzle layer
             IConnectableLayer* const layer = network.AddPermuteLayer(mapping, name.c_str());
 
-            // Connect intput to swizzle layer
             input.Connect(layer->GetInputSlot(0));
 
-            // Setup swizzled output
             const TensorInfo outInfo = armnnUtils::Permuted(input.GetTensorInfo(), mapping);
             layer->GetOutputSlot(0).SetTensorInfo(outInfo);
 
@@ -93,34 +95,14 @@ namespace menoh_impl {
 
         IConnectableLayer* SwizzleInDeswizzleOut(INetwork& network, IOutputSlot& input, IConnectableLayer& layer,
             const std::string& name){
-            // Add swizzle layer
             IConnectableLayer* const swizzleLayer = AddSwizzleLayer(network, input, NHWCToArmNN, "swizzle_for-" + name);
 
-            // Connect swizzledInput to layer
             swizzleLayer->GetOutputSlot(0).Connect(layer.GetInputSlot(0));
 
-            // Add deswizzle layer
             IConnectableLayer* const deswizzleLayer = AddSwizzleLayer(network, layer.GetOutputSlot(0), ArmNNToNHWC,
                 "deswizzle_for-" + name);
 
             return deswizzleLayer;
-        }
-
-        float ReadMandatoryNodeFloatAttribute(const menoh_impl::node& node, const std::string& name){
-            return attribute_float( node, name );  
-        }
-
-        uint32_t ReadMandatoryNodeUint32Attribute(const menoh_impl::node& node, const std::string& name){
-            return attribute_int( node, name );  
-        }
-
-        std::vector<uint32_t> ReadMandatoryNodeUint32ListAttribute(const menoh_impl::node& node, const std::string& name){
-            return (std::vector<uint32_t> const&)attribute_ints( node, name );
-        }
-
-        std::vector<uint32_t> ReadOptionalNodeUint32ListAttribute(const menoh_impl::node& node, const std::string& name)
-        {
-            return (std::vector<uint32_t> const&)attribute_ints( node, name );
         }
 
         TensorInfo PrepareReshape(const TensorInfo& input, const std::vector<int32_t>& targetDims) {
@@ -161,7 +143,7 @@ namespace menoh_impl {
             armnn::TensorInfo reshapedInfo = input1Info;
             reshapedInfo.SetShape(TensorShape{ inputTensorInfo.GetNumDimensions(), reshapedDimensions.data() });
 
-            const std::string reshapeLayerName = "reshape_for-" + GetNodeName(node);
+            const std::string reshapeLayerName = "reshape_for-" + NodeName(node);
             ReshapeDescriptor reshapeDesc;
             reshapeDesc.m_TargetShape = reshapedInfo.GetShape();
             IConnectableLayer* const reshapeLayer = m_Network.AddReshapeLayer(reshapeDesc, reshapeLayerName.c_str());
@@ -195,49 +177,48 @@ namespace menoh_impl {
             CalculateSamePadding(input, stride, kernel, samePadding, &outPadHead, &outPadTail);
         }
 
-        /// An ParsedMenohOperation where the Armnn equivalent is a single layer,
-        /// with output slots that correspond directly to the Menoh node outputs.
-        class SingleLayerParsedMenohOperation : public ParsedMenohOperation{
+        class SingleLayerOperation : public Operation{
         public:
-            SingleLayerParsedMenohOperation(MenohParser* parser, const menoh_impl::node& node, IConnectableLayer* layer)
-            : ParsedMenohOperation(parser, node)
+            SingleLayerOperation(Parser* parser, const menoh_impl::node& node, IConnectableLayer* layer)
+            : Operation(parser, node)
             , m_Layer(layer)
             {
             }
 
-            IOutputSlot& ResolveArmnnOutputSlot(unsigned int MenohOutputIndex) override
+            IOutputSlot& Output(unsigned int index) override
             {
-                BOOST_ASSERT(m_Layer);
-                // Assume one-to-one mapping between Menoh and armnn output slots.
-                unsigned int armnnOutputSlotIdx = MenohOutputIndex;
-                if (armnnOutputSlotIdx >= m_Layer->GetNumOutputSlots())
+                assert(m_Layer);
+
+                if ((int)index >= m_Layer->GetNumOutputSlots())
                 {
-                    throw ParseException(
-                        boost::str(boost::format("The requested output slot #%1% "
-                            "for %2% does not exist") % armnnOutputSlotIdx % m_Layer->GetName()));
+                    std::string msg("The requested output slot ");
+                    msg += index;
+                    msg += "for ";
+                    msg += m_Layer->GetName();
+                    msg += " does not exist Indext";
+                    throw ParseException(msg);
                 }
-                return m_Layer->GetOutputSlot(armnnOutputSlotIdx);
+                return m_Layer->GetOutputSlot(index);
             }
 
         protected:
             IConnectableLayer* m_Layer;
         };
 
-        /// A SingleLayerParsedMenohOperation for deferred layer creation
-        class DeferredSingleLayerParsedMenohOperation : public SingleLayerParsedMenohOperation {
+        class DeferredSingleLayerOperation : public SingleLayerOperation {
         public:
-            DeferredSingleLayerParsedMenohOperation(MenohParser* parser, const menoh_impl::node& node)
-            : SingleLayerParsedMenohOperation(parser, node, nullptr)
+            DeferredSingleLayerOperation(Parser* parser, const menoh_impl::node& node)
+            : SingleLayerOperation(parser, node, nullptr)
             {
             }
 
-            IOutputSlot& ResolveArmnnOutputSlot(unsigned int MenohOutputIndex) override
+            IOutputSlot& Output(unsigned int index) override
             {
                 if (!m_Layer)
                 {
                     CreateLayerDeferred();
                 }
-                return SingleLayerParsedMenohOperation::ResolveArmnnOutputSlot(MenohOutputIndex);
+                return SingleLayerOperation::Output(index);
             }
 
         private:
@@ -245,11 +226,11 @@ namespace menoh_impl {
         };
          
 
-        MenohParser::MenohParser()
+        Parser::Parser()
             : m_Network(nullptr, nullptr){
         }
 
-        const node* MenohParser::ResolveIdentityNode(const node* node){
+        const node* Parser::IdentityNode(const node* node){
             if (node->op_type != "Identity")
             {
                 return node;
@@ -260,11 +241,11 @@ namespace menoh_impl {
                 throw ParseException("Identity node does not have correct amount of inputs!");
             }
 
-            auto it = m_NodesByName.find(node->input_name_list.at(0));
-            if (it != m_NodesByName.end())
+            auto it = m_Nodes.find(node->input_name_list.at(0));
+            if (it != m_Nodes.end())
             {
  	        const menoh_impl::node* inputNode = it->second;
-                return ResolveIdentityNode(inputNode);
+                return IdentityNode(inputNode);
             }
             else
             {
@@ -272,23 +253,26 @@ namespace menoh_impl {
             }
         }
 
+        IOutputSlot* Parser::GetSlot(OutputOfOperation& input) {
+            return &input.m_Value->Output(input.m_Index);
+        }
+
         std::vector<OutputOfConstNodeDef>
-        MenohParser::GetMenohInputNodes(const menoh_impl::node& node) const {
+        Parser::InputNodes(const menoh_impl::node& node) const {
 	    std::vector<OutputOfConstNodeDef> ret;
 
             if (node.op_type == "Const" || node.op_type == "Placeholder")
             {
-                // For some reason const node can have "Control Inputs". We ignore them for now.
                 return ret;
             }
 
-            ret.reserve(boost::numeric_cast<size_t>(node.input_name_list.size()));
+            ret.reserve(static_cast<size_t>(node.input_name_list.size()));
 
             for( unsigned int j=0; j<node.input_name_list.size(); ++j )
             {
                 bool found = false; 
 	        auto input = node.input_name_list.at(j);
-	        for( auto const& n : m_NodesByName )
+	        for( auto const& n : m_Nodes )
                 {
 		    auto my_node = n.second;
 		    for( unsigned int i=0 ; i<my_node->output_name_list.size() ; i++ )
@@ -302,13 +286,10 @@ namespace menoh_impl {
                     }
                 }
 
-	        for( auto const& n : m_ParamByName )
+                auto it = m_Params.find(input);
+                if (it != m_Params.end())
                 {
-		    if (input == n.first)
-                    {
-                        found = true;
-		        break;
-                    }
+                    found = true;
                 }
 
                 if( !found )
@@ -321,30 +302,34 @@ namespace menoh_impl {
             return ret;
         }
 
-        std::vector<OutputOfParsedMenohOperation>
-        MenohParser::GetInputParsedMenohOperationsChecked(const menoh_impl::node& node, std::size_t expectedNumInputs){
-	    std::string name = GetNodeName(node);
-            // Fetch the tensorflow nodes connected as inputs and validate the size.
-  	    std::vector<OutputOfConstNodeDef> nodes = GetMenohInputNodes(node);
+        std::vector<OutputOfOperation>
+        Parser::InputCheck(const menoh_impl::node& node, std::size_t expectedNumInputs){
+	    std::string name = NodeName(node);
+  	    std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
+
             const std::size_t numInputs = node.input_name_list.size();
             if (numInputs != expectedNumInputs)
             {
-                throw ParseException(boost::str(boost::format("Unexpected number of inputs for node %1%. "
-							      "Expected %2%, found %3%") % name % expectedNumInputs % numInputs));
+                std::string msg("Unexpected number of inputs for node ");
+                msg += name;
+                msg += ". Expected ";
+                msg += expectedNumInputs;
+                msg += ", found ";
+                msg += numInputs;
+                throw ParseException(msg);
             }
-            // Fetch the corresponding ParsedMenohOperation operations
-            std::vector<OutputOfParsedMenohOperation> result;
+
+            std::vector<OutputOfOperation> result;
             for (auto&& node : nodes)
             {
-	        auto it = m_ParsedMenohOperations.find(GetNodeName(*(node.m_IndexedValue)));
-                if (it == m_ParsedMenohOperations.end())
+	        auto it = m_Operations.find(NodeName(*(node.m_Value)));
+                if (it == m_Operations.end())
                 {
-		    throw ParseException("Node with name '" + GetNodeName(*(node.m_IndexedValue)) + "' has not been parsed");
+		    throw ParseException("Node with name '" + NodeName(*(node.m_Value)) + "' has not been parsed");
                 }
-	        ParsedMenohOperation* parsedOp = it->second.get();
-                // Transparently 'skip' any Identity operations. This simplifies the logic inside the ParseXXX() functions.
-                parsedOp = parsedOp->ResolveIdentityOperations();
-                result.push_back(OutputOfParsedMenohOperation(parsedOp,node.m_Index));
+	        Operation* parsedOp = it->second.get();
+                parsedOp = parsedOp->IdentityOperations();
+                result.push_back(OutputOfOperation(parsedOp,node.m_Index));
             }
 
 #ifdef ARM_DEBUG
@@ -358,86 +343,113 @@ namespace menoh_impl {
             return result;
         }  
 
-        ParsedMenohOperationPtr MenohParser::ParseAdd(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseAdd(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 	    
-	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 2);
 
-            // If one of the inputs is a MatMul and the other is a const, then we handle both nodes together as FullyConnected
-            if (inputs[0].m_IndexedValue->GetNode().op_type == "MatMul" &&
-                HasParsedConstTensor<float>(GetNodeName(inputs[1].m_IndexedValue->GetNode())))
+            if (HasParsedConst(inputs[1]) && inputs[0].m_Value->GetNode().op_type == "MatMul")
             {
                 IConnectableLayer* layer =
-                    AddFullyConnectedLayer(inputs[0].m_IndexedValue->GetNode(), &node, name.c_str());
-                return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+                    AddFullyConnectedLayer(inputs[0].m_Value->GetNode(), &node, name.c_str());
+                return std::make_unique<SingleLayerOperation>(this, node, layer);
             }
-            else if (HasParsedConstTensor<float>(GetNodeName(inputs[0].m_IndexedValue->GetNode())) &&
-                                                 inputs[1].m_IndexedValue->GetNode().op_type == "MatMul")
+            else if (HasParsedConst(inputs[0]) && inputs[1].m_Value->GetNode().op_type == "MatMul")
             {
                 IConnectableLayer* layer =
-                    AddFullyConnectedLayer(inputs[1].m_IndexedValue->GetNode(), &node, name.c_str());
-                return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+                    AddFullyConnectedLayer(inputs[1].m_Value->GetNode(), &node, name.c_str());
+                return std::make_unique<SingleLayerOperation>(this, node, layer);
             }
             else
             {
-                // Otherwise it's just a regular addition
                 return AddAdditionLayer(node);
             }
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseBiasAdd(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-
+        OperationPtr Parser::ParseBiasAdd(const menoh_impl::node& node) {
 	    return AddAdditionLayer(node, true);
         }
 
-
-        ParsedMenohOperationPtr MenohParser::ParseFC(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseFC(const menoh_impl::node& node) {
 	    
-            IConnectableLayer* layer = AddFullyConnectedLayer(node, GetNodeName(node).c_str());
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            IConnectableLayer* layer = AddFullyConnectedLayer(node, NodeName(node).c_str());
+
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        /// An ParsedMenohOperation which forwards to another (used for Identity nodes).
-        class ParsedIdentityMenohOperation : public ParsedMenohOperation {
+        OperationPtr Parser::ParseGemm(const menoh_impl::node& node) {
+            std::string name = NodeName(node);
+            
+            auto alpha = optional_attribute_float(node, "alpha", 1.f);
+            if(alpha != 1) {
+                throw failed_to_configure_operator(
+                  node.op_type, node.output_name_list.at(0),
+                  "alpha of Gemm must be 1 but given: " +
+                    std::to_string(alpha));
+            }
+
+            auto beta = optional_attribute_float(node, "beta", 1.f);
+            if(beta != 1) {
+                throw failed_to_configure_operator(
+                  node.op_type, node.output_name_list.at(0),
+                  "beta of Gemm must be 1 but given: " + std::to_string(alpha));
+            }
+
+            auto trans_a = optional_attribute_int(node, "transA", 0);
+            if(trans_a) {
+                throw failed_to_configure_operator(
+                  node.op_type, node.output_name_list.at(0),
+                  "transA of Gemm must be 0 but given: " +
+                    std::to_string(alpha));
+            }
+            auto trans_b = optional_attribute_int(node, "transB", 0);
+            if(!trans_b) {
+                throw failed_to_configure_operator(
+                  node.op_type, node.output_name_list.at(0),
+                  "transB of Gemm must be 0 but given: " +
+                    std::to_string(alpha));
+            }
+      
+            IConnectableLayer* layer = AddFullyConnectedLayer(node, NodeName(node).c_str());
+
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
+        }
+
+        class ParsedIdentityOperation : public Operation {
         public:
-            ParsedIdentityMenohOperation(MenohParser* parser, const menoh_impl::node& node, ParsedMenohOperation* representative)
-                : ParsedMenohOperation(parser, node)
-                , m_Representative(representative)
+            ParsedIdentityOperation(Parser* parser, const menoh_impl::node& node, Operation* op)
+                : Operation(parser, node)
+                , m_Op(op)
             {
             }
 
-            virtual IOutputSlot& ResolveArmnnOutputSlot(unsigned int MenohOutputIndex) override
+            virtual IOutputSlot& Output(unsigned int index) override
             {
-                BOOST_ASSERT(m_Representative);
-                return m_Representative->ResolveArmnnOutputSlot(MenohOutputIndex);
+                assert(m_Op);
+                return m_Op->Output(index);
             }
 
-            virtual ParsedMenohOperation* ResolveIdentityOperations() override
+            virtual Operation* IdentityOperations() override
             {
-                return m_Representative->ResolveIdentityOperations();
+                return m_Op->IdentityOperations();
             }
 
         private:
-            ParsedMenohOperation* m_Representative;
+            Operation* m_Op;
         };
 
-        ParsedMenohOperationPtr MenohParser::ParseIdentity(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseIdentity(const menoh_impl::node& node) {
 
-	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
-            // Any requests for the output slots of this node should be forwarded to the node connected as input.
-            return std::make_unique<ParsedIdentityMenohOperation>(this, node, inputs[0].m_IndexedValue);
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
+            return std::make_unique<ParsedIdentityOperation>(this, node, inputs[0].m_Value);
         }
 
         template <typename T>
-        class MenohVector {
+        class Vector {
 
 	public :
 
-	  MenohVector( const T* data_ = nullptr, const int size_ = 0 )
+	  Vector( const T* data_ = nullptr, const int size_ = 0 )
 	    : my_data(data_)
 	    , my_size(size_) {}
 	    
@@ -452,45 +464,40 @@ namespace menoh_impl {
 	  int my_size;
         };
 
-        /// An ParsedMenohOperation for a Const node.
-        /// Creation of the armnn ConstLayer is deferred until it is actually needed, because Const nodes are mostly used
-        /// for weight inputs to MatMul/Conv2D nodes and in these cases armnn doesn't need a ConstLayer.
         template <typename T>
-        class ParsedConstMenohOperation : public DeferredSingleLayerParsedMenohOperation {
+        class ConstOperation : public DeferredSingleLayerOperation {
+//        class ConstOperation : public SingleLayerOperation {
         public:
-            ParsedConstMenohOperation(MenohParser* parser, const menoh_impl::node& node,
+            ConstOperation(Parser* parser, const menoh_impl::node& node,
                                       const T* tensorData, const TensorInfo& tensorInfo)
-                : DeferredSingleLayerParsedMenohOperation(parser, node),
+                : DeferredSingleLayerOperation(parser, node),
+//                : SingleLayerOperation(parser, node),
                 m_Storage(tensorData, tensorInfo.GetNumElements()),
 		m_TensorInfo(tensorInfo)
             {
-                BOOST_ASSERT(tensorInfo.GetDataType() == GetDataType<T>());
+                assert(tensorInfo.GetDataType() == GetDataType<T>());
             }
 
             void CreateLayerDeferred() override
             {
-                BOOST_ASSERT(m_Layer == nullptr);
-                m_Layer = m_Parser->m_Network->AddConstantLayer(ConstTensor(m_TensorInfo, m_Storage), GetNodeName(m_Node).c_str());
+                assert(m_Layer == nullptr);
+                m_Layer = m_Parser->m_Network->AddConstantLayer(ConstTensor(m_TensorInfo, m_Storage), NodeName(m_Node).c_str());
                 m_Layer->GetOutputSlot(0).SetTensorInfo(m_TensorInfo);
             }
 
-            ConstTensor GetConstTensor(MenohVector<T>& outputTensorData) const
+            ConstTensor GetConstTensor(Vector<T>& outputTensorData) const
             {
                 const TensorInfo outInfo = m_TensorInfo;
 
                 outputTensorData.set_data(m_Storage.data());
                 outputTensorData.set_size(m_Storage.size());
 
-		// Update the result to point to the user provided storage
                 ConstTensor constTensor(outInfo, outputTensorData);
                 return constTensor;
             }
 
             ConstTensor GetConstTensor(bool swizzleForConvolutionWeights, std::vector<T>& outputTensorData) const
             {
-                // Mappings from TensorFlow filter tensors to the ArmNN filter tensors.
-                // Tensorflow weights are [H, W, In, Out]
-                // ArmNN weights are [Out, In, H, W]
                 static const PermutationVector HWIOToOIHW = {2, 3, 1, 0};
 
                 const TensorInfo outInfo = swizzleForConvolutionWeights
@@ -499,7 +506,6 @@ namespace menoh_impl {
 
                 outputTensorData.resize(m_TensorInfo.GetNumElements());
 
-                // Copy or swizzle from the permanent storage into the storage the caller provided.
                 if (swizzleForConvolutionWeights)
                 {
                     armnnUtils::Permute(outInfo.GetShape(), HWIOToOIHW, m_Storage.data(), outputTensorData.data());
@@ -508,35 +514,14 @@ namespace menoh_impl {
                 {
                     memcpy(outputTensorData.data(), m_Storage.data(), m_TensorInfo.GetNumBytes());
                 }
-                // Update the result to point to the user provided storage
                 ConstTensor constTensor(outInfo, outputTensorData);
                 return constTensor;
             }
 
         private:
-            ///< Manages the lifetime of the tensor data.
-            MenohVector<T> m_Storage;
-            ///< Describes the layout of the tensor and points to the data in m_Storage.
+            Vector<T> m_Storage;
             TensorInfo m_TensorInfo;
         };      
-
-        DataType ConvertMenohTensorDataType(const dtype_t MenohDataType) {
-            switch (MenohDataType)
-            {
-            case dtype_t::float_:
-                return DataType::Float32;
-                break;
-		/*
-            case dtype_t::DT_INT32:
-                return DataType::Signed32;
-                break;
-		*/  
-            default:
-                throw ParseException(boost::str(
-                    boost::format("Unknown DataType %1% for node")
-                    % dtype_to_string(MenohDataType)));
-            }
-        }
 
         struct ParseMenohTensorValueList {
             template<typename DataType>
@@ -549,30 +534,25 @@ namespace menoh_impl {
             static void ReadData(const void* srcData, unsigned int numSrcElements,
                 std::vector<int8_t>& dstData, unsigned int numDstElements)
             {
-                // If there are no entries in the list, perform no action
                 if (numSrcElements == 0)
                 {
                     return;
                 }
 
-                // If no size was provided, use the length of the value list
                 if (numDstElements == 0)
                 {
                     numDstElements = numSrcElements;
                 }
 
-                // Allocate memory
                 dstData.resize(std::max(numSrcElements, numDstElements) * sizeof(DataType));
 
                 const DataType* srcTensor = reinterpret_cast<const DataType*>(srcData);
                 DataType* dstTensor = reinterpret_cast<DataType*>(dstData.data());
 
-                // Copy the value list entries into the destination
                 std::copy(srcTensor, srcTensor + numSrcElements, dstTensor);
 
                 if (numDstElements > numSrcElements)
                 {
-                    // Use the last element in the list to fill the remaining entries
                     std::fill(dstTensor + numSrcElements, dstTensor + numDstElements, srcTensor[numSrcElements - 1]);
                 }
             }
@@ -596,7 +576,7 @@ namespace menoh_impl {
         template <template<typename> class OperatorType, typename T = int8_t>
         struct MakeMenohOperation {
             template<typename DataType, class... Args>
-            inline static std::unique_ptr<OperatorType<DataType>> Parse(MenohParser* parser, const menoh_impl::node& node,
+            inline static std::unique_ptr<OperatorType<DataType>> Parse(Parser* parser, const menoh_impl::node& node,
                 Args&&... args)
             {
                 return std::make_unique<OperatorType<DataType>>(parser, node, std::forward<Args>(args)...);
@@ -604,14 +584,14 @@ namespace menoh_impl {
         };
       
         template <>
-        struct MakeMenohOperation<ParsedConstMenohOperation> {
+        struct MakeMenohOperation<ConstOperation> {
             template<typename DataType, class... Args>
-            inline static std::unique_ptr<ParsedConstMenohOperation<DataType>> Parse(MenohParser* parser,
+            inline static std::unique_ptr<ConstOperation<DataType>> Parse(Parser* parser,
 						      const menoh_impl::node& node,
-						      const MenohVector<int8_t>& tensorData,
+						      const Vector<int8_t>& tensorData,
 						      const TensorInfo& tensorInfo)
             {
-                return std::make_unique<ParsedConstMenohOperation<DataType>>(parser, node,
+                return std::make_unique<ConstOperation<DataType>>(parser, node,
                             reinterpret_cast<const DataType*>(tensorData.data()), tensorInfo);
             }
         };
@@ -647,98 +627,115 @@ namespace menoh_impl {
             }
         };  
 
+        OperationPtr Parser::ParseConst(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 
-      ParsedMenohOperationPtr MenohParser::ParseConst(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+	    assert(node.op_type == "Const");
 
-	    BOOST_ASSERT(node.op_type == "Const");
-
-#ifdef ARM_DEBUG
-	    std::cout << std::endl << " [node] : Const, " << name << std::endl;
-#endif
-
-            auto it = m_ParamByName.find(name);
-            if (it == m_ParamByName.end() )
+            auto it = m_Params.find(name);
+            if (it == m_Params.end() )
             {
-                throw ParseException(boost::str(boost::format("ParseConst : not found %1%") % name));
+                throw ParseException("ParseConst : not found " + name);
             }
 
-            const dtype_t MenohDataType = dtype_t::float_;
-            const DataType dataType = ConvertMenohTensorDataType(MenohDataType);
-            unsigned int numElements = 0U;
-	    auto arr  = m_ParamByName[name];
-	    std::vector<unsigned int> dimensionSizes(arr.dims().data(), arr.dims().data()+arr.dims().size());
-            if (!dimensionSizes.empty())
+	    auto arr  = m_Params[name];
+	    std::vector<unsigned int> sizes(arr.dims().data(), arr.dims().data()+arr.dims().size());
+
+            unsigned int numElements = 1U;
             {
-                numElements = std::accumulate(dimensionSizes.begin(), dimensionSizes.end(),
-                                            1U, std::multiplies<unsigned int>());
-            }
+                auto size = sizes.size();
+                for(int i=0 ; i<size ; i++ )
+                {
+                    numElements *= sizes[i];
+                }
+            }  
 
-            const TensorInfo tensorInfo(static_cast<unsigned int>(dimensionSizes.size()), dimensionSizes.data(), dataType);
+            const DataType dataType = DataType::Float32; // dtype_t::float_:
+
+            const TensorInfo tensorInfo(static_cast<unsigned int>(sizes.size()), sizes.data(), dataType);
 #ifdef ARM_DEBUG
-	    std::cout << "   output = " << tensorInfo.GetNumDimensions() << ", " << tensorInfo.GetNumElements() << std::endl;
-	    std::cout << "   outputShape = ";
-	    for( unsigned int i=0 ; i<tensorInfo.GetNumDimensions() ; i++ )
-	      std::cout << tensorInfo.GetShape()[i] << " ";
-	    std::cout << std::endl;
+            dumpTensorInfo(tensorInfo);
 #endif
-
-            MenohVector<int8_t> tensorData((const int8_t *)arr.data(), numElements*GetDataTypeSize(dataType));
+            Vector<int8_t> tensorData((const int8_t *)arr.data(), numElements*GetDataTypeSize(dataType));
             if (tensorData.size() > tensorInfo.GetNumBytes())
             {
-                throw ParseException(boost::str(
-                    boost::format("Number of elements (%1%) should be less than or equal \
-                    to the number of elements implied by the shape argument (%2%) for Const node - %3%")
-                    % (tensorData.size() / GetDataTypeSize(dataType))
-                    % tensorInfo.GetNumElements()
-                    % name));
+              std::string msg("Number of elements (" + (tensorData.size() / GetDataTypeSize(dataType)));
+              msg += ") should be less than or equal to the number of elements implied by the shape argument (";
+              msg += tensorInfo.GetNumElements() + ") for Const node - " + name + ")"; 
             }
 
-            return InvokeParseFunction<MakeMenohOperation<ParsedConstMenohOperation>>::Result<ParsedMenohOperationPtr>(
+#if 1
+            return InvokeParseFunction<MakeMenohOperation<ConstOperation>>::Result<OperationPtr>(
                                        dataType, this, node, tensorData, tensorInfo);
+#else
+            return std::make_unique<ConstOperation<float>>(this, node,
+                                                           reinterpret_cast<const float*>((const int8_t*)arr.data()),
+                                                           dataType, dims, numElements);
+#endif
         }
+#if 0
+        template <typename T>
+        class ConstOperation : public SingleLayerOperation {
+        public:
+            ConstOperation(Parser* parser, const menoh_impl::node& node,
+                           const T* data, const DataType dataType, const Dims& dims, int64_t numElements)
+              : SingleLayerOperation(parser, node, nullptr)
+              , dimentions(dims)
+              , weights{dataType, data, numElements}
+            {}
 
+            Dims& getDims(){
+                return dimentions;
+            }            
+
+            Weights& getWeights() { 
+                return weights;
+            }
+
+        private:
+            Dims dimentions;
+            Weights weights;
+        };      
+#endif
         template<typename Type>
-        bool MenohParser::HasParsedConstTensor(const std::string & nodeName) const {
-            auto it = m_ParsedMenohOperations.find(nodeName);
-            if (it == m_ParsedMenohOperations.end() ||
-                dynamic_cast<ParsedConstMenohOperation<Type>*>(it->second.get()) == nullptr)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+        bool Parser::HasParsedConst(const std::string & nodeName) const {
+            auto it = m_Operations.find(nodeName);
+            return (it != m_Operations.end() &&
+                    dynamic_cast<ConstOperation<Type>*>(it->second.get()) != nullptr);
         }
 
-      ParsedMenohOperationPtr MenohParser::ParseConv2D(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 3);
+        bool Parser::HasParsedConst(OutputOfOperation& input) {
+            return HasParsedConst<float>(NodeName(input.m_Value->GetNode()));
+        }
 
-            if (!HasParsedConstTensor<float>(GetNodeName(inputs[1].m_IndexedValue->GetNode()))
-	     || !HasParsedConstTensor<float>(GetNodeName(inputs[2].m_IndexedValue->GetNode())))
+        OperationPtr Parser::ParseConv2D(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
+
+            std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
+            unsigned int numInputs = static_cast<unsigned int>(nodes.size());
+            std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
+
+            if (!HasParsedConst(inputs[1]) || (numInputs == 3 && !HasParsedConst(inputs[2])))
             {
-                throw ParseException("ArmNN only supports Convolution layers with constant weights and biases");
+                throw ParseException("only supports Convolution layers with constant weights and biases");
             }
 
-            ParsedConstMenohOperation<float>* weightNode =
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[1].m_IndexedValue);
-            ParsedConstMenohOperation<float>* biasNode   = 
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[2].m_IndexedValue);
-
-            MenohVector<float> weightTensorData;
+            ConstOperation<float>* weightNode = static_cast<ConstOperation<float>*>(inputs[1].m_Value);
+            Vector<float> weightTensorData;
             ConstTensor weightTensor = weightNode->GetConstTensor(weightTensorData);
-            MenohVector<float> biasTensorData;
-            ConstTensor biasTensor   = biasNode->GetConstTensor(biasTensorData);
+
+            ConstOperation<float>* biasNode;
+            Vector<float> biasTensorData;
+            ConstTensor biasTensor;
+            if( numInputs == 3 ) {
+                biasNode   = static_cast<ConstOperation<float>*>(inputs[2].m_Value);
+                biasTensor = biasNode->GetConstTensor(biasTensorData);
+            }
 
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
 
-            // read the dilations, if present - only [1,1,1,1] (the default) is supported
-            std::vector<uint32_t> dilations = ReadOptionalNodeUint32ListAttribute(node, "dilations");
+            std::vector<uint32_t> dilations = (std::vector<uint32_t> const&)attribute_ints( node, "dilations");
             if (!dilations.empty())
             {
                 for (auto dilation : dilations)
@@ -751,7 +748,7 @@ namespace menoh_impl {
             }
 
             Convolution2dDescriptor desc;
-            desc.m_BiasEnabled = true;
+            desc.m_BiasEnabled = (numInputs == 3) ? true : false;
 
 	    std::string dataFormat = "NCHW";
 
@@ -771,8 +768,8 @@ namespace menoh_impl {
 	        throw ParseException("Unsupported data format passed for Conv2D. Only NHWC and NCHW supported");
             }
 
-	    IOutputSlot& inputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-	    TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
+	    IOutputSlot* slot = GetSlot(inputs[0]);
+	    TensorInfo inputTensorInfo = slot->GetTensorInfo();
 
             uint32_t inputHeight = inputTensorInfo.GetShape()[2];
             uint32_t inputWidth  = inputTensorInfo.GetShape()[3];
@@ -786,8 +783,10 @@ namespace menoh_impl {
 	    std::cout << ", " << inputTensorInfo.GetShape()[2] << ", " << inputTensorInfo.GetShape()[3] << std::endl;
 	    std::cout << "     weight(" << weightTensor.GetNumDimensions() << ") = "
 		      << weightTensor.GetShape()[0] << ", " << weightTensor.GetShape()[1];
-	    std::cout << ", " << weightTensor.GetShape()[2] << ", " << weightTensor.GetShape()[3] << std::endl;
-	    std::cout << "       bias(" << biasTensor.GetNumDimensions() << ") = " << biasTensor.GetShape()[0] << std::endl;
+            if(numInputs == 3){            
+                std::cout << ", " << weightTensor.GetShape()[2] << ", " << weightTensor.GetShape()[3] << std::endl;
+                std::cout << "       bias(" << biasTensor.GetNumDimensions() << ") = " << biasTensor.GetShape()[0] << std::endl;
+            }
 #endif
 	    
             bool padding = false;
@@ -828,42 +827,43 @@ namespace menoh_impl {
             CalcPadding(inputHeight, weightHeight, desc.m_StrideY, desc.m_PadTop,  desc.m_PadBottom, padding);
             CalcPadding(inputWidth,  weightWidth,  desc.m_StrideX, desc.m_PadLeft, desc.m_PadRight,  padding);
 	    
-	    IConnectableLayer* layer = m_Network->AddConvolution2dLayer(desc, weightTensor, biasTensor, name.c_str());
+            IConnectableLayer* layer;
+            if( numInputs == 3 )
+                layer = m_Network->AddConvolution2dLayer(desc, weightTensor, biasTensor, name.c_str());
+            else
+                layer = m_Network->AddConvolution2dLayer(desc, weightTensor, name.c_str());
+                
             layer->GetOutputSlot(0).SetTensorInfo(outputInfo);
 
             if (dataFormat == "NHWC")
             {
-	        layer = SwizzleInDeswizzleOut(*m_Network, inputSlot, *layer, name);
+	        layer = SwizzleInDeswizzleOut(*m_Network, *slot, *layer, name);
             }
             else
             {
-                inputSlot.Connect(layer->GetInputSlot(0));
+                slot->Connect(layer->GetInputSlot(0));
             }
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }  
 
-        ParsedMenohOperationPtr MenohParser::ParseDepthwiseConv2D(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseDepthwiseConv2D(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 
-	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
-            IOutputSlot& inputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 2);
+            IOutputSlot& inputSlot = inputs[0].m_Value->Output(inputs[0].m_Index);
             TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
 
-            if (!HasParsedConstTensor<float>(GetNodeName(inputs[1].m_IndexedValue->GetNode()))
-             || !HasParsedConstTensor<float>(GetNodeName(inputs[2].m_IndexedValue->GetNode())))
+            if (!HasParsedConst(inputs[1]) || !HasParsedConst(inputs[2]))
             {
                 throw ParseException("ArmNN only supports Depthwise Convolution layers with constant weights");
             }
 
-            ParsedConstMenohOperation<float>* weightNode =
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[1].m_IndexedValue);
-            ParsedConstMenohOperation<float>* biasNode   = 
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[2].m_IndexedValue);
-
-            MenohVector<float> weightTensorData;
+            ConstOperation<float>* weightNode = static_cast<ConstOperation<float>*>(inputs[1].m_Value);
+            Vector<float> weightTensorData;
             ConstTensor weightTensor = weightNode->GetConstTensor(weightTensorData);
-            MenohVector<float> biasTensorData;
+
+            ConstOperation<float>* biasNode   = static_cast<ConstOperation<float>*>(inputs[2].m_Value);
+            Vector<float> biasTensorData;
             ConstTensor biasTensor   = biasNode->GetConstTensor(biasTensorData);
 
             std::vector<int> strides, kernel_shape, pads;
@@ -941,93 +941,80 @@ namespace menoh_impl {
                 inputSlot.Connect(layer->GetInputSlot(0));
             }
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }       
 
-        ParsedMenohOperationPtr MenohParser::ParseFusedBatchNorm(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseBatchNormalization(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 
-	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 5);
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 5);
 
-            if (!HasParsedConstTensor<float>(GetNodeName(inputs[1].m_IndexedValue->GetNode())))
+            if (!HasParsedConst(inputs[1]))
             {
-                throw ParseException("ArmNN only supports FusedBatchNormalization layers with constant scale");
+                throw ParseException("ArmNN only supports BatchNormalization layers with constant scale");
             }
-            ParsedConstMenohOperation<float>* scaleNode =
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float> *>(inputs[1].m_IndexedValue);
-
-            if (!HasParsedConstTensor<float>(GetNodeName(inputs[2].m_IndexedValue->GetNode())))
-            {
-                throw ParseException("ArmNN only supports FusedBatchNormalization layers with constant offset");
-            }
-            ParsedConstMenohOperation<float>* offsetNode =
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float> *>(inputs[2].m_IndexedValue);
-
-            if (!HasParsedConstTensor<float>(GetNodeName(inputs[3].m_IndexedValue->GetNode())))
-            {
-                throw ParseException("ArmNN only supports FusedBatchNormalization layers with constant mean");
-            }
-            ParsedConstMenohOperation<float>* meanNode =
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float> *>(inputs[3].m_IndexedValue);
-
-            if (!HasParsedConstTensor<float>(GetNodeName(inputs[4].m_IndexedValue->GetNode())))
-            {
-                throw ParseException("ArmNN only supports FusedBatchNormalization layers with constant variance");
-            }
-            ParsedConstMenohOperation<float>* varianceNode =
-                boost::polymorphic_downcast<ParsedConstMenohOperation<float> *>(inputs[4].m_IndexedValue);
-
-            // The descriptor only has the epsilon attribute
-            BatchNormalizationDescriptor desc;
-            desc.m_Eps = ReadMandatoryNodeFloatAttribute(node, "epsilon");
-
-            // data for the parsed tensor args (scale, offset, mean, variance) must be stored locally until the layer is added
+            ConstOperation<float>* scaleNode = static_cast<ConstOperation<float>*>(inputs[1].m_Value);
             std::vector<float> scaleTensorData;
             ConstTensor scaleTensor = scaleNode->GetConstTensor(false, scaleTensorData);
 
+            if (!HasParsedConst(inputs[2]))
+            {
+                throw ParseException("ArmNN only supports BatchNormalization layers with constant offset");
+            }
+            ConstOperation<float>* offsetNode = static_cast<ConstOperation<float>*>(inputs[2].m_Value);
             std::vector<float> offsetTensorData;
             ConstTensor offsetTensor = offsetNode->GetConstTensor(false, offsetTensorData);
 
+            if (!HasParsedConst(inputs[3]))
+            {
+                throw ParseException("ArmNN only supports BatchNormalization layers with constant mean");
+            }
+            ConstOperation<float>* meanNode = static_cast<ConstOperation<float>*>(inputs[3].m_Value);
             std::vector<float> meanTensorData;
             ConstTensor meanTensor = meanNode->GetConstTensor(false, meanTensorData);
 
+            if (!HasParsedConst(inputs[4]))
+            {
+                throw ParseException("ArmNN only supports BatchNormalization layers with constant variance");
+            }
+            ConstOperation<float>* varianceNode = static_cast<ConstOperation<float>*>(inputs[4].m_Value);
             std::vector<float> varianceTensorData;
             ConstTensor varianceTensor = varianceNode->GetConstTensor(false, varianceTensorData);
 
+            BatchNormalizationDescriptor desc;
+            desc.m_Eps = attribute_float(node, "epsilon");
+
             IConnectableLayer* layer = m_Network->AddBatchNormalizationLayer(desc,
-                                                                            meanTensor,
-                                                                            varianceTensor,
-                                                                            offsetTensor,
-                                                                            scaleTensor,
-									    name.c_str());
+                                                                             meanTensor,
+                                                                             varianceTensor,
+                                                                             offsetTensor,
+                                                                             scaleTensor,
+                                                                             name.c_str());
 
-            IOutputSlot& inputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
+            IOutputSlot* output = GetSlot(inputs[0]);
 
-//            const std::string dataFormat = ReadMandatoryNodeStringAttribute(node, "data_format");
             const std::string dataFormat = "NCHW";
 
             if (dataFormat == "NHWC")
             {
-                const TensorInfo outputTensorInfo = armnnUtils::Permuted(inputSlot.GetTensorInfo(), NHWCToArmNN);
+                const TensorInfo outputTensorInfo = armnnUtils::Permuted(output->GetTensorInfo(), NHWCToArmNN);
                 layer->GetOutputSlot(0).SetTensorInfo(outputTensorInfo);
-                layer = SwizzleInDeswizzleOut(*m_Network, inputSlot, *layer, name);
+                layer = SwizzleInDeswizzleOut(*m_Network, *output, *layer, name);
             }
             else
             {
-                layer->GetOutputSlot(0).SetTensorInfo(inputSlot.GetTensorInfo());
-                inputSlot.Connect(layer->GetInputSlot(0));
+                layer->GetOutputSlot(0).SetTensorInfo(output->GetTensorInfo());
+                output->Connect(layer->GetInputSlot(0));
             }
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseConcat(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseConcat(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 	    
-	    std::vector<OutputOfConstNodeDef> nodes = GetMenohInputNodes(node);
-            // In tensorflow, we have the last input of the Concat layer as the axis for concatenation
+	    std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
+
             unsigned int numInputs = static_cast<unsigned int>(nodes.size());
             unsigned int numConcatView = numInputs - 1;
 
@@ -1035,35 +1022,29 @@ namespace menoh_impl {
             std::vector<unsigned int>mergeDimSizes(MaxNumOfTensorDimensions, 0u);
 
             unsigned int mergeDim = 0;
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, numInputs);
+            std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
 
-            // The last input is the axis for concatenation
-            if (!HasParsedConstTensor<int32_t>(GetNodeName(inputs[numInputs - 1].m_IndexedValue->GetNode())))
+            if (!HasParsedConst<int32_t>(NodeName(inputs[numInputs - 1].m_Value->GetNode())))
             {
                 throw ParseException("ArmNN only supports Concat with constant axis");
             }
-            ParsedConstMenohOperation<int32_t>* shapeNode =
-                    boost::polymorphic_downcast<ParsedConstMenohOperation<int32_t>*>(inputs[numInputs - 1].m_IndexedValue);
+            ConstOperation<int32_t>* shapeNode = static_cast<ConstOperation<int32_t>*>(inputs[numInputs - 1].m_Value);
 
             std::vector<int32_t> axisTensorData;
             ConstTensor axisTensor = shapeNode->GetConstTensor(false, axisTensorData);
 
-            // This concatDim indicates the data format: 3 is the NHWC, 1 is the NCHW
             const unsigned int concatDimInput = static_cast<unsigned int>(axisTensorData[0]);
 
-            // Armnn supports concatenation along the channel dimension for data format NHWC and NCHW
             if (concatDimInput == 0 || concatDimInput == 2)
             {
                 throw ParseException("The dimension for concatenation is not supported by Armnn");
             }
 
-            // This is the only concatDim we support in Armnn
             const unsigned int concatDim = 1;
             for (unsigned int viewIndex = 0; viewIndex < numConcatView; ++viewIndex)
             {
-                // need to double check whether it should be
                 IOutputSlot& inputSlot =
-                    inputs[viewIndex].m_IndexedValue->ResolveArmnnOutputSlot(inputs[viewIndex].m_Index);
+                    inputs[viewIndex].m_Value->Output(inputs[viewIndex].m_Index);
                 TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
 
                 if (inputTensorInfo.GetNumDimensions() != MaxNumOfTensorDimensions)
@@ -1103,16 +1084,16 @@ namespace menoh_impl {
 
             for (unsigned int v = 0; v < numConcatView; ++v)
             {
-                IOutputSlot& inputSlot = inputs[v].m_IndexedValue->ResolveArmnnOutputSlot(inputs[v].m_Index);
+                IOutputSlot* slot = GetSlot(inputs[v]);
                 if (concatDimInput == 3)
                 {
-                    IConnectableLayer* const swizzleLayer = AddSwizzleLayer(*m_Network, inputSlot, NHWCToArmNN,
+                    IConnectableLayer* const swizzleLayer = AddSwizzleLayer(*m_Network, *slot, NHWCToArmNN,
                                                                             "swizzle_for-" + name);
                     swizzleLayer->GetOutputSlot(0).Connect(layer->GetInputSlot(v));
                 }
                 else
                 {
-                    inputSlot.Connect(layer->GetInputSlot(v));
+                    slot->Connect(layer->GetInputSlot(v));
                 }
             }
 
@@ -1123,61 +1104,43 @@ namespace menoh_impl {
                 layer = deswizzleLayer;
             }
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseShape(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseShape(const menoh_impl::node& node) {
 
-	    // Note: The Shape layer is handled in a special way, because:
-            //        1. ARMNN doesn't support int32 tensors which it outputs
-            //        2. ARMNN works with statically shaped tensors which are known at parse time
-            //        3. because of 1. and 2. we treat the output of Shape as a temporary const int32
-            //           tensor which may be used as an input to other ops, most likely a Reshape
+            std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
-#if 0
-            const tensorflow::DataType MenohDataType = ReadMandatoryNodeTypeAttribute(node, "out_type");
-            if (MenohDataType != tensorflow::DT_INT32)
+            IOutputSlot* slot = GetSlot(inputs[0]);
+            const TensorInfo& tensorInfo = slot->GetTensorInfo();
+            unsigned int dims = tensorInfo.GetNumDimensions();
+
+            std::vector<int32_t> shapeData;
+            shapeData.reserve(dims);
+
+            for (unsigned int i=0; i<dims; ++i)
             {
-                throw ParseException("Armnn only supports DT_INT32 as out_type");
-            }
-#endif
-            const std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
-            IOutputSlot& prevLayerOutputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-            const TensorInfo& prevLayerTensorInfo = prevLayerOutputSlot.GetTensorInfo();
-            unsigned int prevLayerDimensions = prevLayerTensorInfo.GetNumDimensions();
-
-            std::vector<int32_t> shapeTensorData;
-            shapeTensorData.reserve(prevLayerDimensions);
-
-            for (unsigned int i=0; i<prevLayerDimensions; ++i)
-            {
-                shapeTensorData.push_back(static_cast<int32_t>(prevLayerTensorInfo.GetShape()[i]));
+                shapeData.push_back(static_cast<int32_t>(tensorInfo.GetShape()[i]));
             }
 
-            TensorInfo shapeTensorInfo(1, &prevLayerDimensions, DataType::Signed32);
+            TensorInfo shapeInfo(1, &dims, DataType::Signed32);
 
-            return std::make_unique<ParsedConstMenohOperation<int32_t>>(this,
-                                                                    node,
-                                                                    &shapeTensorData[0],
-                                                                    shapeTensorInfo);
+            return std::make_unique<ConstOperation<int32_t>>(this, node, &shapeData[0], shapeInfo);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseReshape(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseReshape(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 	    
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
-            ParsedMenohOperation* inputNode = inputs[0].m_IndexedValue;
+            std::vector<OutputOfOperation> inputs = InputCheck(node, 2);
+            Operation* inputNode = inputs[0].m_Value;
 
-            if (!HasParsedConstTensor<int32_t>(GetNodeName(inputs[1].m_IndexedValue->GetNode())))
+            if (!HasParsedConst(inputs[1]))
             {
                 throw ParseException("ArmNN only supports Reshape layers with constant shapes");
             }
-            ParsedConstMenohOperation<int32_t>* shapeNode =
-                boost::polymorphic_downcast<ParsedConstMenohOperation<int32_t>*>(inputs[1].m_IndexedValue);
+            ConstOperation<int32_t>* shapeNode = static_cast<ConstOperation<int32_t>*>(inputs[1].m_Value);
 
-            armnn::IOutputSlot& prevLayerOutputSlot = inputNode->ResolveArmnnOutputSlot(inputs[0].m_Index);
+            armnn::IOutputSlot& prevLayerOutputSlot = inputNode->Output(inputs[0].m_Index);
             TensorInfo inputTensorInfo = prevLayerOutputSlot.GetTensorInfo();
 
             std::vector<int32_t> shapeTensorData;
@@ -1192,245 +1155,194 @@ namespace menoh_impl {
             prevLayerOutputSlot.Connect(layer->GetInputSlot(0));
             layer->GetOutputSlot(0).SetTensorInfo(outputTensorInfo);
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }   
 
-        ParsedMenohOperationPtr MenohParser::ParseLrn(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseLrn(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 	    
-	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
-            NormalizationDescriptor normalizationDescriptor;
-            normalizationDescriptor.m_NormMethodType = NormalizationAlgorithmMethod::LocalBrightness;
-            normalizationDescriptor.m_NormChannelType = NormalizationAlgorithmChannel::Across;
-            normalizationDescriptor.m_Alpha = ReadMandatoryNodeFloatAttribute(node, "alpha");
-            normalizationDescriptor.m_Beta = ReadMandatoryNodeFloatAttribute(node, "beta");
-            normalizationDescriptor.m_K = ReadMandatoryNodeFloatAttribute(node, "bias");
-            normalizationDescriptor.m_NormSize = ReadMandatoryNodeUint32Attribute(node, "depth_radius");
+            NormalizationDescriptor desc;
+            desc.m_NormMethodType  = NormalizationAlgorithmMethod::LocalBrightness;
+            desc.m_NormChannelType = NormalizationAlgorithmChannel::Across;
 
-            // The window size must be an odd value. For a window size of (2 * n + 1), TensorFlow defines depth_radius = n.
-            normalizationDescriptor.m_NormSize = normalizationDescriptor.m_NormSize * 2 + 1;
+            desc.m_Alpha    = attribute_float(node, "alpha");
+            desc.m_Beta     = attribute_float(node, "beta");
+            desc.m_K        = attribute_float(node, "bias");
+            desc.m_NormSize = attribute_int(node,   "depth_radius");
+            desc.m_NormSize = desc.m_NormSize * 2 + 1;
 
-            IOutputSlot& prevLayerOutputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
+            IOutputSlot* slot = GetSlot(inputs[0]);
 
-            IConnectableLayer* layer = m_Network->AddNormalizationLayer(normalizationDescriptor,
-									name.c_str());
+            IConnectableLayer* layer = m_Network->AddNormalizationLayer(desc, name.c_str());
 
-            const TensorInfo permutedInfo = armnnUtils::Permuted(prevLayerOutputSlot.GetTensorInfo(), NHWCToArmNN);
+            const TensorInfo permutedInfo = armnnUtils::Permuted(slot->GetTensorInfo(), NHWCToArmNN);
             layer->GetOutputSlot(0).SetTensorInfo(permutedInfo);
 
-            layer = SwizzleInDeswizzleOut(*m_Network, prevLayerOutputSlot, *layer, name);
+            layer = SwizzleInDeswizzleOut(*m_Network, *slot, *layer, name);
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
  
-        /// An ParsedMenohOperation for a MatMul node.
-        /// Creation of the armnn FullyConnected layer is deferred until it is actually needed, because MatMul nodes are
-        /// often used for the first part of a biased FullyConnected (MatMul followed by Add) and in these cases armnn doesn't
-        /// need a separate layer for the MatMul.
-        class ParsedMatMulMenohOperation : public DeferredSingleLayerParsedMenohOperation {
+        class ParsedMatMulMenohOperation : public DeferredSingleLayerOperation {
         public:
-            ParsedMatMulMenohOperation(MenohParser* parser, const menoh_impl::node& node)
-                : DeferredSingleLayerParsedMenohOperation(parser, node) {
+            ParsedMatMulMenohOperation(Parser* parser, const menoh_impl::node& node)
+                : DeferredSingleLayerOperation(parser, node) {
             }
 
             void CreateLayerDeferred() override {
-                BOOST_ASSERT(m_Layer == nullptr);
-                m_Layer = m_Parser->AddFullyConnectedLayer(m_Node, nullptr, GetNodeName(m_Node).c_str());
+                assert(m_Layer == nullptr);
+                m_Layer = m_Parser->AddFullyConnectedLayer(m_Node, nullptr, NodeName(m_Node).c_str());
             }
         };
 
-        ParsedMenohOperationPtr MenohParser::ParseMatMul(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseMatMul(const menoh_impl::node& node) {
 
-	    // Defer the creation of the layer (see ParsedMatMulMenohOperation).
             return std::make_unique<ParsedMatMulMenohOperation>(this, node);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseMul(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseMul(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 	    
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
+            std::vector<OutputOfOperation> inputs = InputCheck(node, 2);
 
             IConnectableLayer* const layer = m_Network->AddMultiplicationLayer(name.c_str());
-            IOutputSlot* input0Slot = &inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-            IOutputSlot* input1Slot = &inputs[1].m_IndexedValue->ResolveArmnnOutputSlot(inputs[1].m_Index);
 
-            auto const input0NumDims = input0Slot->GetTensorInfo().GetNumDimensions();
-            auto const input1NumDims = input1Slot->GetTensorInfo().GetNumDimensions();
+            IOutputSlot* input0 = GetSlot(inputs[0]);
+            IOutputSlot* input1 = GetSlot(inputs[1]);
+
+            auto const input0NumDims = input0->GetTensorInfo().GetNumDimensions();
+            auto const input1NumDims = input1->GetTensorInfo().GetNumDimensions();
 
             if (input0NumDims < input1NumDims)
             {
                 const bool isNHWC = true;
-                input0Slot = BroadcasMenohorAddandMul(input1Slot, input0Slot, isNHWC, *m_Network, node);
+                input0 = BroadcasMenohorAddandMul(input1, input0, isNHWC, *m_Network, node);
             }
             if (input1NumDims < input0NumDims)
             {
                 const bool isNHWC = true;
-                input1Slot = BroadcasMenohorAddandMul(input0Slot, input1Slot, isNHWC, *m_Network, node);
+                input1 = BroadcasMenohorAddandMul(input0, input1, isNHWC, *m_Network, node);
             }
 
-            input0Slot->Connect(layer->GetInputSlot(0));
-            input1Slot->Connect(layer->GetInputSlot(1));
+            input0->Connect(layer->GetInputSlot(0));
+            input1->Connect(layer->GetInputSlot(1));
 
             if (input0NumDims < input1NumDims)
             {
-                layer->GetOutputSlot(0).SetTensorInfo(input1Slot->GetTensorInfo());
+                layer->GetOutputSlot(0).SetTensorInfo(input1->GetTensorInfo());
             }
             else
             {
-                layer->GetOutputSlot(0).SetTensorInfo(input0Slot->GetTensorInfo());
+                layer->GetOutputSlot(0).SetTensorInfo(input0->GetTensorInfo());
             }
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }  
 
-        ParsedMenohOperationPtr MenohParser::ParsePlaceholder(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParsePlaceholder(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 	    
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 0);
+            std::vector<OutputOfOperation> inputs = InputCheck(node, 0);
 
-            const LayerBindingId layerId = boost::numeric_cast<LayerBindingId>(m_NetworkInputsBindingInfo.size());
+            const LayerBindingId layerId = static_cast<LayerBindingId>(m_NetworkInputsBindingInfo.size());
 
-            auto it = m_InputShapes.find(name);
-            if (it == m_InputShapes.end())
-            {
-	        throw ParseException("Missing input shape for Placeholder '" + name + "'");
-            }
-
-            auto dims = ReadOptionalNodeUint32ListAttribute(node, "dims");
+            auto dims = (std::vector<uint32_t> const&)attribute_ints(node, "dims");
             const TensorInfo tensorInfo(static_cast<unsigned int>(dims.size()), (const unsigned int*)dims.data(), DataType::Float32);
 	    
-#ifdef ARM_DEBUG
-	    std::cout << "   output = " << tensorInfo.GetNumDimensions() << ", " << tensorInfo.GetNumElements() << std::endl;
-	    std::cout << "   outputShape = ";
-	    for( unsigned int i=0 ; i<tensorInfo.GetNumDimensions() ; i++ )
-	      std::cout << tensorInfo.GetShape()[i] << " ";
-	    std::cout << std::endl;
-#endif
             IConnectableLayer* const layer = m_Network->AddInputLayer(layerId, name.c_str());
 
             layer->GetOutputSlot(0).SetTensorInfo(tensorInfo);
 
             TrackInputBinding(layer, layerId, tensorInfo);
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseRelu(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseRelu(const menoh_impl::node& node) {
 	    
-            ActivationDescriptor activationDesc;
-            activationDesc.m_Function = ActivationFunction::ReLu;
-            return AddActivationLayer(node, activationDesc);
+            ActivationDescriptor desc;
+            desc.m_Function = ActivationFunction::ReLu;
+            return AddActivationLayer(node, desc);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseRelu6(const menoh_impl::node& node, const menoh_impl::graph& graph ) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseRelu6(const menoh_impl::node& node) {
 
-            ActivationDescriptor activationDesc;
-            activationDesc.m_Function = ActivationFunction::BoundedReLu;
-            activationDesc.m_A = 6.0f;
-            activationDesc.m_B = 0.0f;
+            ActivationDescriptor desc;
+            desc.m_Function = ActivationFunction::BoundedReLu;
+            desc.m_A = 6.0f;
+            desc.m_B = 0.0f;
 
-            return AddActivationLayer(node, activationDesc);
+            return AddActivationLayer(node, desc);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseSigmoid(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseSigmoid(const menoh_impl::node& node) {
 	    
-            ActivationDescriptor activationDesc;
-            activationDesc.m_Function = ActivationFunction::Sigmoid;
+            ActivationDescriptor desc;
+            desc.m_Function = ActivationFunction::Sigmoid;
 
-            return AddActivationLayer(node, activationDesc);
+            return AddActivationLayer(node, desc);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseSoftplus(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseSoftplus(const menoh_impl::node& node) {
 	    
-            ActivationDescriptor activationDesc;
-            activationDesc.m_Function = ActivationFunction::SoftReLu;
+            ActivationDescriptor desc;
+            desc.m_Function = ActivationFunction::SoftReLu;
 
-            return AddActivationLayer(node, activationDesc);
+            return AddActivationLayer(node, desc);
         }    
 
-        ParsedMenohOperationPtr MenohParser::ParseTanh(const menoh_impl::node& node, const menoh_impl::graph& graph ) {
-	    boost::ignore_unused(graph);
+        OperationPtr Parser::ParseTanh(const menoh_impl::node& node) {
 	    
-            ActivationDescriptor activationDesc;
-            activationDesc.m_Function = ActivationFunction::TanH;
-            activationDesc.m_A = 1.0f;
-            activationDesc.m_B = 1.0f;
+            ActivationDescriptor desc;
+            desc.m_Function = ActivationFunction::TanH;
+            desc.m_A = 1.0f;
+            desc.m_B = 1.0f;
 
-            return AddActivationLayer(node, activationDesc);
+            return AddActivationLayer(node, desc);
         }
 
-        ParsedMenohOperationPtr MenohParser::AddActivationLayer(const menoh_impl::node& node, ActivationDescriptor& activationDesc) {
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::AddActivationLayer(const menoh_impl::node& node, ActivationDescriptor& desc) {
+	    std::string name = NodeName(node);
 
-	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
-            IConnectableLayer* const layer = m_Network->AddActivationLayer(activationDesc, name.c_str());
+            IConnectableLayer* const layer = m_Network->AddActivationLayer(desc, name.c_str());
 
-            IOutputSlot& prevLayerOutputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-            prevLayerOutputSlot.Connect(layer->GetInputSlot(0));
-            layer->GetOutputSlot(0).SetTensorInfo(prevLayerOutputSlot.GetTensorInfo());
+            IOutputSlot* slot = GetSlot(inputs[0]);
+            slot->Connect(layer->GetInputSlot(0));
+            layer->GetOutputSlot(0).SetTensorInfo(slot->GetTensorInfo());
 
-            TensorInfo tensorInfo = prevLayerOutputSlot.GetTensorInfo();
-#ifdef ARM_DEBUG
-	    std::cout << "   output = " << tensorInfo.GetNumDimensions() << ", " << tensorInfo.GetNumElements() << std::endl;
-	    std::cout << "   outputShape = ";
-	    for( unsigned int i=0 ; i<tensorInfo.GetNumDimensions() ; i++ )
-	      std::cout << tensorInfo.GetShape()[i] << " ";
-	    std::cout << std::endl;
-#endif
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseSoftmax(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseSoftmax(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 	    
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
+            std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
-            SoftmaxDescriptor softmaxDescriptor;
-            IConnectableLayer* const layer = m_Network->AddSoftmaxLayer(softmaxDescriptor, name.c_str());
+            SoftmaxDescriptor desc;
+            IConnectableLayer* const layer = m_Network->AddSoftmaxLayer(desc, name.c_str());
 
-            IOutputSlot& prevLayerSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-            prevLayerSlot.Connect(layer->GetInputSlot(0));
-            layer->GetOutputSlot(0).SetTensorInfo(prevLayerSlot.GetTensorInfo());
+            IOutputSlot* prev = GetSlot(inputs[0]);
+            prev->Connect(layer->GetInputSlot(0));
+            layer->GetOutputSlot(0).SetTensorInfo(prev->GetTensorInfo());
 
-            TensorInfo outputInfo = prevLayerSlot.GetTensorInfo();
-#ifdef ARM_DEBUG
-	    std::cout << "   output = " << outputInfo.GetNumDimensions() << ", " << outputInfo.GetNumElements() << std::endl;
-	    std::cout << "   outputShape = ";
-	    for( unsigned int i=0 ; i<outputInfo.GetNumDimensions() ; i++ )
-	      std::cout << outputInfo.GetShape()[i] << " ";
-	    std::cout << std::endl;
-#endif
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseMaxPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    return ParsePooling2d(node, graph, PoolingAlgorithm::Max);
+        OperationPtr Parser::ParseMaxPool(const menoh_impl::node& node) {
+	    return ParsePooling2d(node, PoolingAlgorithm::Max);
         }
 
-        ParsedMenohOperationPtr MenohParser::ParseAvgPool(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    return ParsePooling2d(node, graph, PoolingAlgorithm::Average);
+        OperationPtr Parser::ParseAvgPool(const menoh_impl::node& node) {
+	    return ParsePooling2d(node, PoolingAlgorithm::Average);
         }          
 
-        ParsedMenohOperationPtr MenohParser::ParsePooling2d(const menoh_impl::node& node, const menoh_impl::graph& graph, 
-                                                            PoolingAlgorithm pooltype){
-	    boost::ignore_unused(graph);
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParsePooling2d(const menoh_impl::node& node, PoolingAlgorithm pooltype){
+	    std::string name = NodeName(node);
 	    
-	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 1);
-            if (inputs.size() != 1)
-            {
-                throw ParseException("2D Pooling expects one input!");
-            }
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
             std::vector<int> strides, kernel_shape, pads;
             std::tie(strides, kernel_shape, pads) = attributes_for_2d_data_processing(node);
@@ -1440,18 +1352,18 @@ namespace menoh_impl {
             std::cout << "           pads         = " << pads[0]         << ", " << pads[1]         << std::endl;
 #endif            
 
-            Pooling2dDescriptor pooling2dDescriptor;
-            pooling2dDescriptor.m_PoolType            = pooltype;
-            pooling2dDescriptor.m_PaddingMethod       = PaddingMethod::Exclude;
-            pooling2dDescriptor.m_OutputShapeRounding = OutputShapeRounding::Floor;
+            Pooling2dDescriptor desc;
+            desc.m_PoolType            = pooltype;
+            desc.m_PaddingMethod       = PaddingMethod::Exclude;
+            desc.m_OutputShapeRounding = OutputShapeRounding::Floor;
 
-            pooling2dDescriptor.m_StrideX    = strides[0];
-            pooling2dDescriptor.m_StrideY    = strides[1];
-            pooling2dDescriptor.m_PoolWidth  = kernel_shape[0];
-            pooling2dDescriptor.m_PoolHeight = kernel_shape[1];
+            desc.m_StrideX    = strides[0];
+            desc.m_StrideY    = strides[1];
+            desc.m_PoolWidth  = kernel_shape[0];
+            desc.m_PoolHeight = kernel_shape[1];
 
-            IOutputSlot& inputSlot = inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-            TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
+            IOutputSlot* slot = GetSlot(inputs[0]);
+            TensorInfo inputTensorInfo = slot->GetTensorInfo();
 
             uint32_t inputHeight = inputTensorInfo.GetShape()[2];
             uint32_t inputWidth  = inputTensorInfo.GetShape()[3];
@@ -1470,11 +1382,11 @@ namespace menoh_impl {
                 outputInfo = TensorInfo({ inputTensorInfo.GetShape()[0],
                                           inputTensorInfo.GetShape()[1],
                                           static_cast<uint32_t>(ceil(
-                                              static_cast<float>(inputHeight) /
-                                              static_cast<float>(pooling2dDescriptor.m_StrideY))),
+                                                                static_cast<float>(inputHeight) /
+                                                                static_cast<float>(desc.m_StrideY))),
                                           static_cast<uint32_t>(ceil(
-                                              static_cast<float>(inputWidth) /
-                                              static_cast<float>(pooling2dDescriptor.m_StrideX)))
+                                                                static_cast<float>(inputWidth) /
+                                                                static_cast<float>(desc.m_StrideX)))
                                         }, DataType::Float32);
             }
             else
@@ -1483,18 +1395,17 @@ namespace menoh_impl {
                 outputInfo = TensorInfo({ inputTensorInfo.GetShape()[0],
                                           inputTensorInfo.GetShape()[1],
                                           static_cast<uint32_t>(ceil(
-                                              static_cast<float>(inputHeight - pooling2dDescriptor.m_PoolHeight + 1) /
-                                              static_cast<float>(pooling2dDescriptor.m_StrideY))),
+                                                                static_cast<float>(inputHeight - desc.m_PoolHeight + 1) /
+                                                                static_cast<float>(desc.m_StrideY))),
                                           static_cast<uint32_t>(ceil(
-                                              static_cast<float>(inputWidth - pooling2dDescriptor.m_PoolWidth + 1) /
-                                              static_cast<float>(pooling2dDescriptor.m_StrideX)))
+                                                                static_cast<float>(inputWidth - desc.m_PoolWidth + 1) /
+                                                                static_cast<float>(desc.m_StrideX)))
                                         }, DataType::Float32);
             }
 
-            CalcPadding(inputWidth, pooling2dDescriptor.m_PoolWidth, pooling2dDescriptor.m_StrideX,
-                            pooling2dDescriptor.m_PadLeft, pooling2dDescriptor.m_PadRight, padding);
-            CalcPadding(inputHeight, pooling2dDescriptor.m_PoolHeight, pooling2dDescriptor.m_StrideY,
-                            pooling2dDescriptor.m_PadTop, pooling2dDescriptor.m_PadBottom, padding);
+            CalcPadding(inputWidth,  desc.m_PoolWidth, desc.m_StrideX,  desc.m_PadLeft, desc.m_PadRight, padding);
+            CalcPadding(inputHeight, desc.m_PoolHeight, desc.m_StrideY, desc.m_PadTop, desc.m_PadBottom, padding);
+
 #ifdef ARM_DEBUG
 	    std::cout << "   output = " << outputInfo.GetNumDimensions() << ", " << outputInfo.GetNumElements() << std::endl;
 	    std::cout << "   outputShape = ";
@@ -1502,7 +1413,7 @@ namespace menoh_impl {
 	      std::cout << outputInfo.GetShape()[i] << " ";
 	    std::cout << std::endl;
 #endif
-            IConnectableLayer* layer = m_Network->AddPooling2dLayer(pooling2dDescriptor, name.c_str());
+            IConnectableLayer* layer = m_Network->AddPooling2dLayer(desc, name.c_str());
             if (layer == nullptr)
             {
                 throw ParseException("Failed to add pooling2d layer");
@@ -1510,26 +1421,69 @@ namespace menoh_impl {
 
             layer->GetOutputSlot(0).SetTensorInfo(outputInfo);
 
-            inputSlot.Connect(layer->GetInputSlot(0));
+            slot->Connect(layer->GetInputSlot(0));
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        ParsedMenohOperationPtr MenohParser::AddAdditionLayer(const menoh_impl::node& node, bool isBiasAdd){
-	    std::string name = GetNodeName(node);
+        OperationPtr Parser::ParseGlobalMaxPool(const menoh_impl::node& node) {
+	    return ParseGlobalPooling2d(node, PoolingAlgorithm::Max);
+        }
 
-	    std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 2);
+        OperationPtr Parser::ParseGlobalAvgPool(const menoh_impl::node& node) {
+	    return ParseGlobalPooling2d(node, PoolingAlgorithm::Average);
+        }          
 
-            IOutputSlot* input0Slot = &inputs[0].m_IndexedValue->ResolveArmnnOutputSlot(inputs[0].m_Index);
-            IOutputSlot* input1Slot = &inputs[1].m_IndexedValue->ResolveArmnnOutputSlot(inputs[1].m_Index);
+        OperationPtr Parser::ParseGlobalPooling2d(const menoh_impl::node& node, PoolingAlgorithm pooltype){
+	    std::string name = NodeName(node);
 
-            const TensorInfo& input0Info = input0Slot->GetTensorInfo();
-            const TensorInfo& input1Info = input1Slot->GetTensorInfo();
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
+
+            IOutputSlot* slot = GetSlot(inputs[0]);
+            TensorInfo inputTensorInfo = slot->GetTensorInfo();
+
+            uint32_t inputHeight = inputTensorInfo.GetShape()[2];
+            uint32_t inputWidth  = inputTensorInfo.GetShape()[3];
+
+            Pooling2dDescriptor desc;
+            desc.m_PoolType   = pooltype;
+            desc.m_PoolWidth  = inputWidth;
+            desc.m_PoolHeight = inputHeight;
+
+            TensorInfo outputTensorInfo;
+            outputTensorInfo = TensorInfo({inputTensorInfo.GetShape()[0], inputTensorInfo.GetShape()[1], 1, 1}, DataType::Float32);
+
+#ifdef ARM_DEBUG
+            dumpTensorInfo(inputTensorInfo);
+            dumpTensorInfo(outputTensorInfo);
+#endif
+
+            IConnectableLayer* layer = m_Network->AddPooling2dLayer(desc, name.c_str());
+            if (layer == nullptr)
+            {
+                throw ParseException("Failed to add pooling2d layer");
+            }
+
+            layer->GetOutputSlot(0).SetTensorInfo(outputTensorInfo);
+
+            slot->Connect(layer->GetInputSlot(0));
+
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
+        }
+
+        OperationPtr Parser::AddAdditionLayer(const menoh_impl::node& node, bool isBiasAdd){
+	    std::string name = NodeName(node);
+
+	    std::vector<OutputOfOperation> inputs = InputCheck(node, 2);
+
+            IOutputSlot* input0 = GetSlot(inputs[0]);
+            IOutputSlot* input1 = GetSlot(inputs[1]);
+
+            const TensorInfo& input0Info = input0->GetTensorInfo();
+            const TensorInfo& input1Info = input1->GetTensorInfo();
 
             if (isBiasAdd)
             {
-                // BiasAdd takes bias as a 1D tensor. We need to add a reshape layer to create a 4D tensor
-                // with the same data in the correct dimension for broadcast in addition.
                 if(input1Info.GetNumDimensions() != 1)
                 {
                     throw ParseException("Unsupported bias for BiasAdd. It should be a 1D vector.");
@@ -1544,55 +1498,54 @@ namespace menoh_impl {
                     throw ParseException("Only NHWC or NCHW supported for BiasAdd");
                 }
 
-                input1Slot = BroadcasMenohorAddandMul(input0Slot, input1Slot, isNHWC, *m_Network, node);
+                input1 = BroadcasMenohorAddandMul(input0, input1, isNHWC, *m_Network, node);
             }
             else
             {
                 if (input0Info.GetNumDimensions() == 1)
                 {
                     const bool isNHWC = true;
-                    input0Slot = BroadcasMenohorAddandMul(input1Slot, input0Slot, isNHWC, *m_Network, node);
+                    input0 = BroadcasMenohorAddandMul(input1, input0, isNHWC, *m_Network, node);
                 }
 
                 if (input1Info.GetNumDimensions() == 1)
                 {
                     const bool isNHWC = true;
-                    input1Slot = BroadcasMenohorAddandMul(input0Slot, input1Slot, isNHWC, *m_Network, node);
+                    input1 = BroadcasMenohorAddandMul(input0, input1, isNHWC, *m_Network, node);
                 }
             }
 
             IConnectableLayer* const layer = m_Network->AddAdditionLayer(name.c_str());
 
-            input0Slot->Connect(layer->GetInputSlot(0));
-            input1Slot->Connect(layer->GetInputSlot(1));
+            input0->Connect(layer->GetInputSlot(0));
+            input1->Connect(layer->GetInputSlot(1));
 
             if (input0Info.GetNumDimensions() == 1 && isBiasAdd == false)
             {
-                layer->GetOutputSlot(0).SetTensorInfo(input1Slot->GetTensorInfo());
+                layer->GetOutputSlot(0).SetTensorInfo(input1->GetTensorInfo());
             }
             else
             {
-                layer->GetOutputSlot(0).SetTensorInfo(input0Slot->GetTensorInfo());
+                layer->GetOutputSlot(0).SetTensorInfo(input0->GetTensorInfo());
             }
 
-            return std::make_unique<SingleLayerParsedMenohOperation>(this, node, layer);
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        IConnectableLayer* MenohParser::AddFullyConnectedLayer(const menoh_impl::node& matMulNodeDef, 
-                                                               const menoh_impl::node* addNodeDef, const char* armnnLayerName){
-            // find bias const (if applicable)
-            ParsedConstMenohOperation<float>* biasNode = nullptr;
+        IConnectableLayer* Parser::AddFullyConnectedLayer(const menoh_impl::node& matMulNodeDef, 
+                                                          const menoh_impl::node* addNodeDef, const char* armnnLayerName){
+            ConstOperation<float>* biasNode = nullptr;
             if (addNodeDef != nullptr)
             {
-                std::vector<OutputOfParsedMenohOperation> addInputs = GetInputParsedMenohOperationsChecked(*addNodeDef, 2);
-                // find our inputs
-                if (HasParsedConstTensor<float>(GetNodeName(addInputs[0].m_IndexedValue->GetNode())))
+                std::vector<OutputOfOperation> addInputs = InputCheck(*addNodeDef, 2);
+
+                if (HasParsedConst(addInputs[0]))
                 {
-                    biasNode = boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(addInputs[0].m_IndexedValue);
+                    biasNode = static_cast<ConstOperation<float>*>(addInputs[0].m_Value);
                 }
-                else if (HasParsedConstTensor<float>(GetNodeName(addInputs[1].m_IndexedValue->GetNode())))
+                else if (HasParsedConst(addInputs[1]))
                 {
-                    biasNode = boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(addInputs[1].m_IndexedValue);
+                    biasNode = static_cast<ConstOperation<float>*>(addInputs[1].m_Value);
                 }
                 else
                 {
@@ -1600,40 +1553,41 @@ namespace menoh_impl {
                 }
             }
 
-            // find matmul inputs
-            ParsedConstMenohOperation<float>* weightNode = nullptr;
-            ParsedMenohOperation* inputNode  = nullptr;
+            ConstOperation<float>* weightNode = nullptr;
+            Operation* inputNode  = nullptr;
             unsigned int inputIdx = 0;
-            std::vector<OutputOfParsedMenohOperation> mulInputs = GetInputParsedMenohOperationsChecked(matMulNodeDef, 2);
-            if (HasParsedConstTensor<float>(GetNodeName(mulInputs[0].m_IndexedValue->GetNode())))
+
+            std::vector<OutputOfOperation> mulInputs = InputCheck(matMulNodeDef, 2);
+
+            if (HasParsedConst(mulInputs[0]))
             {
-                weightNode = boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(mulInputs[0].m_IndexedValue);
-                inputNode = mulInputs[1].m_IndexedValue;
-                inputIdx = mulInputs[1].m_Index;
+                weightNode = static_cast<ConstOperation<float>*>(mulInputs[0].m_Value);
+                inputNode  = mulInputs[1].m_Value;
+                inputIdx   = mulInputs[1].m_Index;
             }
-            else if (HasParsedConstTensor<float>(GetNodeName(mulInputs[1].m_IndexedValue->GetNode())))
+            else if (HasParsedConst(mulInputs[1]))
             {
-                weightNode = boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(mulInputs[1].m_IndexedValue);
-                inputNode = mulInputs[0].m_IndexedValue;
-                inputIdx = mulInputs[0].m_Index;
+                weightNode = static_cast<ConstOperation<float>*>(mulInputs[1].m_Value);
+                inputNode  = mulInputs[0].m_Value;
+                inputIdx   = mulInputs[0].m_Index;
             }
             else
             {
                 throw ParseException("ArmNN only supports fully connected layers with constant weights");
             }
 
-            MenohVector<float> weightTensorData;
-            // handle weight
+            Vector<float> weightTensorData;
+
             ConstTensor weights = weightNode->GetConstTensor(weightTensorData);
 
             FullyConnectedDescriptor desc;
             desc.m_BiasEnabled = addNodeDef != nullptr;
 
             IConnectableLayer* layer = nullptr;
-            // make the layer
+
             if (addNodeDef != nullptr)
             {
-                MenohVector<float> biasTensorData;
+                Vector<float> biasTensorData;
                 ConstTensor biases = biasNode->GetConstTensor(biasTensorData);
 
                 if (weights.GetShape()[1] != biases.GetShape()[0])
@@ -1650,31 +1604,26 @@ namespace menoh_impl {
 
             BOOST_ASSERT(layer != nullptr);
 
-            inputNode->ResolveArmnnOutputSlot(inputIdx).Connect(layer->GetInputSlot(0));
-            unsigned int batches = inputNode->ResolveArmnnOutputSlot(inputIdx).GetTensorInfo().GetShape()[0];
+            inputNode->Output(inputIdx).Connect(layer->GetInputSlot(0));
+            unsigned int batches = inputNode->Output(inputIdx).GetTensorInfo().GetShape()[0];
 
-            // handle output
             TensorInfo outputInfo({ batches, weights.GetShape()[1] }, DataType::Float32);
             layer->GetOutputSlot(0).SetTensorInfo(outputInfo);
             return layer;
         }
 
-        IConnectableLayer* MenohParser::AddFullyConnectedLayer(const menoh_impl::node& node, const char* armnnLayerName){
-            std::vector<OutputOfParsedMenohOperation> inputs = GetInputParsedMenohOperationsChecked(node, 3);
+        IConnectableLayer* Parser::AddFullyConnectedLayer(const menoh_impl::node& node, const char* armnnLayerName){
+            std::vector<OutputOfOperation> inputs = InputCheck(node, 3);
 
-            ParsedMenohOperation*             inputNode  = nullptr;
-            ParsedConstMenohOperation<float>* weightNode = nullptr;
-            ParsedConstMenohOperation<float>* biasNode   = nullptr;
+            unsigned int           inputIdx   = inputs[0].m_Index;
+            Operation*             inputNode  = inputs[0].m_Value;
 
-            unsigned int inputIdx = 0;
-            inputNode  = inputs[0].m_IndexedValue;
-            inputIdx   = inputs[0].m_Index;
-            weightNode = boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[1].m_IndexedValue);
-            biasNode   = boost::polymorphic_downcast<ParsedConstMenohOperation<float>*>(inputs[2].m_IndexedValue);
-
-            MenohVector<float> weightTensorData;
+            ConstOperation<float>* weightNode = static_cast<ConstOperation<float>*>(inputs[1].m_Value);
+            Vector<float> weightTensorData;
             ConstTensor weights = weightNode->GetConstTensor(weightTensorData);
-            MenohVector<float> biasTensorData;
+
+            ConstOperation<float>* biasNode   = static_cast<ConstOperation<float>*>(inputs[2].m_Value);
+            Vector<float> biasTensorData;
             ConstTensor biases  = biasNode->GetConstTensor(biasTensorData);
 
             if (weights.GetShape()[0] != biases.GetShape()[0])
@@ -1690,9 +1639,9 @@ namespace menoh_impl {
             layer = m_Network->AddFullyConnectedLayer(desc, weights, biases, armnnLayerName);
 
             BOOST_ASSERT(layer != nullptr);
-            inputNode->ResolveArmnnOutputSlot(inputIdx).Connect(layer->GetInputSlot(0));
-            unsigned int batches = inputNode->ResolveArmnnOutputSlot(inputIdx).GetTensorInfo().GetShape()[0];
-            // handle output
+            inputNode->Output(inputIdx).Connect(layer->GetInputSlot(0));
+            unsigned int batches = inputNode->Output(inputIdx).GetTensorInfo().GetShape()[0];
+
             TensorInfo outputInfo({ batches, weights.GetShape()[0] }, DataType::Float32);
             layer->GetOutputSlot(0).SetTensorInfo(outputInfo);
 #ifdef ARM_DEBUG
@@ -1705,33 +1654,32 @@ namespace menoh_impl {
 	    return layer;
         }
 
-        void MenohParser::LoadNode(const menoh_impl::node& node, const menoh_impl::graph& graph) {
-	    std::string name = GetNodeName(node);
+        void Parser::LoadNode(const menoh_impl::node& node) {
+	    std::string name = NodeName(node);
 	    
-	    // get the type of the node (assume float)
             dtype_t type = dtype_t::float_;
 
             const std::string& operation = node.op_type;
-            auto it = ms_OperationNameToParsingFunctions.find(operation);
-            if (it != ms_OperationNameToParsingFunctions.end())
+            auto it = m_Functions.find(operation);
+            if (it != m_Functions.end())
             {
                 auto func = it->second;
-                ParsedMenohOperationPtr parsedMenohOperation = (this->*func)(node, graph);
-                ParsedMenohOperation* parsedMenohOperationRaw = parsedMenohOperation.get();
-                // Store the parsed operation so that dependent layers can connect to it
-                auto it = m_ParsedMenohOperations.find(name);
-                if (it != m_ParsedMenohOperations.end())
+                OperationPtr parsedMenohOperation = (this->*func)(node);
+                Operation* parsedMenohOperationRaw = parsedMenohOperation.get();
+
+                auto it = m_Operations.find(name);
+                if (it != m_Operations.end())
                 {
 		  throw ParseException(boost::str(boost::format("Name %1% used by more than one node") % name));
                 }
 
-                m_ParsedMenohOperations[name] = std::move(parsedMenohOperation);
-                // If this node was requested as an output from the network then add an ArmNN output layer
-                if (std::find(m_RequestedOutputs.begin(), m_RequestedOutputs.end(), name) !=
-                    m_RequestedOutputs.end())
+                m_Operations[name] = std::move(parsedMenohOperation);
+
+                if (std::find(m_Outputs.begin(), m_Outputs.end(), name) !=
+                    m_Outputs.end())
                 {
-                    const LayerBindingId layerId = boost::numeric_cast<LayerBindingId>(m_NetworkOutputsBindingInfo.size());
-                    IOutputSlot& prevSlot = parsedMenohOperationRaw->ResolveArmnnOutputSlot(0);
+                    const LayerBindingId layerId = static_cast<LayerBindingId>(m_NetworkOutputsBindingInfo.size());
+                    IOutputSlot& prevSlot = parsedMenohOperationRaw->Output(0);
 
                     TensorInfo tensorInfo = prevSlot.GetTensorInfo();
                     IConnectableLayer* outputLayer = m_Network->AddOutputLayer(layerId, node.output_name_list.at(0).c_str());
@@ -1748,79 +1696,79 @@ namespace menoh_impl {
             }
         }
 
-        void MenohParser::LoadGraph(const menoh_impl::graph& graph,
-                                    std::unordered_map<std::string, array> const& parameter_table) {
+        void Parser::CheckOutput(const menoh_impl::graph& graph, const std::vector<std::string>& outputs) {
 
-            // add all nodes to our map
-            m_NodesByName.clear();
-            m_ParamByName.clear();
-            m_NetworkInputsBindingInfo.clear();
-            m_NetworkOutputsBindingInfo.clear();
-
-            for( unsigned int i=0; i<graph.node_list().size() ; ++i)
-            {
-	        const menoh_impl::node& my_node = graph.node_list().at(i);
-	        m_NodesByName[GetNodeName(my_node)] = &my_node;
-            }
-
-            for( auto param : parameter_table )
-            {
-                auto arr = param.second;
-	        array param_arr(arr.dtype(), std::move(arr.dims()), std::move(arr.data()));
-	        m_ParamByName[param.first] = param_arr;
-            }
-
-            // Find the output nodes the user requested
-            std::vector<const menoh_impl::node*> targetNodes;
-            for (const std::string& requestedOutputName : m_RequestedOutputs)
+            std::vector<const menoh_impl::node*> outputNodes;
+            for (const std::string& name : outputs)
             {
                 bool found = false;
 
 #ifdef ARM_DEBUG
-	        std::cout << "requestedOutputName = " << requestedOutputName << std::endl;
+                std::cout << "OutputName = " << name << std::endl;
 #endif
                 for( unsigned int i=0; i<graph.node_list().size(); ++i)
                 {
- 		    const menoh_impl::node& node = graph.node_list().at(i);
+                    const menoh_impl::node& node = graph.node_list().at(i);
                      
-	            auto nodeIt = std::find(node.output_name_list.begin(), node.output_name_list.end(), requestedOutputName);
+                    auto nodeIt = std::find(node.output_name_list.begin(), node.output_name_list.end(), name);
                     if (nodeIt != node.output_name_list.end())
                     {
-		        targetNodes.push_back(&node);
+		        outputNodes.push_back(&node);
                         found = true;
                         break;
                     }
                 }
+
                 if( !found )
-                    throw ParseException("Couldn't find requested output node '" + requestedOutputName + "' in graph");
+                    throw ParseException("Couldn't find requested output node '" + name + "' in graph");
             }
 
-	    for( auto node : targetNodes )
-	      m_RequestedOutputs.push_back(GetNodeName(*node));
-	    
+	    for( auto node : outputNodes )
+	      m_Outputs.push_back(NodeName(*node));
+        }
+
+        void Parser::LoadParameter(std::unordered_map<std::string, array> const& parameter_table) {
+            for( auto param : parameter_table )
+            {
+                auto arr = param.second;
+	        array param_arr(arr.dtype(), std::move(arr.dims()), std::move(arr.data()));
+	        m_Params[param.first] = param_arr;
+            }
+        }
+          
+        void Parser::LoadGraph(const menoh_impl::graph& graph) {
+
+            for( unsigned int i=0; i<graph.node_list().size() ; ++i)
+            {
+	        const menoh_impl::node& my_node = graph.node_list().at(i);
+	        m_Nodes[NodeName(my_node)] = &my_node;
+            }
+
+
             for( unsigned int i=0; i<graph.node_list().size(); ++i)
             {
-                LoadNode(graph.node_list().at(i), graph);
+                LoadNode(graph.node_list().at(i));
             }
         }
  
-        armnn::INetworkPtr MenohParser::CreateNetworkFromGraph(const menoh_impl::graph& graph,
+        armnn::INetworkPtr Parser::CreateNetworkFromGraph(const menoh_impl::graph& graph,
 						               std::unordered_map<std::string, array> const& parameter_table,
-	                                                       const std::map<std::string, TensorShape>& inputShapes,
-                                                               const std::vector<std::string>& requestedOutputs){
+                                                               const std::vector<std::string>& outputs){
+            Cleanup();
+
             m_Network = INetwork::Create();
             assert(m_Network);
 
-            m_InputShapes = inputShapes;
-            if (requestedOutputs.size() == 0)
+            if (outputs.size() == 0)
             {
-                throw ParseException("requestedOutputs must have at least one entry");
+                throw ParseException("outputs must have at least one entry");
             }
-            m_RequestedOutputs = requestedOutputs;
 
             try
             {
-		LoadGraph(graph, parameter_table);
+                CheckOutput(graph, outputs);
+                LoadParameter(parameter_table);
+		LoadGraph(graph);
             }
             catch (const ParseException& e)
             {
@@ -1831,17 +1779,23 @@ namespace menoh_impl {
             return std::move(m_Network);
         }
 
-        BindingPointInfo MenohParser::GetNetworkInputBindingInfo(const std::string& name) const
+        void Parser::Cleanup(){
+            m_Nodes.clear();
+            m_Params.clear();
+            m_Operations.clear();
+        }  
+
+        BindingPointInfo Parser::GetNetworkInputBindingInfo(const std::string& name) const
         {
             return GetBindingInfo(name, "input", m_NetworkInputsBindingInfo);
         }
 
-        BindingPointInfo MenohParser::GetNetworkOutputBindingInfo(const std::string& name) const
+        BindingPointInfo Parser::GetNetworkOutputBindingInfo(const std::string& name) const
         {
             return GetBindingInfo(name, "output", m_NetworkOutputsBindingInfo);
         }
 
-        std::pair<LayerBindingId, TensorInfo> MenohParser::GetBindingInfo(const std::string& layerName,
+        std::pair<LayerBindingId, TensorInfo> Parser::GetBindingInfo(const std::string& layerName,
             const char* bindingPointDesc,
             const std::unordered_map<std::string, BindingPointInfo>& nameToBindingInfo)
         {
@@ -1853,17 +1807,17 @@ namespace menoh_impl {
             return it->second;
         }
 
-        void MenohParser::TrackInputBinding(IConnectableLayer* layer, LayerBindingId id, const TensorInfo& tensorInfo)
+        void Parser::TrackInputBinding(IConnectableLayer* layer, LayerBindingId id, const TensorInfo& tensorInfo)
         {
             TrackBindingPoint(layer, id, tensorInfo, "input", m_NetworkInputsBindingInfo);
         }
 
-        void MenohParser::TrackOutputBinding(IConnectableLayer* layer, LayerBindingId id, const TensorInfo& tensorInfo)
+        void Parser::TrackOutputBinding(IConnectableLayer* layer, LayerBindingId id, const TensorInfo& tensorInfo)
         {
             TrackBindingPoint(layer, id, tensorInfo, "output", m_NetworkOutputsBindingInfo);
         }
 
-        void MenohParser::TrackBindingPoint(IConnectableLayer* layer,
+        void Parser::TrackBindingPoint(IConnectableLayer* layer,
             LayerBindingId id,
             const TensorInfo& tensorInfo,
             const char* bindingPointDesc,
@@ -1882,39 +1836,34 @@ namespace menoh_impl {
             }
         }
 
-        void MenohParser::Cleanup(){
-            // cleanup, in case we reuse this parser
-            m_InputShapes.clear();
-            m_RequestedOutputs.clear();
-            m_NodesByName.clear();
-            m_ParamByName.clear();
-            m_ParsedMenohOperations.clear();
-        }  
-
-        const std::map<std::string, MenohParser::OperationParsingFunction> MenohParser::ms_OperationNameToParsingFunctions = {
-	  { "Const",                 &MenohParser::ParseConst },
-          { "Add",                   &MenohParser::ParseAdd },
-          { "BiasAdd",               &MenohParser::ParseBiasAdd },
-          { "FC",                    &MenohParser::ParseFC },
-          { "Identity",              &MenohParser::ParseIdentity },
-          { "Conv",                  &MenohParser::ParseConv2D },
-          { "DepthwiseConv2dNative", &MenohParser::ParseDepthwiseConv2D },
-          { "FusedBatchNorm",        &MenohParser::ParseFusedBatchNorm },
-          { "ConcatV2",              &MenohParser::ParseConcat },
-          { "LRN",                   &MenohParser::ParseLrn },
-          { "MatMul",                &MenohParser::ParseMatMul },
-          { "Mul",                   &MenohParser::ParseMul },
-          { "Placeholder",           &MenohParser::ParsePlaceholder },
-          { "Relu",                  &MenohParser::ParseRelu },
-          { "Relu6",                 &MenohParser::ParseRelu6 },
-          { "Reshape",               &MenohParser::ParseReshape },
-          { "Shape",                 &MenohParser::ParseShape },
-          { "Sigmoid",               &MenohParser::ParseSigmoid },
-          { "Softmax",               &MenohParser::ParseSoftmax },
-          { "Softplus",              &MenohParser::ParseSoftplus },
-          { "Tanh",                  &MenohParser::ParseTanh },
-          { "MaxPool",               &MenohParser::ParseMaxPool },
-          { "AvgPool",               &MenohParser::ParseAvgPool },
+        const std::map<std::string, Parser::ParseFunction> Parser::m_Functions = {
+	  { "Const",                 &Parser::ParseConst },
+          { "Add",                   &Parser::ParseAdd },
+          { "Sum",                   &Parser::ParseAdd },
+          { "BiasAdd",               &Parser::ParseBiasAdd },
+          { "FC",                    &Parser::ParseFC },
+          { "Gemm",                  &Parser::ParseGemm },
+          { "Identity",              &Parser::ParseIdentity },
+          { "Conv",                  &Parser::ParseConv2D },
+          { "DepthwiseConv2dNative", &Parser::ParseDepthwiseConv2D },
+          { "BatchNormalization",    &Parser::ParseBatchNormalization },
+          { "ConcatV2",              &Parser::ParseConcat },
+          { "LRN",                   &Parser::ParseLrn },
+          { "MatMul",                &Parser::ParseMatMul },
+          { "Mul",                   &Parser::ParseMul },
+          { "Placeholder",           &Parser::ParsePlaceholder },
+          { "Relu",                  &Parser::ParseRelu },
+          { "Relu6",                 &Parser::ParseRelu6 },
+          { "Reshape",               &Parser::ParseReshape },
+          { "Shape",                 &Parser::ParseShape },
+          { "Sigmoid",               &Parser::ParseSigmoid },
+          { "Softmax",               &Parser::ParseSoftmax },
+          { "Softplus",              &Parser::ParseSoftplus },
+          { "Tanh",                  &Parser::ParseTanh },
+          { "MaxPool",               &Parser::ParseMaxPool },
+          { "AveragePool",           &Parser::ParseAvgPool },
+          { "GlobalMaxPool",         &Parser::ParseGlobalMaxPool },
+          { "GlobalAveragePool",     &Parser::ParseGlobalAvgPool },
         };
 
     } // namespace armnn_backend
