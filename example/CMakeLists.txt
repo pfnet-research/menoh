@@ -21,14 +21,17 @@ target_link_libraries(general_cnn_example_in_cpp menoh ${OpenCV_LIBS})
 
 # Build vgg19_example_in_cpp
 add_executable(vgg19_example_in_cpp vgg19_example_in_cpp.cpp)
+target_include_directories(vgg19_example_in_cpp PUBLIC "${PROJECT_SOURCE_DIR}/include" "${OpenCV_INCLUDE_DIRS}")
 target_link_libraries(vgg19_example_in_cpp menoh ${OpenCV_LIBS})
 
 # Build resnet50_example_in_cpp
 add_executable(resnet50_example_in_cpp resnet50_example_in_cpp.cpp)
+target_include_directories(resnet50_example_in_cpp PUBLIC "${PROJECT_SOURCE_DIR}/include" "${OpenCV_INCLUDE_DIRS}")
 target_link_libraries(resnet50_example_in_cpp menoh ${OpenCV_LIBS})
 
 # Build squeezenet_example_in_cpp
 add_executable(squeezenet_example_in_cpp squeezenet_example_in_cpp.cpp)
+target_include_directories(squeezenet_example_in_cpp PUBLIC "${PROJECT_SOURCE_DIR}/include" "${OpenCV_INCLUDE_DIRS}")
 target_link_libraries(squeezenet_example_in_cpp menoh ${OpenCV_LIBS})
 
 # Build inception_v1_example_in_cpp
