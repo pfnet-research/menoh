@@ -853,9 +853,7 @@ namespace menoh_impl {
                     throw ParseException("Couldn't find requested output node '" + name + "' in graph");
             }
 
-            auto sorted_graph = make_graph(graph.node_list());
-
-            for( unsigned int i=0; i<sorted_graph.node_list().size(); ++i)
+            for( unsigned int i=0; i<graph.node_list().size(); ++i)
             {
                  LoadNode(graph.node_list().at(i));
             }
