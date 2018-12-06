@@ -111,8 +111,8 @@ message(STATUS "Adding external/onnx")
 # for ARM Environment
 if (ENABLE_ARMNN)
     set(ARM_HOME   ~/ARM_HOME)
-    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.08)
-    set(ARMNN_HOME ${ARM_HOME}/armnn/v18.08)
+    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.11)
+    set(ARMNN_HOME ${ARM_HOME}/armnn/v18.11)
 endif()
 
 # for protobuf

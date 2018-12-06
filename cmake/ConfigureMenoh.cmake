@@ -21,7 +21,7 @@ macro(menoh_link_libraries TARGET_NAME SCOPE)
     endif()
 
     if(ENABLE_ARMNN)
-        set(ARMNN_LIBRARIES ${ACL_LIBRARY} ${ARMNN_LIBRARY} boost_system boost_thread)
+        set(ARMNN_LIBRARIES ${ACL_LIBRARY} ${ARMNN_LIBRARY} boost_system boost_thread pthread)
         target_link_libraries(${TARGET_NAME} ${SCOPE} ${ARMNN_LIBRARIES})
     endif()
 

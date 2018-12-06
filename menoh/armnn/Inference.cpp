@@ -124,7 +124,11 @@ namespace menoh_impl {
             std::cout << "armnn::Optimize" << std::endl;
 #endif
             armnn::OptimizerOptions options;
-            optNet = armnn::Optimize(*network, m_ComputeDevice, m_Runtime->GetDeviceSpec(), options);
+            std::vector<armnn::BackendId> backends;
+            for( auto device : m_ComputeDevice)
+                backends.push_back(armnn::BackendId(device));
+
+            optNet = armnn::Optimize(*network, backends, m_Runtime->GetDeviceSpec(), options);
 
 #ifdef ARM_DEBUG
             std::cout << "armnn::LoadNetwork" << std::endl;
