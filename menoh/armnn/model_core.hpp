@@ -3,7 +3,7 @@
 
 #include <menoh/backend_config.hpp>
 
-#include <menoh/armnn/ArmnnInference.hpp>
+#include <menoh/armnn/Inference.hpp>
 
 namespace menoh_impl {
     namespace armnn_backend {

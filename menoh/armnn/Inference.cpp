@@ -15,7 +15,7 @@
 #include <armnnUtils/Permute.hpp>
 #include <armnnUtils/GraphTopologicalSort.hpp>
 
-#include <menoh/armnn/ArmnnInference.hpp>
+#include <menoh/armnn/Inference.hpp>
 
 using namespace armnn;
 

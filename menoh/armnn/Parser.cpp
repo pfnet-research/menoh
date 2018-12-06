@@ -22,9 +22,8 @@
 #include <armnn/ArmNN.hpp>
 
 #include <armnnUtils/Permute.hpp>
-#include <armnnUtils/GraphTopologicalSort.hpp>
 
-#include <menoh/armnn/MenohParser.hpp>
+#include <menoh/armnn/Parser.hpp>
 
 using namespace armnn;
 
@@ -1799,27 +1798,9 @@ namespace menoh_impl {
 	    for( auto node : targetNodes )
 	      m_RequestedOutputs.push_back(GetNodeName(*node));
 	    
-            // Sort them into a linear ordering such that all inputs of a node are before the node itself
-            std::vector<const menoh_impl::node*> sortedNodes;
-            if (!armnnUtils::GraphTopologicalSort<const menoh_impl::node*>(
-                targetNodes,
-                [this](const menoh_impl::node* node)
-                {
-	            auto outputs = GetMenohInputNodes(*node);
-                    std::vector<const menoh_impl::node*> nodesOnly;
-                    for (const auto & o : outputs) {
-                        nodesOnly.push_back(o.m_IndexedValue);
-                    }
-                    return nodesOnly;
-                },
-                sortedNodes))
+            for( unsigned int i=0; i<graph.node_list().size(); ++i)
             {
-                throw ParseException("Cycle detected in graph");
-            }
-
-            for (const auto& it : sortedNodes)
-            {
-                LoadNode(*it, graph);
+                LoadNode(graph.node_list().at(i), graph);
             }
         }
  

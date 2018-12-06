@@ -20,7 +20,7 @@
 #include <menoh/model_core.hpp>
 #include <menoh/model_data.hpp>
 
-#include <menoh/armnn/MenohParser.hpp>
+#include <menoh/armnn/Parser.hpp>
 
 using namespace armnn;
 
