@@ -811,25 +811,9 @@ namespace menoh_impl {
             }
         }
 
-        void Parser::LoadParameter(std::unordered_map<std::string, array> const& parameter_table) {
-            for( auto param : parameter_table )
-            {
-                auto arr = param.second;
-                array param_arr(arr.dtype(), std::move(arr.dims()), std::move(arr.data()));
-                m_Params[param.first] = param_arr;
-            }
-        }
-          
-        void Parser::LoadGraph(const menoh_impl::graph& graph){
+        void Parser::CheckOutput(const menoh_impl::graph& graph, const std::vector<std::string>& outputs) {
 
-            for( unsigned int i=0; i<graph.node_list().size() ; ++i)
-            {
-                const menoh_impl::node& my_node = graph.node_list().at(i);
-                m_Nodes[NodeName(my_node)] = &my_node;
-            }
-
-            std::vector<const menoh_impl::node*> outputNodes;
-            for (const std::string& name : m_Outputs)
+            for (const std::string& name : outputs)
             {
                 bool found = false;
 
@@ -843,7 +827,6 @@ namespace menoh_impl {
                     auto nodeIt = std::find(node.output_name_list.begin(), node.output_name_list.end(), name);
                     if (nodeIt != node.output_name_list.end())
                     {
-                        outputNodes.push_back(&node);
                         found = true;
                         break;
                     }
@@ -851,6 +834,24 @@ namespace menoh_impl {
 
                 if( !found )
                     throw ParseException("Couldn't find requested output node '" + name + "' in graph");
+            }
+        }
+
+        void Parser::LoadParameter(std::unordered_map<std::string, array> const& parameter_table) {
+            for( auto param : parameter_table )
+            {
+                auto arr = param.second;
+                array param_arr(arr.dtype(), std::move(arr.dims()), std::move(arr.data()));
+                m_Params[param.first] = param_arr;
+            }
+        }
+          
+        void Parser::LoadGraph(const menoh_impl::graph& graph) {
+
+            for( unsigned int i=0; i<graph.node_list().size() ; ++i)
+            {
+                const menoh_impl::node& my_node = graph.node_list().at(i);
+                m_Nodes[NodeName(my_node)] = &my_node;
             }
 
             for( unsigned int i=0; i<graph.node_list().size(); ++i)
@@ -875,10 +876,14 @@ namespace menoh_impl {
             m_Network = builder->createNetwork();
             assert(m_Network);
 
-            m_Outputs = outputs;
+            if (outputs.size() == 0)
+            {
+                throw ParseException("outputs must have at least one entry");
+            }
 
             try
             {
+                CheckOutput(graph, outputs);
                 LoadParameter(parameter_table);
                 LoadGraph(graph);
             }
@@ -897,7 +902,6 @@ namespace menoh_impl {
         }
 
         void Parser::Cleanup(){
-            m_Outputs.clear();
             m_Nodes.clear();
             m_Params.clear();
             m_Operations.clear();

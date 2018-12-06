@@ -89,12 +89,13 @@ namespace menoh_impl {
 
             void SetLayer(ILayer* layer, const menoh_impl::node &node);
             
+            void CheckOutput(const menoh_impl::graph& graph, const std::vector<std::string>& outputs);
             void LoadParameter(std::unordered_map<std::string, array> const& parameter_table);
-            void LoadNode(const node& menoh_node);
-            void LoadGraph(const graph& menoh_graph);
+            void LoadNode(const menoh_impl::node& node);
+            void LoadGraph(const menoh_impl::graph& graph);
 
-            std::vector<OutputOfConstNodeDef> InputNodes(const node& menoh_node) const;
-            std::vector<OutputOfOperation> InputCheck(const node& menoh_node, std::size_t expectedNumInputs);
+            std::vector<OutputOfConstNodeDef> InputNodes(const menoh_impl::node& node) const;
+            std::vector<OutputOfOperation> InputCheck(const menoh_impl::node& node, std::size_t expectedNumInputs);
             ITensor* GetTensor(OutputOfOperation& input);
           
             template<typename Type>
@@ -136,7 +137,6 @@ namespace menoh_impl {
             INetworkDefinition*                           m_Network;
             ILayer*                                       m_Layer;
 
-            std::vector<std::string>                      m_Outputs;
             std::unordered_map<std::string, const node*>  m_Nodes;
             std::unordered_map<std::string, array>        m_Params;
             std::unordered_map<std::string, OperationPtr> m_Operations;
