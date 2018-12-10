@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     cv::resize(image_mat, image_mat, cv::Size(width, height));
     image_mat.convertTo(image_mat, CV_32FC3);
     image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
-    auto image_data = reorder_to_chw(image_mat);
+     auto image_data = reorder_to_chw(image_mat);
 
     // Load ONNX model data
     auto model_data = menoh::make_model_data_from_onnx(onnx_model_path);

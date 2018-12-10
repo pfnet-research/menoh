@@ -63,10 +63,9 @@ auto load_category_list(std::string const& synset_words_path) {
 
 int main(int argc, char** argv) {
     std::cout << "inception_v1 example" << std::endl;
-
     const std::string in_name  = "data_0";
     const std::string out_name = "prob_1";
-
+    
     const int batch_size = 1;
     const int channel_num = 3;
     const int height = 224;
@@ -86,7 +85,7 @@ int main(int argc, char** argv) {
     auto synset_words_path = a.get<std::string>("synset_words");
 
     cv::Mat image_mat =
-      cv::imread(input_image_path.c_str(), CV_LOAD_IMAGE_COLOR);
+      cv::imread(input_image_path.c_str(), cv::IMREAD_COLOR);
     if(!image_mat.data) {
         throw std::runtime_error("Invalid input image path: " +
                                  input_image_path);
@@ -95,12 +94,13 @@ int main(int argc, char** argv) {
     // Preprocess
     cv::resize(image_mat, image_mat, cv::Size(width, height));
     image_mat.convertTo(image_mat, CV_32FC3);
-    image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
+    //    image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
+    image_mat -= 128.0f;
+    image_mat /= 128.0f;
     auto image_data = reorder_to_chw(image_mat);
 
     // Load ONNX model data
     auto model_data = menoh::make_model_data_from_onnx(onnx_model_path);
-
     // Define input profile (name, dtype, dims) and output profile (name, dtype)
     // dims of output is automatically calculated later
     menoh::variable_profile_table_builder vpt_builder;
@@ -110,14 +110,14 @@ int main(int argc, char** argv) {
 
     // Build variable_profile_table and get variable dims (if needed)
     auto vpt = vpt_builder.build_variable_profile_table(model_data);
-
+    std::cerr << "1" << std::endl;
     // Make model_builder and attach extenal memory buffer
     // Variables which are not attached external memory buffer here are attached
     // internal memory buffers which are automatically allocated
     menoh::model_builder model_builder(vpt);
+          std::cerr << "0" << std::endl;
     model_builder.attach_external_buffer(in_name,
                                          static_cast<void*>(image_data.data()));
-
     // Build model
 #ifdef TENSORRT 
     auto model = model_builder.build_model(model_data, "tensorrt");

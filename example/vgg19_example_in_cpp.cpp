@@ -94,8 +94,12 @@ int main(int argc, char** argv) {
 
     // Preprocess
     cv::resize(image_mat, image_mat, cv::Size(width, height));
-    image_mat.convertTo(image_mat, CV_32FC3);
+#if 0
     image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
+#else
+    image_mat -= 128.0f;
+    image_mat /= 128.0f;
+#endif
     auto image_data = reorder_to_chw(image_mat);
 
     // Load ONNX model data
@@ -115,6 +119,7 @@ int main(int argc, char** argv) {
     // Variables which are not attached external memory buffer here are attached
     // internal memory buffers which are automatically allocated
     menoh::model_builder model_builder(vpt);
+
     model_builder.attach_external_buffer(in_name,
                                          static_cast<void*>(image_data.data()));
 
