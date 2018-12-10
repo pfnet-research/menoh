@@ -229,6 +229,9 @@ namespace menoh_impl {
                     dims.d[i]    = arr.dims().data()[i];
                     dims.type[i] = DimensionType::kSEQUENCE;
                     numElements *= dims.d[i];
+#ifdef TENSORRT_DEBUG
+                    std::cerr << "    dims[" << i << "] = " << dims.d[i] << std::endl;
+#endif
                 }
             }  
 
@@ -799,7 +802,10 @@ namespace menoh_impl {
                   "transB of Gemm must be 0 but given: " +
                     std::to_string(alpha));
             }
-      
+#ifdef TENSORRT_DEBUG
+            std::cerr << "alpha = " << alpha << ", beta = " << beta
+                      << ", transA = " << trans_a << ", transB = " << trans_b << std::endl;
+#endif            
             IFullyConnectedLayer* full;
             {
                 full = Network()->addFullyConnected(*GetTensor(inputs[0]), bias.count, weight, bias);
