@@ -127,9 +127,9 @@ namespace menoh_impl {
                 std::string msg("Unexpected number of inputs for node ");
                 msg += name;
                 msg += ". Expected ";
-                msg += expectedNumInputs;
+                msg += std::to_string(expectedNumInputs);
                 msg += ", found ";
-                msg += numInputs;
+                msg += std::to_string(numInputs);
                 throw ParseException(msg);
 				
             }
@@ -167,7 +167,19 @@ namespace menoh_impl {
               : SingleLayerOperation(parser, node, nullptr)
               , dimentions(dims)
               , weights{dataType, data, numElements}
-            {}
+            {
+                std::string name = NodeName(node);
+
+                assert(m_Layer == nullptr);
+                IConstantLayer* layer;
+                {
+                    layer = m_Parser->Network()->addConstant(dimentions, weights);
+                    assert(layer);
+                    layer->setName(name.c_str());
+                    layer->getOutput(0)->setName(TensorName(name).c_str());
+                }
+                m_Layer = layer;
+            }
 
             Dims& getDims(){
                 return dimentions;
@@ -202,6 +214,9 @@ namespace menoh_impl {
                 throw ParseException("ParseConst : not found " + name);
             }
 
+#ifdef TENSORRT_DEBUG
+            std::cerr << "[node] : Const, " << name << std::endl;
+#endif
             auto arr = m_Params[name];
             std::vector<unsigned int> sizes(arr.dims().data(), arr.dims().data()+arr.dims().size());
 
@@ -488,29 +503,57 @@ namespace menoh_impl {
             ITensor* placeholder;
             {
                 Dims inputDims;
-                int offset = dims.size() - 3 ;            
-                inputDims.nbDims = dims.size() - offset ;
-                for( unsigned int i=offset ; i<dims.size() ; i++ )
-                    inputDims.d[i-offset] = dims[i];  
 
-                placeholder = Network()->addInput(PrefixNodeName(node).c_str(), nvinfer1::DataType::kFLOAT, inputDims);
-                assert(placeholder);
+                unsigned int size = dims.size();
+                if( size > 3 ) {
+                    int offset = size - 3;
+                    inputDims.nbDims = size - offset ;
+                    for( unsigned int i=offset ; i<size ; i++ )
+                        inputDims.d[i-offset] = dims[i];  
+                } else {
+#if 0
+                    inputDims.nbDims = 3;
+                    for( unsigned int i=0 ; i<3-size ; i++ )
+                        inputDims.d[i] = 1;
+                    for( unsigned int i=3-size ; i<3 ; i++ )
+                        inputDims.d[i] = dims[i-(3-size)];
+#else
+                    inputDims.nbDims = size;
+                    for( unsigned int i=0 ; i<size ; i++ )
+                        inputDims.d[i] = dims[i];
+#endif
+                }
+
 #ifdef TENSORRT_DEBUG
+                std::cout << "           dims.size() = " << dims.size();
+                for( unsigned int i=0 ; i<dims.size() ; i++ )
+                    std::cout << std::endl << "           dims[" << i << "] = " << dims[i];
+                std::cout << std::endl; 
                 std::cout << "           inputDims.nbDims = " << inputDims.nbDims;
                 for( int i=0 ; i<inputDims.nbDims ; i++ )
                     std::cout << std::endl << "           inputDims.d[" << i << "] = " << inputDims.d[i];
                 std::cout << std::endl; 
 #endif
+                placeholder = Network()->addInput(PrefixNodeName(node).c_str(), nvinfer1::DataType::kFLOAT, inputDims);
+                assert(placeholder);
             }
 
-            IScaleLayer* scale;
+#if 1
+            IScaleLayer* layer;
             {
-                scale = Network()->addScale(*placeholder, ScaleMode::kUNIFORM, {}, {}, {});
-                assert(scale);
-                SetLayer(scale, node);
+                layer = Network()->addScale(*placeholder, ScaleMode::kUNIFORM, {}, {}, {});
+                assert(layer);
+                SetLayer(layer, node);
             }
-
-            return std::make_unique<SingleLayerOperation>(this, node, scale);
+#else
+            IIdentityLayer* layer;
+            {
+                layer = Network()->addIdentity(*placeholder);
+                assert(layer);
+                SetLayer(layer, node);
+            }
+#endif
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
         OperationPtr Parser::ParseRelu(const menoh_impl::node& node) {
@@ -544,14 +587,31 @@ namespace menoh_impl {
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
+            bool found = true;
+            int  axis = 0;
+            try {
+                axis = get<int>(node.attribute_table.at("axis"));
+            }
+            catch (const std::out_of_range &e){
+                std::cerr << "Exception at " << e.what() << std::endl; 
+                found = false;
+            }  
+
             ISoftMaxLayer* softmax;
             {
                 softmax = Network()->addSoftMax(*GetTensor(inputs[0]));
                 assert(softmax);
+#ifdef TENSORRT_DEBUG
+            std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
+#endif            
+                if(found && (axis!=(int)softmax->getAxes())) {
+                    softmax->setAxes(axis);                
+                } 
                 SetLayer(softmax, node);
             }
-
+                
 #ifdef TENSORRT_DEBUG
+            std::cout << "           axis = " << axis << std::endl;
             std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
             std::cout << "           output.name = " << softmax->getOutput(0)->getName() << std::endl;
 #endif            
@@ -751,11 +811,13 @@ namespace menoh_impl {
         }
 
         OperationPtr Parser::ParseUnsqueeze(const menoh_impl::node& node) {
+            std::cerr << "ParseUnsqueeze" << std::endl;
             std::string name = NodeName(node);
-            
+            std::cerr << "ParseUnsqueeze" << std::endl;            
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
+            std::cerr << "ParseUnsqueeze" << std::endl;
             ITensor* input0 = GetTensor(inputs[0]);
-
+            std::cerr << "ParseUnsqueeze" << std::endl;
             auto axes = get<std::vector<int>>(node.attribute_table.at("axes"));
             std::set<int> axes_set(axes.begin(), axes.end());
             Dims old_shape = input0->getDimensions();
@@ -782,6 +844,7 @@ namespace menoh_impl {
                 shuffle->setReshapeDimensions(new_shape);
                 SetLayer(shuffle, node);
             }
+            std::cerr << "ParseUnsqueeze" << std::endl;
             return std::make_unique<SingleLayerOperation>(this, node, shuffle);
         }
 
@@ -871,6 +934,7 @@ namespace menoh_impl {
                                          const menoh_impl::graph& graph,
                                          std::unordered_map<std::string, array> const& parameter_table,
                                          const std::vector<std::string>& outputs){
+          std::cerr << "CreateNetwork" << std::endl;
             Cleanup();
 
             m_Network = builder->createNetwork();
