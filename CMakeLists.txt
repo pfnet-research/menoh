@@ -43,9 +43,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   if(ENABLE_TENSORRT)
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra -DTENSORRT -DTENSORRT_DEBUG")
   else()
-    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra -DTENSORRT")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
   endif()
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DTENSORRT")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s")
 endif()
 
 ## Configure to use the new `libstdc++` ABI
