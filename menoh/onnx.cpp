@@ -219,7 +219,9 @@ namespace menoh_impl {
         auto parameter_table =
           extract_parameter_name_and_array_list_from_onnx_graph(
             *onnx_model.mutable_graph(), model_parameter_name_list);
-        return model_data{node_list, parameter_table};
+        return model_data{static_cast<int32_t>(onnx_model.ir_version()),
+                          onnx_model.opset_import(0).version(), node_list,
+                          parameter_table};
     }
 
     model_data make_model_data_from_onnx_file(std::string const& filename) {

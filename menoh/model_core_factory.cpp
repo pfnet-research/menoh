@@ -3,6 +3,7 @@
 
 #include <menoh/composite_backend/model_core.hpp>
 #include <menoh/mkldnn/model_core.hpp>
+#include <menoh/onnxifi/model_core.hpp>
 
 #include <menoh/json.hpp>
 
@@ -30,6 +31,11 @@ namespace menoh_impl {
         } else if(backend_name == "composite_backend") {
             return std::make_unique<composite_backend::model_core>(
               composite_backend::make_model_core(
+                input_table, required_output_table, output_profile_table,
+                model_data, config));
+        } else if(backend_name == "onnxifi") {
+            return std::make_unique<onnxifi_backend::model_core>(
+              onnxifi_backend::make_model_core(
                 input_table, required_output_table, output_profile_table,
                 model_data, config));
         }
