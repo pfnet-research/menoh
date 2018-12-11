@@ -321,7 +321,7 @@ add_variable_to_table(output(0), dtype_of(input(0)),
             ("alpha", "float", "0.0001f"),
             ("beta", "float", "0.75f"),
             ("bias", "float", "1.0f"),
-            ("size", "float", None),
+            ("size", "int", None),
         ]))
     code_list.append(
         make_completion_code("MaxPool", [

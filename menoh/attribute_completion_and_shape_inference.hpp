@@ -756,7 +756,7 @@ auto bias = get<float>(node.attribute_table.at("bias"));
 static_cast<void>(bias); // maybe unused
 
 
-auto size = get<float>(node.attribute_table.at("size"));
+auto size = get<int>(node.attribute_table.at("size"));
 static_cast<void>(size); // maybe unused
 
         
