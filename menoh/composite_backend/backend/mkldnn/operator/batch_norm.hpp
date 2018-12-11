@@ -88,8 +88,7 @@ namespace menoh_impl {
                 mkldnn::batch_normalization_forward::desc batch_norm_desc(
                   mkldnn::prop_kind::forward_inference,
                   input_memory.get_primitive_desc().desc(), epsilon,
-                  mkldnn::use_global_stats | mkldnn::use_scale_shift |
-                    mkldnn::omit_stats);
+                  mkldnn::use_global_stats | mkldnn::use_scale_shift);
                 mkldnn::batch_normalization_forward::primitive_desc
                   batch_norm_pd(batch_norm_desc, engine);
 
