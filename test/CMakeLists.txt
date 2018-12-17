@@ -23,11 +23,16 @@ add_executable(menoh_test
     onnx.cpp
 
     operator.cpp
-    mkldnn_with_generic_fallback_backend.cpp
     model_data.cpp
     attribute_completion_and_shape_inference.cpp
     #vgg16.cpp
 )
+
+if(ENABLE_MKLDNN)
+    target_sources(menoh_test PRIVATE
+        mkldnn_with_generic_fallback_backend.cpp
+    )
+endif()
 
 target_include_directories(menoh_test PUBLIC
     "${PROJECT_SOURCE_DIR}"

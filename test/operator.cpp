@@ -202,6 +202,7 @@ namespace {
 
     float eps = 1.e-4;
 
+#ifdef ENABLE_MKLDNN
     // Tests for MKLDNN backend
     TEST_OP_SQUASH_DIMS(mkldnn, test_abs, eps);
     TEST_OP_SQUASH_DIMS(mkldnn, test_elu, eps);
@@ -324,6 +325,8 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_4, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_5, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_transpose_default, eps);
+
+#endif // ENABLE_MKLDNN
 
 
 #undef TEST_OP_SQUASH_DIMS
