@@ -328,6 +328,19 @@ namespace {
 
 #endif // MENOH_WITH_MKLDNN
 
+#ifdef MENOH_WITH_TENSORRT
+    // BatchNormalization
+    //TEST_OP(tensorrt, test_batchnorm_epsilon, eps);
+    //TEST_OP(tensorrt, test_batchnorm_example, eps);
+  
+    // Conv
+    TEST_OP(tensorrt, test_basic_conv_without_padding, eps);
+    TEST_OP(tensorrt, test_basic_conv_with_padding, eps);
+    TEST_OP(tensorrt, test_conv_with_strides_and_asymmetric_padding, eps);
+    TEST_OP(tensorrt, test_conv_with_strides_no_padding, eps);
+    TEST_OP(tensorrt, test_conv_with_strides_padding, eps);
+#endif // MENOH_WITH_TENSORRT
+
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP
 #undef TEST_OP_IMPL
