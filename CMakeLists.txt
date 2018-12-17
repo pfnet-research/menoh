@@ -45,13 +45,13 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 if(ENABLE_MKLDNN)
-    add_compile_definitions(MENOH_WITH_MKLDNN)
+    add_definitions(-DMENOH_WITH_MKLDNN)
 endif()
 
 if(ENABLE_TENSORRT)
-    add_compile_definitions(MENOH_WITH_TENSORRT)
+    add_definitions(-DMENOH_WITH_TENSORRT)
     if(CMAKE_BUILD_TYPE=="Debug")
-        add_compile_definitions(MENOH_ENABLE_TENSORRT_DEBUG)
+        add_definitions(-DMENOH_ENABLE_TENSORRT_DEBUG)
     endif()
 endif()
 
