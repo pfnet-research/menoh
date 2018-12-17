@@ -113,7 +113,7 @@ namespace menoh_impl {
                 
                 input_name.push_back(name);
 
-#ifdef TENSORRT_DEBUG  
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG  
                 std::cout << "Input name(" << name << ") : dims(" << arr.dims().size() << ")  = ( ";
                 for( auto size : arr.dims() ) std::cerr << size << " "; 
                 std::cout << ")" << std::endl;
@@ -137,7 +137,7 @@ namespace menoh_impl {
                 auto dims = arr.dims();
 
                 input_name.push_back(name);
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
                 std::cout << " Param : " << name << ", dims(" << arr.dims().size() << ")  = ( ";
                 for( auto size : arr.dims() ) std::cerr << size << " "; 
                 std::cout << ")" << std::endl;
@@ -161,7 +161,7 @@ namespace menoh_impl {
                 array arr;
                 std::tie(name, arr) = name_and_arr;
                 auto dims = arr.dims();
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
                 std::cout << "Output name(" << name << ") : dims(" << arr.dims().size() << ")  = ( ";
                 for( auto size : arr.dims() ) std::cerr << size << " "; 
                 std::cout << ")" << std::endl;
@@ -199,7 +199,7 @@ namespace menoh_impl {
                                                 outputs );
             assert(m_Network); 
 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "maxBatchSize = " << maxBatchSize << std::endl;
 #endif
             builder->setMaxBatchSize(maxBatchSize);
@@ -238,7 +238,7 @@ namespace menoh_impl {
             int input_size  = total_size(input_map) * GetDataTypeSize(DataType::kFLOAT);
             int output_size = total_size(output_map)* GetDataTypeSize(DataType::kFLOAT);
 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "Run, input_size = " << input_size << ", output_size = " << output_size << std::endl;            
 #endif
             using clock = std::chrono::high_resolution_clock;

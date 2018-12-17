@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
     model_builder.attach_external_buffer(in_name,
                                          static_cast<void*>(image_data.data()));
     // Build model
-#ifdef TENSORRT 
+#ifdef MENOH_WITH_TENSORRT 
     auto model = model_builder.build_model(model_data, "tensorrt");
 #else
     auto model = model_builder.build_model(model_data, "mkldnn");

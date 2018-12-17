@@ -67,7 +67,6 @@ if(ENABLE_MKLDNN)
         mkldnn/operator/batch_norm.cpp
         mkldnn/model_core.cpp
     )
-    target_compile_definitions(menoh_objlib PRIVATE ENABLE_MKLDNN)
     target_include_directories(menoh_objlib PUBLIC
         $<BUILD_INTERFACE:${MKLDNN_INCLUDE_DIR}>)
 
@@ -86,7 +85,6 @@ if(ENABLE_TENSORRT)
     endif()
     file(GLOB TENSORRT_SOURCES "tensorrt/*.cpp")
     target_sources(menoh_objlib PRIVATE "${TENSORRT_SOURCES}")
-    target_compile_definitions(menoh_objlib PRIVATE ENABLE_TENSORRT)
     target_include_directories(menoh_objlib PRIVATE
         "${CUDA_INCLUDE_DIRS}"
         "${TENSORRT_INCLUDE_DIRS}")

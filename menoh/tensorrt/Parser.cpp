@@ -148,7 +148,7 @@ namespace menoh_impl {
                 result.push_back(OutputOfOperation(parsedOp,node.m_Index));
             }
 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << std::endl << " [node] : " << node.op_type << " , " << name << std::endl;
             for( unsigned int j=0; j<node.input_name_list.size(); ++j )
             std::cout << "    input : " << node.input_name_list.at(j) << std::endl;
@@ -214,7 +214,7 @@ namespace menoh_impl {
                 throw ParseException("ParseConst : not found " + name);
             }
 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cerr << "[node] : Const, " << name << std::endl;
 #endif
             auto arr = m_Params[name];
@@ -229,7 +229,7 @@ namespace menoh_impl {
                     dims.d[i]    = arr.dims().data()[i];
                     dims.type[i] = DimensionType::kSEQUENCE;
                     numElements *= dims.d[i];
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
                     std::cerr << "    dims[" << i << "] = " << dims.d[i] << std::endl;
 #endif
                 }
@@ -388,7 +388,7 @@ namespace menoh_impl {
                 bias.count  = w_bias.count;
             }
 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "           strides      = " << strides[0]      << ", " << strides[1]      << std::endl;
             std::cout << "           kernel_shape = " << kernel_shape[0] << ", " << kernel_shape[1] << std::endl;
             std::cout << "           pads         = " << pads[0]         << ", " << pads[1];
@@ -527,7 +527,7 @@ namespace menoh_impl {
 #endif
                 }
 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
                 std::cout << "           dims.size() = " << dims.size();
                 for( unsigned int i=0 ; i<dims.size() ; i++ )
                     std::cout << std::endl << "           dims[" << i << "] = " << dims[i];
@@ -604,7 +604,7 @@ namespace menoh_impl {
             {
                 softmax = Network()->addSoftMax(*GetTensor(inputs[0]));
                 assert(softmax);
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
 #endif            
                 if(found && (axis!=(int)softmax->getAxes())) {
@@ -613,7 +613,7 @@ namespace menoh_impl {
                 SetLayer(softmax, node);
             }
                 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "           axis = " << axis << std::endl;
             std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
             std::cout << "           output.name = " << softmax->getOutput(0)->getName() << std::endl;
@@ -636,7 +636,7 @@ namespace menoh_impl {
             DimsHW begin_pad{pads[0], pads[1]}, end_pad{(pads.size()<=2)? pads[0] : pads[2],
                                                         (pads.size()<=2)? pads[1] : pads[3]};
             
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "           strides      = " << strides[0]      << ", " << strides[1]      << std::endl;
             std::cout << "           kernel_shape = " << kernel_shape[0] << ", " << kernel_shape[1] << std::endl;
             std::cout << "           pads         = " << pads[0]         << ", " << pads[1];
@@ -676,7 +676,7 @@ namespace menoh_impl {
             DimsHW begin_pad{pads[0], pads[1]}, end_pad{(pads.size()<=2)? pads[0] : pads[2],
                                                         (pads.size()<=2)? pads[1] : pads[3]};
             
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "           strides      = " << strides[0]      << ", " << strides[1]      << std::endl;
             std::cout << "           kernel_shape = " << kernel_shape[0] << ", " << kernel_shape[1] << std::endl;
             std::cout << "           pads         = " << pads[0]         << ", " << pads[1];
@@ -802,7 +802,7 @@ namespace menoh_impl {
                   "transB of Gemm must be 0 but given: " +
                     std::to_string(alpha));
             }
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cerr << "alpha = " << alpha << ", beta = " << beta
                       << ", transA = " << trans_a << ", transB = " << trans_b << std::endl;
 #endif            
@@ -886,7 +886,7 @@ namespace menoh_impl {
             {
                 bool found = false;
 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
                 std::cout << "OutputName = " << name << std::endl;
 #endif
                 for( unsigned int i=0; i<graph.node_list().size(); ++i)
@@ -928,7 +928,7 @@ namespace menoh_impl {
                  LoadNode(graph.node_list().at(i));
             }
 
-#ifdef TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "markOutput.node   = " << m_Layer->getName() << std::endl;
             std::cout << "markOutput.output = " << m_Layer->getOutput(0)->getName() << std::endl;
 #endif
