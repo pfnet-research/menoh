@@ -85,7 +85,7 @@ namespace {
               "../external/onnx/onnx/backend/test/data/node/") {}
 
         void run_test(std::string backend_name, std::string const& test_name,
-                      float eps, bool squash_dims = false) {
+                      float eps, bool squash_dims = false, bool static_params = false) {
             auto parent_dir_path = onnx_test_data_dir_path_ / test_name;
 
             for(int data_set_index = 0; true; ++data_set_index) {
@@ -118,23 +118,42 @@ namespace {
                       load_param(output_data_path, squash_dims));
                 }
 
+                auto onnx_model_filename = parent_dir_path / "model.onnx";
+                auto model_data =
+                  menoh::make_model_data_from_onnx(onnx_model_filename.str());
                 menoh::variable_profile_table_builder vpt_builder;
-                for(auto const& input : input_list) {
-                    vpt_builder.add_input_profile(input.name, input.dtype,
-                                                  input.dims);
+
+                if(static_params) {
+                    vpt_builder.add_input_profile(input_list.front().name, input_list.front().dtype,
+                                                  input_list.front().dims);
+                    for(auto i = 1; i < input_list.size(); ++i) {
+                        auto& input = input_list.at(i);
+                        menoh_model_data_add_parameter(model_data.get(), input.name.c_str(),
+                                static_cast<menoh_dtype>(input.dtype), input.dims.size(),
+                                input.dims.data(), input.data.get());
+                    }
+                }
+                else {
+                    for(auto const& input : input_list) {
+                        vpt_builder.add_input_profile(input.name, input.dtype,
+                                                      input.dims);
+                    }
                 }
                 for(auto const& output : true_output_list) {
                     vpt_builder.add_output_name(output.name);
                 }
-                auto onnx_model_filename = parent_dir_path / "model.onnx";
-                auto model_data =
-                  menoh::make_model_data_from_onnx(onnx_model_filename.str());
                 auto vpt = vpt_builder.build_variable_profile_table(model_data);
                 menoh::model_builder model_builder(vpt);
 
-                for(auto const& input : input_list) {
+                if(static_params) {
                     model_builder.attach_external_buffer(
-                      input.name, static_cast<void*>(input.data.get()));
+                      input_list.front().name, static_cast<void*>(input_list.front().data.get()));
+                }
+                else {
+                    for(auto const& input : input_list) {
+                        model_builder.attach_external_buffer(
+                          input.name, static_cast<void*>(input.data.get()));
+                    }
                 }
 
                 auto model = model_builder.build_model(
@@ -191,14 +210,16 @@ namespace {
         filesystem::path onnx_test_data_dir_path_;
     };
 
-#define TEST_OP_IMPL(backend_name, test_name, eps, squash) \
+#define TEST_OP_IMPL(backend_name, test_name, eps, squash, static_params) \
     TEST_F(OperatorTest, backend_name##_##test_name) {     \
-        run_test(#backend_name, #test_name, eps, squash);  \
+        run_test(#backend_name, #test_name, eps, squash, static_params);  \
     }
 #define TEST_OP(backend_name, test_name, eps) \
-    TEST_OP_IMPL(backend_name, test_name, eps, false)
+    TEST_OP_IMPL(backend_name, test_name, eps, false, false)
 #define TEST_OP_SQUASH_DIMS(backend_name, test_name, eps) \
-    TEST_OP_IMPL(backend_name, test_name, eps, true)
+    TEST_OP_IMPL(backend_name, test_name, eps, true, false)
+#define TEST_OP_STATIC_PARAMS(backend_name, test_name, eps) \
+    TEST_OP_IMPL(backend_name, test_name, eps, false, true)
 
     float eps = 1.e-4;
 
@@ -330,15 +351,111 @@ namespace {
 
 #ifdef MENOH_WITH_TENSORRT
     // BatchNormalization
-    //TEST_OP(tensorrt, test_batchnorm_epsilon, eps);
-    //TEST_OP(tensorrt, test_batchnorm_example, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_batchnorm_epsilon, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_batchnorm_example, eps);
+
+    // Concat
+    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_1d_axis_0, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_2d_axis_0, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_2d_axis_1, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_3d_axis_0, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_3d_axis_1, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_3d_axis_2, eps);
+
+    // Const
+    TEST_OP_STATIC_PARAMS(tensorrt, test_const, eps);
   
     // Conv
-    TEST_OP(tensorrt, test_basic_conv_without_padding, eps);
-    TEST_OP(tensorrt, test_basic_conv_with_padding, eps);
-    TEST_OP(tensorrt, test_conv_with_strides_and_asymmetric_padding, eps);
-    TEST_OP(tensorrt, test_conv_with_strides_no_padding, eps);
-    TEST_OP(tensorrt, test_conv_with_strides_padding, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_basic_conv_without_padding, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_basic_conv_with_padding, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_conv_with_strides_and_asymmetric_padding, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_conv_with_strides_no_padding, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_conv_with_strides_padding, eps);
+
+    // Eltwise
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_abs, eps); // not supported
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_elu, eps);  // not supported
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_leakyrelu, eps); // not supported
+    TEST_OP_STATIC_PARAMS(tensorrt, test_relu, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_sqrt, eps); // not supported
+    TEST_OP_STATIC_PARAMS(tensorrt, test_sigmoid, eps); // not supported
+    TEST_OP_STATIC_PARAMS(tensorrt, test_sigmoid_example, eps); // not supported
+    TEST_OP_STATIC_PARAMS(tensorrt, test_tanh, eps);
+
+    // Gemm
+    TEST_OP_STATIC_PARAMS(tensorrt, test_gemm_broadcast, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_gemm_nobroadcast, eps);
+
+    // Identity
+    TEST_OP_STATIC_PARAMS(tensorrt, test_identity, eps);
+
+    // LRN
+    TEST_OP_STATIC_PARAMS(tensorrt, test_lrn, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_lrn_default, eps);
+    
+    // Mul
+    TEST_OP_STATIC_PARAMS(tensorrt, test_mul, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_mul_bcast, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_mul_example, eps);
+  
+    // Pool
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_1d_default, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_default, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_pads, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_pads_count_include_pad, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_pads, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_pads_count_include_pad, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_same_upper, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_strides, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_same_lower, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_same_upper, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_strides, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_3d_default, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_1d_default, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_2d_default, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_2d_pads, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_2d_precomputed_pads, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_2d_precomputed_same_upper, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_2d_precomputed_strides, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_2d_same_lower, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_2d_same_upper, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_2d_strides, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_3d_default, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_with_argmax_2d_precomputed_pads, eps); // not found z
+    TEST_OP_STATIC_PARAMS(tensorrt, test_maxpool_with_argmax_2d_precomputed_strides, eps); // not found z
+
+    // Reshape
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_reshape_extended_dims, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_reshape_negative_dim, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_reshape_one_dim, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_reshape_reduced_dims, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_reshape_reordered_dims, eps);
+
+    // Softmax
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_0, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_1, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_2, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_default_axis, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_example, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_large_number, eps);
+
+    // Sum and Add
+    TEST_OP_STATIC_PARAMS(tensorrt, test_sum_example, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_sum_one_input, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_sum_two_inputs, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_add, eps); // ndims=3 is not implemented yet (mkldnn will support soon)
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_add_bcast, eps); //broadcast is not implemented yet
+
+    // Transpose // not supported
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_transpose_all_permutations_0, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_transpose_all_permutations_1, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_transpose_all_permutations_2, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_transpose_all_permutations_3, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_transpose_all_permutations_4, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_transpose_all_permutations_5, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_transpose_default, eps);
+    
+    TEST_OP_STATIC_PARAMS(tensorrt, test_unsqueeze, eps);
 #endif // MENOH_WITH_TENSORRT
 
 #undef TEST_OP_SQUASH_DIMS
