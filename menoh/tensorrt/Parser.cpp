@@ -65,9 +65,11 @@ namespace menoh_impl {
             return input.m_Value->Output(input.m_Index);
         }
 
-        void Parser::SetLayer(ILayer* layer, const menoh_impl::node& node) {
-            layer->setName(PrefixNodeName(node).c_str());
-            layer->getOutput(0)->setName(TensorName(NodeName(node)).c_str());
+        void Parser::SetLayer(ILayer* layer, const menoh_impl::node& node, const char* index ) {
+            std::string prefix_name(PrefixNodeName(node) + index);  
+            layer->setName(prefix_name.c_str());
+            std::string tensor_name(TensorName(NodeName(node) + index));
+            layer->getOutput(0)->setName(tensor_name.c_str());
             m_Layer = layer;
         }
 
@@ -267,7 +269,20 @@ namespace menoh_impl {
 
         OperationPtr Parser::ParseIdentity(const menoh_impl::node& node) {
 	    std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
+            std::cerr << "ParseIdentity" << std::endl;
+#if 1
+            ITensor* input0 = GetTensor(inputs[0]);
+
+            IIdentityLayer* layer;
+            {
+                layer = Network()->addIdentity(*input0);
+                assert(layer);
+                SetLayer(layer, node);
+            }
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
+#else
             return std::make_unique<ParsedIdentityOperation>(this, node, inputs[0].m_Value);
+#endif
         }
 
         OperationPtr Parser::ParseBatchNormalization(const menoh_impl::node& node) {
@@ -298,8 +313,9 @@ namespace menoh_impl {
             Weights& w_variance = varianceNode->getWeights();
 
             auto epsilon = optional_attribute_float(node, "epsilon", 1e-5f);
-
             size_t nweight = input0->getDimensions().d[0];
+            std::cerr << "nweight = " << nweight << std::endl;
+            std::cerr << "epsilon = " << epsilon << std::endl;
             for( size_t i=0; i<nweight; ++i ) {
                 float scale    = (static_cast<float const*>(w_scale.values)[i]);
                 float bias     = (static_cast<float const*>(w_bias.values)[i]);
@@ -421,31 +437,26 @@ namespace menoh_impl {
             unsigned int numInputs = static_cast<unsigned int>(nodes.size());
             std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
 
-            ITensor* input0 = GetTensor(inputs[0]);
-
             auto axis = get<int>(node.attribute_table.at("axis"));
-            axis += (axis<0) ? input0->getDimensions().nbDims : (-1);
-
-            if( axis == 0 )
-            {
-                std::vector<ITensor*> itensors;
-                for(unsigned int i=0 ; i<numInputs ; i++ )
-                {
-                    itensors.push_back(inputs[i].m_Value->Output(inputs[i].m_Index));
-                }
-
-                IConcatenationLayer* concat;
-                {
-                    concat = Network()->addConcatenation(itensors.data(), itensors.size());
-                    assert(concat);
-                    SetLayer(concat, node);
-                }
-                return std::make_unique<SingleLayerOperation>(this, node, concat);
+            std::cerr << "axis = " << axis << std::endl;
+            if( axis < 0 ) {
+                axis += GetTensor(inputs[0])->getDimensions().nbDims;
             }
-            else
+
+            std::vector<ITensor*> itensors;
+            for(unsigned int i=0 ; i<numInputs ; i++ )
             {
-                throw ParseException("only supports Concat layers with legal axis");
+                itensors.push_back(inputs[i].m_Value->Output(inputs[i].m_Index));
             }
+
+            IConcatenationLayer* concat;
+            {
+                concat = Network()->addConcatenation(itensors.data(), itensors.size());
+                assert(concat);
+                concat->setAxis(axis);
+                SetLayer(concat, node);
+            }
+            return std::make_unique<SingleLayerOperation>(this, node, concat);
         }
 
         OperationPtr Parser::ParseLrn(const menoh_impl::node& node) {
@@ -485,15 +496,39 @@ namespace menoh_impl {
         OperationPtr Parser::ParseElementWise(const menoh_impl::node& node, ElementWiseOperation op) {
             std::string name = NodeName(node);
 	    
-            std::vector<OutputOfOperation> inputs = InputCheck(node, 2);
+            std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
+            unsigned int numInputs = static_cast<unsigned int>(nodes.size());
+            std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
+            ITensor* input0 = GetTensor(inputs[0]);
 
-            IElementWiseLayer* layer;
-            {
-                layer = Network()->addElementWise(*GetTensor(inputs[0]), *GetTensor(inputs[1]), op);
+            ILayer* root; 
+            if( numInputs == 1 ) {
+                IIdentityLayer* layer;
+                layer = Network()->addIdentity(*input0);
                 assert(layer);
                 SetLayer(layer, node);
+                root = layer;
             }
-            return std::make_unique<SingleLayerOperation>(this, node, layer);
+            else {
+                unsigned int index = 0;
+                IElementWiseLayer* layer;
+                {
+                    layer = Network()->addElementWise(*input0, *GetTensor(inputs[1]), op);
+                    assert(layer);
+                    SetLayer(layer, node, std::to_string(index).c_str());
+                }
+
+                index += 2;
+                while( index < numInputs ) {
+                    input0 = layer->getOutput(0);
+                    layer = Network()->addElementWise(*input0, *GetTensor(inputs[index]), op);
+                    assert(layer);
+                    SetLayer(layer, node, std::to_string(index).c_str());
+                    index++;
+                    root = layer;
+                }
+            }
+            return std::make_unique<SingleLayerOperation>(this, node, root);
         }            
 
         OperationPtr Parser::ParsePlaceholder(const menoh_impl::node& node) {
@@ -514,17 +549,9 @@ namespace menoh_impl {
                     for( unsigned int i=offset ; i<size ; i++ )
                         inputDims.d[i-offset] = dims[i];  
                 } else {
-#if 0
-                    inputDims.nbDims = 3;
-                    for( unsigned int i=0 ; i<3-size ; i++ )
-                        inputDims.d[i] = 1;
-                    for( unsigned int i=3-size ; i<3 ; i++ )
-                        inputDims.d[i] = dims[i-(3-size)];
-#else
                     inputDims.nbDims = size;
                     for( unsigned int i=0 ; i<size ; i++ )
                         inputDims.d[i] = dims[i];
-#endif
                 }
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
@@ -541,21 +568,12 @@ namespace menoh_impl {
                 assert(placeholder);
             }
 
-#if 1
-            IScaleLayer* layer;
-            {
-                layer = Network()->addScale(*placeholder, ScaleMode::kUNIFORM, {}, {}, {});
-                assert(layer);
-                SetLayer(layer, node);
-            }
-#else
             IIdentityLayer* layer;
             {
                 layer = Network()->addIdentity(*placeholder);
                 assert(layer);
                 SetLayer(layer, node);
             }
-#endif
             return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
@@ -761,7 +779,7 @@ namespace menoh_impl {
             std::string name = NodeName(node);
             
             std::vector<OutputOfOperation> inputs = InputCheck(node, 3);
-
+            std::cerr << "ParseGemm" << std::endl;
             ConstOperation<float>* weightNode = static_cast<ConstOperation<float>*>(inputs[1].m_Value);
             Weights& weight = weightNode->getWeights();
 
@@ -795,6 +813,7 @@ namespace menoh_impl {
                   "transA of Gemm must be 0 but given: " +
                     std::to_string(alpha));
             }
+
             auto trans_b = optional_attribute_int(node, "transB", 0);
             if(!trans_b) {
                 throw failed_to_configure_operator(
@@ -802,6 +821,7 @@ namespace menoh_impl {
                   "transB of Gemm must be 0 but given: " +
                     std::to_string(alpha));
             }
+
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cerr << "alpha = " << alpha << ", beta = " << beta
                       << ", transA = " << trans_a << ", transB = " << trans_b << std::endl;
@@ -940,7 +960,6 @@ namespace menoh_impl {
                                          const menoh_impl::graph& graph,
                                          std::unordered_map<std::string, array> const& parameter_table,
                                          const std::vector<std::string>& outputs){
-          std::cerr << "CreateNetwork" << std::endl;
             Cleanup();
 
             m_Network = builder->createNetwork();

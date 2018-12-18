@@ -87,7 +87,7 @@ namespace menoh_impl {
             template <typename T>
             friend class ConstOperation;
 
-            void SetLayer(ILayer* layer, const menoh_impl::node &node);
+            void SetLayer(ILayer* layer, const menoh_impl::node &node, const char* index = "" );
             
             void CheckOutput(const menoh_impl::graph& graph, const std::vector<std::string>& outputs);
             void LoadParameter(std::unordered_map<std::string, array> const& parameter_table);
