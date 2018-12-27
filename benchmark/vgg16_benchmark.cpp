@@ -11,16 +11,22 @@
 int main(int argc, char** argv) {
     using clock = std::chrono::high_resolution_clock;
     cmdline::parser a;
-    a.add<std::string>("input", '\0', "input_data");
+    a.add<std::string>("backend", '\0', "backend name", false,
+                       "mkldnn_with_generic_fallback");
+    a.add<std::string>("config", '\0', "backend config", false, "");
+    a.add<std::string>("input", '\0', "input_data", false,
+                       "../data/random_input_1_3_224_224.txt");
     a.add<std::string>("model", '\0', "onnx model path", false,
                        "../data/vgg16.onnx");
     a.add<int>("iteration", '\0', "number of iterations", false, 1);
     a.parse_check(argc, argv);
 
     constexpr auto category_num = 1000;
-    auto input_data = menoh_impl::load_np_array_as_array(a.get<std::string>("input"));
+    auto input_data =
+      menoh_impl::load_np_array_as_array(a.get<std::string>("input"));
     auto batch_size = input_data.dims().at(0);
-    menoh_impl::array output_data(menoh_impl::dtype_t::float_, {batch_size, category_num});
+    menoh_impl::array output_data(menoh_impl::dtype_t::float_,
+                                  {batch_size, category_num});
 
     auto input_image_path = a.get<std::string>("input");
     auto onnx_model_path = a.get<std::string>("model");
@@ -41,7 +47,8 @@ int main(int argc, char** argv) {
 
     // Build model
     menoh::model_builder model_builder(vpt);
-    auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
+    auto model = model_builder.build_model(
+      model_data, a.get<std::string>("backend"), a.get<std::string>("config"));
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
@@ -53,16 +60,19 @@ int main(int argc, char** argv) {
 
     std::vector<std::chrono::microseconds> usecs;
 
-    for (int i = 0; i < a.get<int>("iteration"); ++i) {
+    for(int i = 0; i < a.get<int>("iteration"); ++i) {
         auto start = clock::now();
 
         // Run inference
         model.run();
 
         auto end = clock::now();
-        usecs.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start));
+        usecs.push_back(
+          std::chrono::duration_cast<std::chrono::microseconds>(end - start));
     }
 
-    auto total_usec = std::accumulate(usecs.begin(), usecs.end(), std::chrono::microseconds::zero());
-    std::cout << total_usec.count() / usecs.size() * 0.001 << " msec" << std::endl;
+    auto total_usec = std::accumulate(usecs.begin(), usecs.end(),
+                                      std::chrono::microseconds::zero());
+    std::cout << total_usec.count() / usecs.size() * 0.001 << " msec"
+              << std::endl;
 }
