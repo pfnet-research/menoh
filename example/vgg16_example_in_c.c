@@ -24,7 +24,7 @@ int main() {
 
     menoh_model_data_handle model_data;
     ERROR_CHECK(
-      menoh_make_model_data_from_onnx("../data/VGG16.onnx", &model_data));
+      menoh_make_model_data_from_onnx("../data/vgg16.onnx", &model_data));
 
     menoh_variable_profile_table_builder_handle vpt_builder;
     ERROR_CHECK(menoh_make_variable_profile_table_builder(&vpt_builder));
