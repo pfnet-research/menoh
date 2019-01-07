@@ -44,6 +44,15 @@ int main() {
     ERROR_CHECK(menoh_build_variable_profile_table(vpt_builder, model_data,
                                                    &variable_profile_table));
 
+    int32_t softmax_out_dims_size;
+    const int32_t* softmax_out_dims;
+    ERROR_CHECK(menoh_variable_profile_table_get_dims(
+      variable_profile_table, softmax_out_name, &softmax_out_dims_size,
+      &softmax_out_dims));
+    assert(softmax_out_dims_size == 2);
+    assert(softmax_out_dims[0]== 1);
+    assert(softmax_out_dims[1] == 1000);
+
     /*
     int32_t softmax_out_dims[2];
     ERROR_CHECK(menoh_variable_profile_table_get_dims_at(
@@ -52,14 +61,6 @@ int main() {
       variable_profile_table, softmax_out_name, 1, &softmax_out_dims[1]));
     */
 
-    int32_t softmax_out_dims_size;
-    const int32_t* softmax_out_dims;
-    ERROR_CHECK(menoh_variable_profile_table_get_dims(
-      variable_profile_table, softmax_out_name, &softmax_out_dims_size,
-      &softmax_out_dims));
-    assert(softmax_out_dims_size == 1);
-    assert(softmax_out_dims[0]== 2);
-    assert(softmax_out_dims[1] == 1000);
 
     ERROR_CHECK(menoh_model_data_optimize(model_data, variable_profile_table));
 
