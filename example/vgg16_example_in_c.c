@@ -53,6 +53,7 @@ int main() {
     assert(softmax_out_dims[0]== 1);
     assert(softmax_out_dims[1] == 1000);
 
+    /* Another way to take dims of variables */
     /*
     int32_t softmax_out_dims[2];
     ERROR_CHECK(menoh_variable_profile_table_get_dims_at(
