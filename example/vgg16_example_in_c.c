@@ -1,10 +1,12 @@
 
 #if defined(_WIN32) || defined(__WIN32__)
 #include <Windows.h>
-#endif 
+#endif
+
+#include <assert.h>
+#include <stdio.h>
 
 #include <menoh/menoh.h>
-#include <stdio.h>
 
 #define ERROR_CHECK(statement)                            \
     {                                                     \
@@ -18,13 +20,13 @@
 int main() {
     menoh_error_code ec = menoh_error_code_success;
 
-    const char* conv1_1_in_name = "140326425860192";
-    const char* fc6_out_name = "140326200777584";
-    const char* softmax_out_name = "140326200803680";
+    const char* conv1_1_in_name = "Input_0";
+    const char* fc6_out_name = "Gemm_0";
+    const char* softmax_out_name = "Softmax_0";
 
     menoh_model_data_handle model_data;
     ERROR_CHECK(
-      menoh_make_model_data_from_onnx("../data/VGG16.onnx", &model_data));
+      menoh_make_model_data_from_onnx("../data/vgg16.onnx", &model_data));
 
     menoh_variable_profile_table_builder_handle vpt_builder;
     ERROR_CHECK(menoh_make_variable_profile_table_builder(&vpt_builder));
@@ -42,11 +44,22 @@ int main() {
     ERROR_CHECK(menoh_build_variable_profile_table(vpt_builder, model_data,
                                                    &variable_profile_table));
 
+    /*
     int32_t softmax_out_dims[2];
     ERROR_CHECK(menoh_variable_profile_table_get_dims_at(
       variable_profile_table, softmax_out_name, 0, &softmax_out_dims[0]));
     ERROR_CHECK(menoh_variable_profile_table_get_dims_at(
       variable_profile_table, softmax_out_name, 1, &softmax_out_dims[1]));
+    */
+
+    int32_t softmax_out_dims_size;
+    const int32_t* softmax_out_dims;
+    ERROR_CHECK(menoh_variable_profile_table_get_dims(
+      variable_profile_table, softmax_out_name, &softmax_out_dims_size,
+      &softmax_out_dims));
+    assert(softmax_out_dims_size == 1);
+    assert(softmax_out_dims[0]== 2);
+    assert(softmax_out_dims[1] == 1000);
 
     ERROR_CHECK(menoh_model_data_optimize(model_data, variable_profile_table));
 
