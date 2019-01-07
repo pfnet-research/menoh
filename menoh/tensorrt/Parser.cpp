@@ -269,7 +269,9 @@ namespace menoh_impl {
 
         OperationPtr Parser::ParseIdentity(const menoh_impl::node& node) {
 	    std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cerr << "ParseIdentity" << std::endl;
+#endif
 #if 1
             ITensor* input0 = GetTensor(inputs[0]);
 
@@ -313,9 +315,11 @@ namespace menoh_impl {
             Weights& w_variance = varianceNode->getWeights();
 
             auto epsilon = optional_attribute_float(node, "epsilon", 1e-5f);
-            size_t nweight = input0->getDimensions().d[0];
+            size_t nweight = GetTensor(inputs[0])->getDimensions().d[0];
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cerr << "nweight = " << nweight << std::endl;
             std::cerr << "epsilon = " << epsilon << std::endl;
+#endif
             for( size_t i=0; i<nweight; ++i ) {
                 float scale    = (static_cast<float const*>(w_scale.values)[i]);
                 float bias     = (static_cast<float const*>(w_bias.values)[i]);
@@ -438,7 +442,9 @@ namespace menoh_impl {
             std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
 
             auto axis = get<int>(node.attribute_table.at("axis"));
-            std::cerr << "axis = " << axis << std::endl;
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
+            std::cerr << "ParseConcat : axis = " << axis << std::endl;
+#endif
             if( axis < 0 ) {
                 axis += GetTensor(inputs[0])->getDimensions().nbDims;
             }
@@ -464,16 +470,14 @@ namespace menoh_impl {
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
-            float alpha = attribute_float(node, "alpha");
-            float beta  = attribute_float(node, "beta");
-            float k     = attribute_float(node, "bias");
-            int window  = attribute_int(node, "depth_radius");
-
-            window = window * 2 + 1;
+            int   size  = attribute_int(node, "size");
+            float alpha = optional_attribute_float(node, "alpha", 1e-4f);
+            float beta  = optional_attribute_float(node, "beta", 0.75f);
+            float bias  = optional_attribute_float(node, "bias", 1.f);
 
             ILRNLayer* lrn;
             {
-                lrn = Network()->addLRN(*GetTensor(inputs[0]), window, alpha, beta, k);
+                lrn = Network()->addLRN(*GetTensor(inputs[0]), size, alpha, beta, bias);
                 assert(lrn);
                 SetLayer(lrn, node);
             }
@@ -608,30 +612,18 @@ namespace menoh_impl {
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
-            bool found = true;
-            int  axis = 0;
-            try {
-                axis = get<int>(node.attribute_table.at("axis"));
-            }
-            catch (const std::out_of_range &e){
-                std::cerr << "Exception at " << e.what() << std::endl; 
-                found = false;
-            }  
+            int axis = optional_attribute_int(node, "axis", 1);
 
             ISoftMaxLayer* softmax;
             {
                 softmax = Network()->addSoftMax(*GetTensor(inputs[0]));
                 assert(softmax);
-#ifdef MENOH_ENABLE_TENSORRT_DEBUG
-            std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
-#endif            
-                if(found && (axis!=(int)softmax->getAxes())) {
-                    softmax->setAxes(axis);                
-                } 
+                //                softmax->setAxes(axis);                
                 SetLayer(softmax, node);
             }
                 
-#ifdef MENOH_ENABLE_TENSORRT_DEBUG
+#if 1
+            //#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "           axis = " << axis << std::endl;
             std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
             std::cout << "           output.name = " << softmax->getOutput(0)->getName() << std::endl;
@@ -779,7 +771,10 @@ namespace menoh_impl {
             std::string name = NodeName(node);
             
             std::vector<OutputOfOperation> inputs = InputCheck(node, 3);
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cerr << "ParseGemm" << std::endl;
+#endif
+            ITensor *input0 = GetTensor(inputs[0]);
             ConstOperation<float>* weightNode = static_cast<ConstOperation<float>*>(inputs[1].m_Value);
             Weights& weight = weightNode->getWeights();
 
@@ -790,7 +785,7 @@ namespace menoh_impl {
             {
                 throw ParseException("shape of weight and bias do not match");
             }
-
+                std::cerr << "full" << std::endl;
             auto alpha = optional_attribute_float(node, "alpha", 1.f);
             if(alpha != 1) {
                 throw failed_to_configure_operator(
@@ -815,7 +810,7 @@ namespace menoh_impl {
             }
 
             auto trans_b = optional_attribute_int(node, "transB", 0);
-            if(!trans_b) {
+            if(trans_b) {
                 throw failed_to_configure_operator(
                   node.op_type, node.output_name_list.at(0),
                   "transB of Gemm must be 0 but given: " +
@@ -828,7 +823,9 @@ namespace menoh_impl {
 #endif            
             IFullyConnectedLayer* full;
             {
-                full = Network()->addFullyConnected(*GetTensor(inputs[0]), bias.count, weight, bias);
+                std::cerr << "full" << std::endl;
+                full = Network()->addFullyConnected(*input0, bias.count, weight, bias);
+                std::cerr << "full" << std::endl;
                 assert(full);
                 SetLayer(full, node);
             }
@@ -837,13 +834,12 @@ namespace menoh_impl {
         }
 
         OperationPtr Parser::ParseUnsqueeze(const menoh_impl::node& node) {
-            std::cerr << "ParseUnsqueeze" << std::endl;
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
+          std::cerr << "ParseUnsqueeze" << std::endl;
+#endif
             std::string name = NodeName(node);
-            std::cerr << "ParseUnsqueeze" << std::endl;            
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
-            std::cerr << "ParseUnsqueeze" << std::endl;
             ITensor* input0 = GetTensor(inputs[0]);
-            std::cerr << "ParseUnsqueeze" << std::endl;
             auto axes = get<std::vector<int>>(node.attribute_table.at("axes"));
             std::set<int> axes_set(axes.begin(), axes.end());
             Dims old_shape = input0->getDimensions();
@@ -870,7 +866,6 @@ namespace menoh_impl {
                 shuffle->setReshapeDimensions(new_shape);
                 SetLayer(shuffle, node);
             }
-            std::cerr << "ParseUnsqueeze" << std::endl;
             return std::make_unique<SingleLayerOperation>(this, node, shuffle);
         }
 

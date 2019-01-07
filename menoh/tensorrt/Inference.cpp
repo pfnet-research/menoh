@@ -54,7 +54,7 @@ public:
 
 namespace menoh_impl {
     namespace tensorrt_backend {
-
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
         struct Profiler : public IProfiler
         {
             const int TIMING_ITERATIONS = 1;
@@ -83,7 +83,7 @@ namespace menoh_impl {
                 printf("=== Time over all layers: %4.3f ms ===\n\n", totalTime / TIMING_ITERATIONS);
             }
         } gProfiler;
-      
+#endif      
         static Logger gLogger;
 
         Inference::Inference( const Params& params )
@@ -207,21 +207,28 @@ namespace menoh_impl {
             builder->setFp16Mode(false);
             builder->setDebugSync(false);
 
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
             std::cout << "buildCudaEngine::start" << std::endl;
+#endif
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
             using clock = std::chrono::high_resolution_clock;
             auto start = clock::now();
+#endif
             engine = builder->buildCudaEngine(*m_Network);
             assert(engine);
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
             auto end = clock::now();
             std::cout << "buildCudaEngine = "
                       << std::chrono::duration_cast<std::chrono::milliseconds>(end -start).count()/1000.0
                       << " sec" << std::endl;
             std::cout << "buildCudaEngine::done" << std::endl;
-
+#endif
             context = engine->createExecutionContext();
             assert(context);
 
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
             context->setProfiler(&gProfiler);
+#endif
         }
   
         // ==========================================================
@@ -230,8 +237,9 @@ namespace menoh_impl {
 
         void Inference::Run() {
 
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
             std::cout << "Inference::Run::start" << std::endl;
-
+#endif
             auto input_map  = m_Input[ input_name[0].c_str()];
             auto output_map = m_Output[output_name[0].c_str()];
 
@@ -241,9 +249,10 @@ namespace menoh_impl {
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "Run, input_size = " << input_size << ", output_size = " << output_size << std::endl;            
 #endif
+#ifdef MENOH_ENABLE_TENSORRT_PRIFILER
             using clock = std::chrono::high_resolution_clock;
             auto start = clock::now();
-
+#endif
             {
                 void* buffers[2];
                 CHECK(cudaMalloc(&buffers[0], input_size));
@@ -264,16 +273,19 @@ namespace menoh_impl {
                 CHECK(cudaFree(buffers[1]));
             }
 
+#ifdef MENOH_ENABLE_TENSORRT_PRIFILER
             auto end = clock::now();
             std::cout << "Run time = "
                       << std::chrono::duration_cast<std::chrono::milliseconds>(end -start).count()/1000.0
                       << " sec" << std::endl;
 
             gProfiler.printLayerTimes();
-
+#endif
             Clear();
 
+#ifdef MENOH_ENABLE_TENSORRT_PRIFILER
             std::cout << "Inference::Run::done" << std::endl;          
+#endif
         }
 
         void Inference::Clear(){
