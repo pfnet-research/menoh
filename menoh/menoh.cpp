@@ -93,24 +93,26 @@ menoh_error_code check_error(Func func) {
  * dtype
  */
 
-menoh_error_code MENOH_API menoh_dtype_size(menoh_dtype dtype, int32_t *dst_size) {
-    switch (dtype) {
-#define MENOH_DTYPE_SIZE_CASE(dtype) \
-    case dtype: \
-        *dst_size = menoh_impl::size_in_bytes<static_cast<menoh_impl::dtype_t>(dtype)>; \
+menoh_error_code MENOH_API menoh_dtype_size(menoh_dtype dtype,
+                                            int32_t* dst_size) {
+    switch(dtype) {
+#define MENOH_DTYPE_SIZE_CASE(dtype)                                          \
+    case dtype:                                                               \
+        *dst_size =                                                           \
+          menoh_impl::size_in_bytes<static_cast<menoh_impl::dtype_t>(dtype)>; \
         break;
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_float)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_float16)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_float64)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_int8)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_int16)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_int32)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_int64)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_float)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_float16)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_float64)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_int8)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_int16)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_int32)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_int64)
 #undef MENOH_DTYPE_SIZE_CASE
-    default:
-        std::string msg("unknown dtype: " + std::to_string(dtype));
-        menoh_impl::set_last_error_message(msg.c_str());
-        return menoh_error_code_invalid_dtype;
+        default:
+            std::string msg("unknown dtype: " + std::to_string(dtype));
+            menoh_impl::set_last_error_message(msg.c_str());
+            return menoh_error_code_invalid_dtype;
     }
     return menoh_error_code_success;
 }

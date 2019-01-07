@@ -79,11 +79,11 @@ int main() {
       model_data); // you can delete model_data after model building
 
     float* fc6_output_buff;
-    ERROR_CHECK(menoh_model_get_variable_buffer_handle(model, fc6_out_name,
-                                              (void**)&fc6_output_buff));
+    ERROR_CHECK(menoh_model_get_variable_buffer_handle(
+      model, fc6_out_name, (void**)&fc6_output_buff));
     float* softmax_output_buff;
-    ERROR_CHECK(menoh_model_get_variable_buffer_handle(model, softmax_out_name,
-                                              (void**)&softmax_output_buff));
+    ERROR_CHECK(menoh_model_get_variable_buffer_handle(
+      model, softmax_out_name, (void**)&softmax_output_buff));
 
     // initialie input_buf here
     for(int i = 0; i < 1 * 3 * 224 * 224; ++i) {
