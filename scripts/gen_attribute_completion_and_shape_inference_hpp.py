@@ -315,6 +315,11 @@ add_variable_to_table(output(0), dtype_of(input(0)),
     output_dims);
 '''))
     code_list.append(
+        make_completion_code("Identity", [], '''
+add_variable_to_table(output(0), dtype_of(input(0)),
+    dims_of(input(0)));
+'''))
+    code_list.append(
         make_completion_code("LeakyRelu", [("alpha", "float", "0.01f")]))
     code_list.append(
         make_completion_code("LRN", [
