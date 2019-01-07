@@ -667,6 +667,21 @@ add_variable_to_table(output(0), dtype_of(input(0)),
 else
 
 
+if(node.op_type == "Identity") {
+    
+    
+    
+    {
+        
+        
+add_variable_to_table(output(0), dtype_of(input(0)),
+    dims_of(input(0)));
+
+    }
+}
+else
+
+
 if(node.op_type == "LeakyRelu") {
     
     
