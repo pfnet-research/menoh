@@ -618,7 +618,7 @@ namespace menoh_impl {
             {
                 softmax = Network()->addSoftMax(*GetTensor(inputs[0]));
                 assert(softmax);
-                //                softmax->setAxes(axis);                
+                softmax->setAxes(axis);                
                 SetLayer(softmax, node);
             }
                 
