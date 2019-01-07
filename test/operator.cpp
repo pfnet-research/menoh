@@ -399,12 +399,12 @@ namespace {
     TEST_OP_STATIC_PARAMS(tensorrt, test_mul_example, eps);
   
     // Softmax
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_0, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_0, eps); // fails
     TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_1, eps); // fails
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_2, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_2, eps); // fails
     TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_default_axis, eps); // fails
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_example, eps);
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_large_number, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_example, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_large_number, eps);
 
     // Pool
     //TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_1d_default, eps);

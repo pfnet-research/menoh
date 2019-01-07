@@ -614,12 +614,42 @@ namespace menoh_impl {
 
             int axis = optional_attribute_int(node, "axis", 1);
 
+            ITensor* input = GetTensor(inputs[0]);
+            Dims old_shape = input->getDimensions();
+
+            Dims new_shape;
+            int n = 1;
+            for(int i = 0; i < axis; ++i) {
+                n *= old_shape.d[i];
+            }
+            int d = 1;
+            for(int i = axis; i < old_shape.nbDims; ++i) {
+                d *= old_shape.d[i];
+            }
+            new_shape.nbDims = 2;
+            new_shape.d[0] = n;
+            new_shape.d[1] = d;
+
+            IShuffleLayer* pre_reshape;
+            {
+                pre_reshape = Network()->addShuffle(*input);
+                assert(pre_reshape);
+                pre_reshape->setReshapeDimensions(new_shape);
+            }
+
             ISoftMaxLayer* softmax;
             {
-                softmax = Network()->addSoftMax(*GetTensor(inputs[0]));
+                softmax = Network()->addSoftMax(*(pre_reshape->getOutput(0)));
                 assert(softmax);
-                softmax->setAxes(axis);                
+                softmax->setAxes(2);
                 SetLayer(softmax, node);
+            }
+
+            IShuffleLayer* post_reshape;
+            {
+                post_reshape = Network()->addShuffle(*(softmax->getOutput(0)));
+                assert(post_reshape);
+                post_reshape->setReshapeDimensions(old_shape);
             }
                 
 #if 1
