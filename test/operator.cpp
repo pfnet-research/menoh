@@ -400,9 +400,9 @@ namespace {
   
     // Softmax
     //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_0, eps); // fails
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_1, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_1, eps); // fails
     //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_axis_2, eps); // fails
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_default_axis, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_default_axis, eps); // fails
     //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_example, eps);
     //TEST_OP_STATIC_PARAMS(tensorrt, test_softmax_large_number, eps);
 
