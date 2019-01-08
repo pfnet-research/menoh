@@ -16,7 +16,7 @@ namespace menoh_impl {
                 std::unordered_map<std::string, array> const* input_table,
                 std::unordered_map<std::string, array> const* output_table,
                 menoh_impl::model_data const* model_data,
-                int batch_size = 1, int max_batch_size = 1 )
+                int batch_size, int max_batch_size)
 	        : batchSize(batch_size)
 	        , maxBatchSize(max_batch_size)
 	        , input_table_(input_table)

@@ -352,7 +352,7 @@ namespace {
 
 #ifdef MENOH_WITH_TENSORRT
     // BatchNormalization
-    // TEST_OP_STATIC_PARAMS(tensorrt, test_batchnorm_epsilon, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_batchnorm_epsilon, eps); // fails
     TEST_OP_STATIC_PARAMS(tensorrt, test_batchnorm_example, eps);
 
     // Concat
