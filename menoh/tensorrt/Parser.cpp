@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 
 #include <menoh/array.hpp>
 #include <menoh/graph.hpp>
@@ -331,7 +332,7 @@ namespace menoh_impl {
                 float& combined_bias_ref  = const_cast<float*>(
                     static_cast<float const*>(w_bias.values))[i];
 
-                combined_scale_ref = scale / sqrtf(variance + epsilon);
+                combined_scale_ref = scale / std::sqrt(variance + epsilon);
                 combined_bias_ref  = bias - mean * combined_scale_ref;
             }
 
