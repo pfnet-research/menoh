@@ -396,7 +396,7 @@ namespace {
     
     // Mul
     TEST_OP_STATIC_PARAMS(tensorrt, test_mul, eps);
-    // TEST_OP_STATIC_PARAMS(tensorrt, test_mul_bcast, eps);  // fails
+    // TEST_OP_STATIC_PARAMS(tensorrt, test_mul_bcast, eps);  // not support broadcasting (TODO implement by TensorRT's Scale function)
     TEST_OP_STATIC_PARAMS(tensorrt, test_mul_example, eps);
   
     // Softmax
