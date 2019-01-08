@@ -410,9 +410,9 @@ namespace {
     //TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_1d_default, eps);
     TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_default, eps);
     TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_pads, eps);
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_pads_count_include_pad, eps); // fails
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_pads_count_include_pad, eps);
     TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_pads, eps);
-    // TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_pads_count_include_pad, eps);
+    TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_pads_count_include_pad, eps);
     //TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_same_upper, eps);
     TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_precomputed_strides, eps);
     //TEST_OP_STATIC_PARAMS(tensorrt, test_averagepool_2d_same_lower, eps);

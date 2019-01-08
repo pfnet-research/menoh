@@ -730,6 +730,7 @@ namespace menoh_impl {
                 pool = Network()->addPooling(*input0, PoolingType::kAVERAGE, DimsHW{kernel_shape[0], kernel_shape[1]});
                 assert(pool);
                 pool->setStride(DimsHW{strides[0],strides[1]});
+                pool->setAverageCountExcludesPadding(!get<int>(node.attribute_table.at("count_include_pad")));
                 SetLayer(pool, node);
                 input0 = pool->getOutput(0);
             } 
