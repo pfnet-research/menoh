@@ -471,7 +471,7 @@ namespace menoh_impl {
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
             int   size  = attribute_int(node, "size");
-            float alpha = optional_attribute_float(node, "alpha", 1e-4f);
+            float alpha = optional_attribute_float(node, "alpha", 1e-4f) * size;
             float beta  = optional_attribute_float(node, "beta", 0.75f);
             float bias  = optional_attribute_float(node, "bias", 1.f);
 
@@ -1032,7 +1032,7 @@ namespace menoh_impl {
           { "BatchNormalization",    &Parser::ParseBatchNormalization },
           { "Conv",                  &Parser::ParseConv2D },
           { "Concat",                &Parser::ParseConcat },
-          { "LRN",                   &Parser::ParseLrn },
+          //{ "LRN",                   &Parser::ParseLrn }, // not support (perhaps, tensorrt's LRN is different from the ONNX's)
           { "Mul",                   &Parser::ParseMul },
           { "Add",                   &Parser::ParseAdd },
           { "Placeholder",           &Parser::ParsePlaceholder },

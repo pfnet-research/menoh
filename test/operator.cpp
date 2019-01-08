@@ -222,6 +222,7 @@ namespace {
     TEST_OP_IMPL(backend_name, test_name, eps, false, true)
 
     float eps = 1.e-4;
+    float tolerant_eps = 1.e-3;
 
 #ifdef MENOH_WITH_MKLDNN
     // Tests for MKLDNN backend
@@ -390,8 +391,8 @@ namespace {
     TEST_OP_STATIC_PARAMS(tensorrt, test_identity, eps);
 
     // LRN
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_lrn, eps); // fails
-    //TEST_OP_STATIC_PARAMS(tensorrt, test_lrn_default, eps); // fails
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_lrn, tolerant_eps); // not support
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_lrn_default, tolerant_eps); // not support
     
     // Mul
     TEST_OP_STATIC_PARAMS(tensorrt, test_mul, eps);
