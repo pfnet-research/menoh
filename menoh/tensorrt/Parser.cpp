@@ -647,8 +647,7 @@ namespace menoh_impl {
                 post_reshape->setReshapeDimensions(old_shape);
             }
                 
-#if 1
-            //#ifdef MENOH_ENABLE_TENSORRT_DEBUG
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "           axis = " << axis << std::endl;
             std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
             std::cout << "           output.name = " << softmax->getOutput(0)->getName() << std::endl;
@@ -811,7 +810,7 @@ namespace menoh_impl {
             {
                 throw ParseException("shape of weight and bias do not match");
             }
-                std::cerr << "full" << std::endl;
+
             auto alpha = optional_attribute_float(node, "alpha", 1.f);
             if(alpha != 1) {
                 throw failed_to_configure_operator(
@@ -832,15 +831,15 @@ namespace menoh_impl {
                 throw failed_to_configure_operator(
                   node.op_type, node.output_name_list.at(0),
                   "transA of Gemm must be 0 but given: " +
-                    std::to_string(alpha));
+                    std::to_string(trans_a));
             }
 
             auto trans_b = optional_attribute_int(node, "transB", 0);
-            if(trans_b) {
+            if(!trans_b) {
                 throw failed_to_configure_operator(
                   node.op_type, node.output_name_list.at(0),
                   "transB of Gemm must be 0 but given: " +
-                    std::to_string(alpha));
+                    std::to_string(trans_b));
             }
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
@@ -849,9 +848,7 @@ namespace menoh_impl {
 #endif            
             IFullyConnectedLayer* full;
             {
-                std::cerr << "full" << std::endl;
                 full = Network()->addFullyConnected(*input0, bias.count, weight, bias);
-                std::cerr << "full" << std::endl;
                 assert(full);
                 SetLayer(full, node);
             }
