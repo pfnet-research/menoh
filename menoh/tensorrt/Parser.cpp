@@ -613,22 +613,16 @@ namespace menoh_impl {
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 
             int axis = optional_attribute_int(node, "axis", 1);
+            if(axis != 1) {
+                throw ParseException("Softmax supports axis==1 only");
+            }
 
             ITensor* input = GetTensor(inputs[0]);
             Dims old_shape = input->getDimensions();
 
             Dims new_shape;
-            int n = 1;
-            for(int i = 0; i < axis; ++i) {
-                n *= old_shape.d[i];
-            }
-            int d = 1;
-            for(int i = axis; i < old_shape.nbDims; ++i) {
-                d *= old_shape.d[i];
-            }
-            new_shape.nbDims = 2;
-            new_shape.d[0] = n;
-            new_shape.d[1] = d;
+            new_shape.nbDims = 1;
+            new_shape.d[0] = std::accumulate(old_shape.d, old_shape.d+old_shape.nbDims, 1, std::multiplies<int>());
 
             IShuffleLayer* pre_reshape;
             {
@@ -641,7 +635,6 @@ namespace menoh_impl {
             {
                 softmax = Network()->addSoftMax(*(pre_reshape->getOutput(0)));
                 assert(softmax);
-                softmax->setAxes(2);
                 SetLayer(softmax, node);
             }
 
