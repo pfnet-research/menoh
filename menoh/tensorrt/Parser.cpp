@@ -521,6 +521,7 @@ namespace menoh_impl {
                     layer = Network()->addElementWise(*input0, *GetTensor(inputs[1]), op);
                     assert(layer);
                     SetLayer(layer, node, std::to_string(index).c_str());
+                    root = layer;
                 }
 
                 index += 2;
