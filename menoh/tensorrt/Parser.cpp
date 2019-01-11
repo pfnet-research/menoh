@@ -800,11 +800,6 @@ namespace menoh_impl {
             ConstOperation<float>* biasNode = static_cast<ConstOperation<float>*>(inputs[2].m_Value);
             Weights& bias = biasNode->getWeights();
 
-            if (weightNode->getDims().d[0] != biasNode->getDims().d[0])
-            {
-                throw ParseException("shape of weight and bias do not match");
-            }
-
             auto alpha = optional_attribute_float(node, "alpha", 1.f);
             if(alpha != 1) {
                 throw failed_to_configure_operator(
@@ -834,6 +829,12 @@ namespace menoh_impl {
                   node.op_type, node.output_name_list.at(0),
                   "transB of Gemm must be 1 but given: " +
                     std::to_string(trans_b));
+            }
+
+            if (weightNode->getDims().d[0] != biasNode->getDims().d[0])
+            {
+                std::cout << weightNode->getDims().d[0] << " " << biasNode->getDims().d[0] << std::endl;
+                throw ParseException("shape of weight and bias do not match");
             }
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG

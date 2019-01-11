@@ -384,8 +384,8 @@ namespace {
     TEST_OP_STATIC_PARAMS(tensorrt, test_tanh, eps);
 
     // Gemm
-    // TEST_OP_STATIC_PARAMS(tensorrt, test_gemm_broadcast, eps);   // not support (need three dimentions)
-    // TEST_OP_STATIC_PARAMS(tensorrt, test_gemm_nobroadcast, eps;) // not support (need three dimentions)
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_gemm_broadcast, eps);   // not support (need transpose)
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_gemm_nobroadcast, eps); // not support (need transpose)
 
     // Identity
     TEST_OP_STATIC_PARAMS(tensorrt, test_identity, eps);
