@@ -356,12 +356,12 @@ namespace {
     TEST_OP_STATIC_PARAMS(tensorrt, test_batchnorm_example, eps);
 
     // Concat
-    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_1d_axis_0, eps);
-    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_2d_axis_0, eps);
-    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_2d_axis_1, eps);
-    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_3d_axis_0, eps);
-    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_3d_axis_1, eps);
-    TEST_OP_STATIC_PARAMS(tensorrt, test_concat_3d_axis_2, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_concat_1d_axis_0, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_concat_2d_axis_0, eps);
+    TEST_OP(tensorrt, test_concat_2d_axis_1, eps);
+    //TEST_OP_STATIC_PARAMS(tensorrt, test_concat_3d_axis_0, eps);
+    TEST_OP(tensorrt, test_concat_3d_axis_1, eps);
+    TEST_OP(tensorrt, test_concat_3d_axis_2, eps);
 
     // Const
     TEST_OP_STATIC_PARAMS(tensorrt, test_const, eps);

@@ -460,7 +460,7 @@ namespace menoh_impl {
             {
                 concat = Network()->addConcatenation(itensors.data(), itensors.size());
                 assert(concat);
-                concat->setAxis(axis);
+                concat->setAxis(axis-1);
                 SetLayer(concat, node);
             }
             return std::make_unique<SingleLayerOperation>(this, node, concat);
