@@ -547,17 +547,11 @@ namespace menoh_impl {
             ITensor* placeholder;
             {
                 Dims inputDims;
+                inputDims.nbDims = dims.size()-1;
 
-                unsigned int size = dims.size();
-                if( size > 3 ) {
-                    int offset = size - 3;
-                    inputDims.nbDims = size - offset ;
-                    for( unsigned int i=offset ; i<size ; i++ )
-                        inputDims.d[i-offset] = dims[i];  
-                } else {
-                    inputDims.nbDims = size;
-                    for( unsigned int i=0 ; i<size ; i++ )
-                        inputDims.d[i] = dims[i];
+                // delete batch axis
+                for(int i = 1; i < dims.size(); ++i) {
+                    inputDims.d[i-1] = dims.at(i);
                 }
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
