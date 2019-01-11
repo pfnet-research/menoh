@@ -838,7 +838,7 @@ namespace menoh_impl {
             if(!trans_b) {
                 throw failed_to_configure_operator(
                   node.op_type, node.output_name_list.at(0),
-                  "transB of Gemm must be 0 but given: " +
+                  "transB of Gemm must be 1 but given: " +
                     std::to_string(trans_b));
             }
 
