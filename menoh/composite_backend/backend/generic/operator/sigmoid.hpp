@@ -21,12 +21,9 @@ namespace menoh_impl {
                 }
 
                 auto procedure = [input, output = output_list.at(0)]() {
-                    auto m = *std::max_element(fbegin(input), fend(input));
-                    auto em = std::exp(-m);
                     for(decltype(total_size(input)) i = 0;
                         i < total_size(input); ++i) {
-                        auto e = std::exp(fat(input, i) - m);
-                        fat(output, i) = e / (e + em);
+                        fat(output, i) = 1 / (1 + std::exp(-fat(input, i)));
                     }
                 };
 
