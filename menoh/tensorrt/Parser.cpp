@@ -26,11 +26,20 @@ namespace menoh_impl {
         }
 
         std::string PrefixNodeName( const menoh_impl::node& node ) {
-            return std::string(node.op_type + ":" + NodeName(node));
+            return std::string(node.op_type + "_" + NodeName(node));
         }
 
-        std::string TensorName( const std::string name ) {
-            return std::string("tensor:" + name);
+        std::string TensorName(menoh_impl::node const& node) {
+            return std::string("tensor_" + PrefixNodeName(node));
+        }
+
+        void Parser::MarkOutputIfRequired(ITensor* output_tensor, std::string const& output_name,
+                                  std::vector<std::string> const& required_outputs) {
+            if(std::find(required_outputs.begin(), required_outputs.end(), output_name)
+                    != required_outputs.end()) {
+                Network()->markOutput(*output_tensor);
+                output_tensor_name_table.emplace(output_name, output_tensor->getName());
+            }
         }
 
         class SingleLayerOperation : public Operation{
@@ -66,12 +75,20 @@ namespace menoh_impl {
             return input.m_Value->Output(input.m_Index);
         }
 
-        void Parser::SetLayer(ILayer* layer, const menoh_impl::node& node, const char* index ) {
-            std::string prefix_name(PrefixNodeName(node) + index);  
-            layer->setName(prefix_name.c_str());
-            std::string tensor_name(TensorName(NodeName(node) + index));
-            layer->getOutput(0)->setName(tensor_name.c_str());
-            m_Layer = layer;
+        void Parser::InitLayerNameAndOutputTensorName(ILayer* layer, const menoh_impl::node& node) {
+            layer->setName(PrefixNodeName(node).c_str());
+            std::string tensor_name(TensorName(node));
+            for(int i = 0; i < layer->getNbOutputs(); ++i) {
+                layer->getOutput(i)->setName((tensor_name+"_"+std::to_string(i)).c_str());
+            }
+        }
+
+        void Parser::InitLayerNameAndOutputTensorName(ILayer* layer, const menoh_impl::node& node, int index) {
+            layer->setName((PrefixNodeName(node) + std::to_string(index)).c_str());
+            std::string tensor_name(TensorName(node) + std::to_string(index));
+            for(int i = 0; i < layer->getNbOutputs(); ++i) {
+                layer->getOutput(i)->setName((tensor_name+"_"+std::to_string(i)).c_str());
+            }
         }
 
         std::vector<OutputOfConstNodeDef>
@@ -179,7 +196,7 @@ namespace menoh_impl {
                     layer = m_Parser->Network()->addConstant(dimentions, weights);
                     assert(layer);
                     layer->setName(name.c_str());
-                    layer->getOutput(0)->setName(TensorName(name).c_str());
+                    layer->getOutput(0)->setName(TensorName(node).c_str());
                 }
                 m_Layer = layer;
             }
@@ -208,7 +225,7 @@ namespace menoh_impl {
             return HasParsedConst<float>(NodeName(input.m_Value->GetNode()));
         }
 
-        OperationPtr Parser::ParseConst(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseConst(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
             
             auto it = m_Params.find(name);
@@ -237,6 +254,10 @@ namespace menoh_impl {
 #endif
                 }
             }  
+            if(std::find(required_outputs.begin(), required_outputs.end(), node.output_name_list.front())
+                    != required_outputs.end()) {
+                throw std::runtime_error("Const parameters can not be specified as an output");
+            }
 
             const DataType dataType = DataType::kFLOAT; // dtype_t::float_
 
@@ -268,7 +289,7 @@ namespace menoh_impl {
             Operation* m_Op;
         };
 
-        OperationPtr Parser::ParseIdentity(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseIdentity(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
 	    std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cerr << "ParseIdentity" << std::endl;
@@ -280,15 +301,17 @@ namespace menoh_impl {
             {
                 layer = Network()->addIdentity(*input0);
                 assert(layer);
-                SetLayer(layer, node);
+                InitLayerNameAndOutputTensorName(layer, node);
             }
+
+            MarkOutputIfRequired(layer->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, layer);
 #else
             return std::make_unique<ParsedIdentityOperation>(this, node, inputs[0].m_Value);
 #endif
         }
 
-        OperationPtr Parser::ParseBatchNormalization(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseBatchNormalization(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 
             std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
@@ -340,13 +363,14 @@ namespace menoh_impl {
             {
                 scale = Network()->addScale(*input0, ScaleMode::kCHANNEL, w_bias, w_scale, {});
                 assert(scale);
-                SetLayer(scale, node);
+                InitLayerNameAndOutputTensorName(scale, node);
             }
 
+            MarkOutputIfRequired(scale->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, scale);
         }
 
-        OperationPtr Parser::ParseFC(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseFC(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 3);
@@ -366,13 +390,14 @@ namespace menoh_impl {
             {
                 full = Network()->addFullyConnected(*GetTensor(inputs[0]), bias.count, weight, bias);
                 assert(full);
-                SetLayer(full, node);
+                InitLayerNameAndOutputTensorName(full, node);
             }
 
+            MarkOutputIfRequired(full->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, full);
         }
 
-        OperationPtr Parser::ParseConv2D(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseConv2D(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 
             std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
@@ -430,12 +455,14 @@ namespace menoh_impl {
                 {
                     conv->setPadding(begin_pad);
                 }    
-                SetLayer(conv, node);   
+                InitLayerNameAndOutputTensorName(conv, node);
             }
+
+            MarkOutputIfRequired(conv->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, conv);
         }  
  
-        OperationPtr Parser::ParseConcat(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseConcat(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 	    
             std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
@@ -461,12 +488,14 @@ namespace menoh_impl {
                 concat = Network()->addConcatenation(itensors.data(), itensors.size());
                 assert(concat);
                 concat->setAxis(axis-1);
-                SetLayer(concat, node);
+                InitLayerNameAndOutputTensorName(concat, node);
             }
+
+            MarkOutputIfRequired(concat->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, concat);
         }
 
-        OperationPtr Parser::ParseLrn(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseLrn(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
@@ -480,38 +509,38 @@ namespace menoh_impl {
             {
                 lrn = Network()->addLRN(*GetTensor(inputs[0]), size, alpha, beta, bias);
                 assert(lrn);
-                SetLayer(lrn, node);
+                InitLayerNameAndOutputTensorName(lrn, node);
             }
 
+            MarkOutputIfRequired(lrn->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, lrn);
         }
 
-        OperationPtr Parser::ParseSum(const menoh_impl::node& node) {
-            return ParseElementWise(node, ElementWiseOperation::kSUM);
+        OperationPtr Parser::ParseSum(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
+            return ParseElementWise(node, ElementWiseOperation::kSUM, required_outputs);
         }  
 
-        OperationPtr Parser::ParseMul(const menoh_impl::node& node) {
-            return ParseElementWise(node, ElementWiseOperation::kPROD);
+        OperationPtr Parser::ParseMul(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
+            return ParseElementWise(node, ElementWiseOperation::kPROD, required_outputs);
         }  
 
-        OperationPtr Parser::ParseAdd(const menoh_impl::node& node) {
-            return ParseElementWise(node, ElementWiseOperation::kSUM);
+        OperationPtr Parser::ParseAdd(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
+            return ParseElementWise(node, ElementWiseOperation::kSUM, required_outputs);
         }  
 
-        OperationPtr Parser::ParseElementWise(const menoh_impl::node& node, ElementWiseOperation op) {
+        OperationPtr Parser::ParseElementWise(const menoh_impl::node& node, ElementWiseOperation op, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 	    
             std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
             unsigned int numInputs = static_cast<unsigned int>(nodes.size());
             std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
             ITensor* input0 = GetTensor(inputs[0]);
-
             ILayer* root; 
             if( numInputs == 1 ) {
                 IIdentityLayer* layer;
                 layer = Network()->addIdentity(*input0);
                 assert(layer);
-                SetLayer(layer, node);
+                InitLayerNameAndOutputTensorName(layer, node);
                 root = layer;
             }
             else {
@@ -520,7 +549,7 @@ namespace menoh_impl {
                 {
                     layer = Network()->addElementWise(*input0, *GetTensor(inputs[1]), op);
                     assert(layer);
-                    SetLayer(layer, node, std::to_string(index).c_str());
+                    InitLayerNameAndOutputTensorName(layer, node, index);
                     root = layer;
                 }
 
@@ -529,15 +558,17 @@ namespace menoh_impl {
                     input0 = layer->getOutput(0);
                     layer = Network()->addElementWise(*input0, *GetTensor(inputs[index]), op);
                     assert(layer);
-                    SetLayer(layer, node, std::to_string(index).c_str());
+                    InitLayerNameAndOutputTensorName(layer, node, index);
                     index++;
                     root = layer;
                 }
             }
+
+            MarkOutputIfRequired(root->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, root);
         }            
 
-        OperationPtr Parser::ParsePlaceholder(const menoh_impl::node& node) {
+        OperationPtr Parser::ParsePlaceholder(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 	    
             std::vector<OutputOfOperation> inputs = InputCheck(node, 0);
@@ -564,7 +595,9 @@ namespace menoh_impl {
                     std::cout << std::endl << "           inputDims.d[" << i << "] = " << inputDims.d[i];
                 std::cout << std::endl; 
 #endif
-                placeholder = Network()->addInput(PrefixNodeName(node).c_str(), nvinfer1::DataType::kFLOAT, inputDims);
+                auto prefixed_node_name = PrefixNodeName(node);
+                placeholder = Network()->addInput(prefixed_node_name.c_str(), nvinfer1::DataType::kFLOAT, inputDims);
+                input_tensor_name_table.emplace(node.output_name_list.front(), prefixed_node_name);
                 assert(placeholder);
             }
 
@@ -572,24 +605,26 @@ namespace menoh_impl {
             {
                 layer = Network()->addIdentity(*placeholder);
                 assert(layer);
-                SetLayer(layer, node);
+                InitLayerNameAndOutputTensorName(layer, node);
             }
+
+            MarkOutputIfRequired(layer->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        OperationPtr Parser::ParseRelu(const menoh_impl::node& node) {
-            return AddActivationLayer(node, ActivationType::kRELU);
+        OperationPtr Parser::ParseRelu(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
+            return AddActivationLayer(node, ActivationType::kRELU, required_outputs);
         }
 
-        OperationPtr Parser::ParseSigmoid(const menoh_impl::node& node) {
-            return AddActivationLayer(node, ActivationType::kSIGMOID);
+        OperationPtr Parser::ParseSigmoid(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
+            return AddActivationLayer(node, ActivationType::kSIGMOID, required_outputs);
         }
 
-        OperationPtr Parser::ParseTanh(const menoh_impl::node& node) {
-            return AddActivationLayer(node, ActivationType::kTANH);
+        OperationPtr Parser::ParseTanh(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
+            return AddActivationLayer(node, ActivationType::kTANH, required_outputs);
         }
 
-        OperationPtr Parser::AddActivationLayer(const menoh_impl::node& node, ActivationType activationType) {
+        OperationPtr Parser::AddActivationLayer(const menoh_impl::node& node, ActivationType activationType, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
@@ -598,12 +633,14 @@ namespace menoh_impl {
             {
                 activate = Network()->addActivation(*GetTensor(inputs[0]), activationType);
                 assert(activate);
-                SetLayer(activate, node);
+                InitLayerNameAndOutputTensorName(activate, node);
             }
+
+            MarkOutputIfRequired(activate->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, activate);
         }
 
-        OperationPtr Parser::ParseSoftmax(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseSoftmax(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
@@ -631,7 +668,7 @@ namespace menoh_impl {
             {
                 softmax = Network()->addSoftMax(*(pre_reshape->getOutput(0)));
                 assert(softmax);
-                SetLayer(softmax, node);
+                InitLayerNameAndOutputTensorName(softmax, node);
             }
 
             IShuffleLayer* post_reshape;
@@ -640,16 +677,18 @@ namespace menoh_impl {
                 assert(post_reshape);
                 post_reshape->setReshapeDimensions(old_shape);
             }
-                
+
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "           axis = " << axis << std::endl;
             std::cout << "           softmax.getAxes() = " << softmax->getAxes() << std::endl;
             std::cout << "           output.name = " << softmax->getOutput(0)->getName() << std::endl;
 #endif            
+
+            MarkOutputIfRequired(post_reshape->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, softmax);
         }
 
-        OperationPtr Parser::ParseMaxPool(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseMaxPool(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
@@ -688,12 +727,14 @@ namespace menoh_impl {
                 {
                     pool->setPadding(begin_pad);
                 }    
-                SetLayer(pool, node);
+                InitLayerNameAndOutputTensorName(pool, node);
             } 
+
+            MarkOutputIfRequired(pool->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, pool);
         }          
 
-        OperationPtr Parser::ParseAvgPool(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseAvgPool(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
@@ -719,7 +760,7 @@ namespace menoh_impl {
                 assert(pool);
                 pool->setStride(DimsHW{strides[0],strides[1]});
                 pool->setAverageCountExcludesPadding(!get<int>(node.attribute_table.at("count_include_pad")));
-                SetLayer(pool, node);
+                InitLayerNameAndOutputTensorName(pool, node);
                 input0 = pool->getOutput(0);
             } 
 
@@ -748,14 +789,16 @@ namespace menoh_impl {
                 auto layer = Network()->addPadding(*input0, DimsHW{ -pre_crop.d[0], -pre_crop.d[1]}, 
                                                             DimsHW{-post_crop.d[0],-post_crop.d[1]});
                 assert(layer);
-                SetLayer(layer, node);
+                InitLayerNameAndOutputTensorName(layer, node);
 
                 return std::make_unique<SingleLayerOperation>(this, node, layer);
             }
+
+            MarkOutputIfRequired(pool->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, pool);
         }
 
-        OperationPtr Parser::ParseGlobalPool(const menoh_impl::node& node, PoolingType type ) {
+        OperationPtr Parser::ParseGlobalPool(const menoh_impl::node& node, PoolingType type, std::vector<std::string> const& required_outputs ) {
             std::string name = NodeName(node);
 	    
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
@@ -773,20 +816,22 @@ namespace menoh_impl {
                 DimsHW kernel_shape({dims.d[1], dims.d[2]});
                 pool = Network()->addPooling(*input0, type, kernel_shape);
                 assert(pool);
-                SetLayer(pool, node);
+                InitLayerNameAndOutputTensorName(pool, node);
             } 
+
+            MarkOutputIfRequired(pool->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, pool);
         }
         
-        OperationPtr Parser::ParseGlobalMaxPool(const menoh_impl::node& node) {
-            return ParseGlobalPool(node, PoolingType::kMAX);
+        OperationPtr Parser::ParseGlobalMaxPool(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
+            return ParseGlobalPool(node, PoolingType::kMAX, required_outputs);
         }
         
-        OperationPtr Parser::ParseGlobalAvgPool(const menoh_impl::node& node) {
-            return ParseGlobalPool(node, PoolingType::kAVERAGE);
+        OperationPtr Parser::ParseGlobalAvgPool(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
+            return ParseGlobalPool(node, PoolingType::kAVERAGE, required_outputs);
         }
 
-        OperationPtr Parser::ParseGemm(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseGemm(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
             
             std::vector<OutputOfOperation> inputs = InputCheck(node, 3);
@@ -845,13 +890,14 @@ namespace menoh_impl {
             {
                 full = Network()->addFullyConnected(*input0, bias.count, weight, bias);
                 assert(full);
-                SetLayer(full, node);
+                InitLayerNameAndOutputTensorName(full, node);
             }
 
+            MarkOutputIfRequired(full->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, full);
         }
 
-        OperationPtr Parser::ParseUnsqueeze(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseUnsqueeze(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
           std::cerr << "ParseUnsqueeze" << std::endl;
 #endif
@@ -882,12 +928,14 @@ namespace menoh_impl {
                 shuffle = Network()->addShuffle(*input0);
                 assert(shuffle);
                 shuffle->setReshapeDimensions(new_shape);
-                SetLayer(shuffle, node);
+                InitLayerNameAndOutputTensorName(shuffle, node);
             }
+
+            MarkOutputIfRequired(shuffle->getOutput(0), node.output_name_list.front(), required_outputs);
             return std::make_unique<SingleLayerOperation>(this, node, shuffle);
         }
 
-        void Parser::LoadNode(const menoh_impl::node& node) {
+        void Parser::LoadNode(const menoh_impl::node& node, std::vector<std::string> const& required_outputs) {
             std::string name = NodeName(node);
 	    
             const std::string& operation = node.op_type;
@@ -895,7 +943,7 @@ namespace menoh_impl {
             if (it != m_Functions.end())
             {
                 auto func = it->second;
-                OperationPtr operation = (this->*func)(node);
+                OperationPtr operation = (this->*func)(node, required_outputs);
                 auto it = m_Operations.find(name);
                 if (it != m_Operations.end())
                 {
@@ -948,7 +996,7 @@ namespace menoh_impl {
             }
         }
           
-        void Parser::LoadGraph(const menoh_impl::graph& graph) {
+        void Parser::LoadGraph(const menoh_impl::graph& graph, std::vector<std::string> const& required_outputs) {
 
             for( unsigned int i=0; i<graph.node_list().size() ; ++i)
             {
@@ -958,14 +1006,8 @@ namespace menoh_impl {
 
             for( unsigned int i=0; i<graph.node_list().size(); ++i)
             {
-                 LoadNode(graph.node_list().at(i));
+                 LoadNode(graph.node_list().at(i), required_outputs);
             }
-
-#ifdef MENOH_ENABLE_TENSORRT_DEBUG
-            std::cout << "markOutput.node   = " << m_Layer->getName() << std::endl;
-            std::cout << "markOutput.output = " << m_Layer->getOutput(0)->getName() << std::endl;
-#endif
-            Network()->markOutput(*m_Layer->getOutput(0));
         }
 
         INetworkDefinition* Parser::CreateNetwork(
@@ -987,7 +1029,7 @@ namespace menoh_impl {
             {
                 CheckOutput(graph, outputs);
                 LoadParameter(parameter_table);
-                LoadGraph(graph);
+                LoadGraph(graph, outputs);
             }
             catch (const ParseException& e)
             {
@@ -1001,6 +1043,14 @@ namespace menoh_impl {
         INetworkDefinition* Parser::Network()
         {
             return m_Network;
+        }
+
+        std::string Parser::ConvertToInputTensorName(std::string const& name) {
+            return input_tensor_name_table.at(name);
+        }
+
+        std::string Parser::ConvertToOutputTensorName(std::string const& name) {
+            return output_tensor_name_table.at(name);
         }
 
         void Parser::Cleanup(){
