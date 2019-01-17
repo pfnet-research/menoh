@@ -86,6 +86,9 @@ namespace {
             return named_array_data{tensor.name(), menoh::dtype_t::int64,
                                     std::move(dims), std::move(data)};
         }
+
+        assert(!"something wrong");
+        return named_array_data{};
     }
 
     class OperatorTest : public ::testing::Test {
@@ -136,7 +139,7 @@ namespace {
                 if(static_params) {
                     vpt_builder.add_input_profile(input_list.front().name, input_list.front().dtype,
                                                   input_list.front().dims);
-                    for(auto i = 1; i < input_list.size(); ++i) {
+                    for(std::size_t i = 1; i < input_list.size(); ++i) {
                         auto& input = input_list.at(i);
                         menoh_model_data_add_parameter(model_data.get(), input.name.c_str(),
                                 static_cast<menoh_dtype>(input.dtype), input.dims.size(),
@@ -232,7 +235,6 @@ namespace {
     TEST_OP_IMPL(backend_name, test_name, eps, false, true)
 
     float eps = 1.e-4;
-    float tolerant_eps = 1.e-3;
 
 #ifdef MENOH_WITH_MKLDNN
     // Tests for MKLDNN backend
