@@ -5,6 +5,7 @@
 #include <menoh/model_core.hpp>
 #include <menoh/model_data.hpp>
 
+#include <menoh/tensorrt/cuda_memory.hpp>
 #include <menoh/tensorrt/Parser.hpp>
 
 namespace menoh_impl {
@@ -58,6 +59,10 @@ namespace menoh_impl {
 
             std::unordered_map<std::string, array> m_Input;
             std::unordered_map<std::string, array> m_Output;
+
+            std::unordered_map<std::string, cuda_memory> input_memory_table_;
+            std::unordered_map<std::string, cuda_memory> output_memory_table_;
+            std::vector<void*> buffers_;
         };
 
     } // namespace tensorrt_backend

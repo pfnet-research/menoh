@@ -229,6 +229,27 @@ namespace menoh_impl {
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
             context->setProfiler(&gProfiler);
 #endif
+
+            // allocate memory
+            buffers_ = std::vector<void*>(engine->getNbBindings(), nullptr);
+            for(auto const& p : m_Input) {
+                auto name = p.first;
+                auto index = engine->getBindingIndex(m_Parser.ConvertToInputTensorName(name).c_str());
+                input_memory_table_.emplace(p.first, make_cuda_memory_like(p.second));
+                if(index == -1) {
+                    throw ParseException("Input not found: " + name);
+                }
+                buffers_.at(index) = input_memory_table_.at(name).get();
+            }
+            for(auto const& p : m_Output) {
+                auto name = p.first;
+                auto index = engine->getBindingIndex(m_Parser.ConvertToOutputTensorName(name).c_str());
+                output_memory_table_.emplace(p.first, make_cuda_memory_like(p.second));
+                if(index == -1) {
+                    throw ParseException("Output not found: " + name);
+                }
+                buffers_.at(index) = output_memory_table_.at(name).get();
+            }
         }
   
         // ==========================================================
@@ -240,37 +261,34 @@ namespace menoh_impl {
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
             std::cout << "Inference::Run::start" << std::endl;
 #endif
-            auto input_map  = m_Input[ input_name[0].c_str()];
-            auto output_map = m_Output[output_name[0].c_str()];
 
-            int input_size  = total_size(input_map) * GetDataTypeSize(DataType::kFLOAT);
-            int output_size = total_size(output_map)* GetDataTypeSize(DataType::kFLOAT);
-
-#ifdef MENOH_ENABLE_TENSORRT_DEBUG
-            std::cout << "Run, input_size = " << input_size << ", output_size = " << output_size << std::endl;            
-#endif
 #ifdef MENOH_ENABLE_TENSORRT_PRIFILER
             using clock = std::chrono::high_resolution_clock;
             auto start = clock::now();
 #endif
             {
-                void* buffers[2];
-                CHECK(cudaMalloc(&buffers[0], input_size));
-                CHECK(cudaMalloc(&buffers[1], output_size));
-
                 cudaStream_t stream;
                 CHECK(cudaStreamCreate(&stream));
-                CHECK(cudaMemcpyAsync(buffers[0], (float*)input_map.data(),  input_size,  cudaMemcpyHostToDevice, stream));
+                for(auto const& p : m_Input) {
+                    auto const& name = p.first;
+                    auto const& arr = p.second;
+                    input_memory_table_.emplace(p.first, make_cuda_memory_like(p.second));
+                    CHECK(cudaMemcpyAsync(input_memory_table_.at(name).get(), static_cast<float*>(arr.data()),
+                                total_size_in_bytes(arr), cudaMemcpyHostToDevice, stream));
+                }
 
-                context->enqueue(batchSize, buffers, stream, nullptr);
+                context->enqueue(batchSize, buffers_.data(), stream, nullptr);
 
-                CHECK(cudaMemcpyAsync((float*)output_map.data(), buffers[1], output_size, cudaMemcpyDeviceToHost, stream));
+                for(auto const& p : m_Output) {
+                    auto const& name = p.first;
+                    auto const& arr = p.second;
+                    output_memory_table_.emplace(p.first, make_cuda_memory_like(p.second));
+                    CHECK(cudaMemcpyAsync(static_cast<float*>(arr.data()), output_memory_table_.at(name).get(),
+                                total_size_in_bytes(arr), cudaMemcpyDeviceToHost, stream));
+                }
                       
                 CHECK(cudaStreamSynchronize(stream));
                 CHECK(cudaStreamDestroy(stream));
-
-                CHECK(cudaFree(buffers[0]));
-                CHECK(cudaFree(buffers[1]));
             }
 
 #ifdef MENOH_ENABLE_TENSORRT_PRIFILER
