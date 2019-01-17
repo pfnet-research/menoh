@@ -38,7 +38,7 @@ add_library(menoh_objlib OBJECT
     menoh.cpp
     model_core.cpp
 )
-set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_dependencies(menoh_objlib gen_onnx_proto) # custom target defined in onnx
 target_include_directories(menoh_objlib PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
