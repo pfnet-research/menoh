@@ -405,7 +405,7 @@ namespace {
     //TEST_OP_STATIC_PARAMS(tensorrt, test_lrn_default, tolerant_eps); // not support
     
     // Mul
-    TEST_OP_STATIC_PARAMS(tensorrt, test_mul, eps);
+    TEST_OP(tensorrt, test_mul, eps);
     // TEST_OP_STATIC_PARAMS(tensorrt, test_mul_bcast, eps);  // not support broadcasting (TODO implement by TensorRT's Scale function)
     //TEST_OP(tensorrt, test_mul_example, eps); // not support 1d input
 
