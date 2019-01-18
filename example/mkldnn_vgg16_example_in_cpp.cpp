@@ -131,9 +131,8 @@ int main(int argc, char** argv) {
       fc6_out_name, static_cast<void*>(fc6_out_data.data()));
 
     // Build model
-    auto model = model_builder.build_model(
-      model_data, "composite_backend",
-      R"({"backends":[{"type":"mkldnn"}, {"type":"generic"}], "log_output":"stdout"})");
+    auto model =
+      model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
