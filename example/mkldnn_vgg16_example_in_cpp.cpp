@@ -89,8 +89,7 @@ int main(int argc, char** argv) {
     auto onnx_model_path = a.get<std::string>("model");
     auto synset_words_path = a.get<std::string>("synset_words");
 
-    cv::Mat image_mat =
-      cv::imread(input_image_path.c_str(), cv::IMREAD_COLOR);
+    cv::Mat image_mat = cv::imread(input_image_path.c_str(), cv::IMREAD_COLOR);
     if(!image_mat.data) {
         throw std::runtime_error("Invalid input image path: " +
                                  input_image_path);
