@@ -72,7 +72,6 @@ namespace menoh_impl {
         public:
             Parser()
               : m_Network()
-              , m_Layer()
             {}
 
             INetworkDefinition* CreateNetwork(
@@ -142,7 +141,6 @@ namespace menoh_impl {
             static const std::map<std::string, ParseFunction> m_Functions;
 
             INetworkDefinition*                           m_Network;
-            ILayer*                                       m_Layer;
 
             std::unordered_map<std::string, const node*>  m_Nodes;
             std::unordered_map<std::string, array>        m_Params;
