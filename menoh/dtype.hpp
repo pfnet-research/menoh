@@ -85,32 +85,7 @@ namespace menoh_impl {
     template <dtype_t d>
     constexpr int size_in_bytes = sizeof(dtype_to_type_t<d>);
 
-    inline std::size_t get_size_in_bytes(dtype_t dtype) {
-        if(dtype == dtype_t::float_) {
-            return size_in_bytes<dtype_t::float_>;
-        } else
-        if(dtype == dtype_t::float16) {
-            return size_in_bytes<dtype_t::float16>;
-        } else
-        if(dtype == dtype_t::float32) {
-            return size_in_bytes<dtype_t::float32>;
-        } else
-        if(dtype == dtype_t::float64) {
-            return size_in_bytes<dtype_t::float64>;
-        } else
-        if(dtype == dtype_t::int8) {
-            return size_in_bytes<dtype_t::int8>;
-        } else
-        if(dtype == dtype_t::int16) {
-            return size_in_bytes<dtype_t::int8>;
-        } else
-        if(dtype == dtype_t::int32) {
-            return size_in_bytes<dtype_t::int8>;
-        } else
-        if(dtype == dtype_t::int64) {
-            return size_in_bytes<dtype_t::int8>;
-        }
-    }
+    std::size_t get_size_in_bytes(dtype_t dtype);
 
 } // namespace menoh_impl
 
