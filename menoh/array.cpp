@@ -49,6 +49,8 @@ namespace menoh_impl {
 
     std::size_t total_size(array const& a) { return calc_total_size(a.dims()); }
 
+    std::size_t total_size_in_bytes(array const& a) { return total_size(a)*get_size_in_bytes(a.dtype()); }
+
     dtype_to_type_t<dtype_t::float32>* fbegin(array const& a) {
         return begin<dtype_t::float32>(a);
     }
