@@ -16,15 +16,17 @@ namespace menoh_impl {
                 std::unordered_map<std::string, array> const* input_table,
                 std::unordered_map<std::string, array> const* output_table,
                 menoh_impl::model_data const* model_data,
-                int batch_size, int max_batch_size)
+                int batch_size, int max_batch_size, int device_id)
 	        : batchSize(batch_size)
 	        , maxBatchSize(max_batch_size)
+            , device_id(device_id)
 	        , input_table_(input_table)
                 , output_table_(output_table)
 	        , model_data_(model_data) {}
 
             int batchSize;
             int maxBatchSize; 
+            int device_id;
             std::unordered_map<std::string, array> const* input_table_;
             std::unordered_map<std::string, array> const* output_table_;
             menoh_impl::model_data const* model_data_;
@@ -47,6 +49,7 @@ namespace menoh_impl {
             Parser              m_Parser;
             int                 batchSize;
             int                 maxBatchSize;
+            int                 device_id;
 
             INetworkDefinition  *m_Network;
             IBuilder            *builder;
