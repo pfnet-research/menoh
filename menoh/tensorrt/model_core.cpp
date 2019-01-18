@@ -10,9 +10,9 @@ namespace menoh_impl {
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
           menoh_impl::model_data const& model_data,
-          int batch_size, int max_batch_size)
+          int batch_size, int max_batch_size, int device_id)
           : m_inference(Params(&input_table, &output_table, &model_data,
-                               batch_size, max_batch_size)) {}
+                               batch_size, max_batch_size, device_id)) {}
 
         void model_core::do_run() {
             m_inference.Run();
@@ -26,6 +26,7 @@ namespace menoh_impl {
             try {
                 int batch_size = input_table.begin()->second.dims().front(); // default
                 int max_batch_size = batch_size; // default
+                int device_id = 0;
                 if(!config.empty()) {
                     auto c = nlohmann::json::parse(config);
                     if(c.find("batch_size") != c.end()) {
@@ -37,10 +38,14 @@ namespace menoh_impl {
                     if(max_batch_size < batch_size) {
                         max_batch_size = batch_size;
                     }
+
+                    if(c.find("device_id") != c.end()) {
+                        device_id = c["device_id"].get<int>();
+                    }
                 }
                 assert(batch_size <= max_batch_size);
                 return model_core(input_table, output_table, model_data,
-                                  batch_size, max_batch_size);
+                                  batch_size, max_batch_size, device_id);
             } catch(nlohmann::json::parse_error const& e) {
                 throw json_parse_error(e.what());
             }

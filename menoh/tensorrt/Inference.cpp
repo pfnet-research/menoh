@@ -90,6 +90,7 @@ namespace menoh_impl {
           : m_Parser()
           , batchSize(params.batchSize)
           , maxBatchSize(params.maxBatchSize)
+          , device_id(params.device_id)
           , m_Network(nullptr)
           , builder(nullptr)
           , engine(nullptr)
@@ -190,6 +191,15 @@ namespace menoh_impl {
                                std::unordered_map<std::string, array> const& parameter_table,
                                std::vector<std::string>& outputs ) {
 
+            {
+                int count;
+                cudaGetDeviceCount(&count);
+                if(count <= device_id) {
+                    throw ParseException("invalid device_id: " + std::to_string(device_id)
+                            + " >= " + std::to_string(count) + " (available device count)");
+                }
+            }
+            CHECK(cudaSetDevice(device_id));
             builder = createInferBuilder(gLogger);
             assert(builder); 
 
