@@ -13,6 +13,8 @@
 namespace menoh_impl {
 
     struct model_data {
+        int32_t ir_version;
+        int64_t opset_version;
         std::vector<node> node_list;
         std::vector<std::pair<std::string, array>>
           parameter_name_and_array_list;

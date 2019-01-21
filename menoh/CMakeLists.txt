@@ -35,6 +35,7 @@ add_library(menoh_objlib OBJECT
     mkldnn/operator/fc.cpp
     mkldnn/operator/batch_norm.cpp
     mkldnn/model_core.cpp
+    onnxifi/model_core.hpp
     menoh.cpp
     model_core.cpp
 )
@@ -44,7 +45,8 @@ target_include_directories(menoh_objlib PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
-    $<BUILD_INTERFACE:${ONNX_INCLUDE_DIRS}>
+    "$<BUILD_INTERFACE:${ONNX_INCLUDE_DIRS}>"
+    $<BUILD_INTERFACE:${FMT_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${MKLDNN_INCLUDE_DIR}>
 )
 
@@ -56,7 +58,7 @@ if(NOT APPLE AND NOT MSVC)
         TARGET menoh APPEND_STRING PROPERTY
             LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif()
-target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES} onnx)
+target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES} onnx onnxifi_loader)
 if(LINK_STATIC_LIBGCC)
     target_link_libraries(menoh PRIVATE -static-libgcc)
 endif()
@@ -66,7 +68,7 @@ endif()
 
 # menoh_test_target: only used in `test` subdirectory
 add_library(menoh_test_target $<TARGET_OBJECTS:menoh_objlib>)
-target_link_libraries(menoh_test_target PRIVATE ${MKLDNN_LIBRARIES} onnx)
+target_link_libraries(menoh_test_target PRIVATE ${MKLDNN_LIBRARIES} onnx onnxifi_loader)
 
 install(TARGETS menoh
     RUNTIME DESTINATION "bin"

@@ -8,3 +8,6 @@
 [submodule "test/lib/filesystem"]
 	path = test/lib/filesystem
 	url = https://github.com/wjakob/filesystem.git
+[submodule "external/fmt"]
+	path = external/fmt
+	url = https://github.com/fmtlib/fmt.git

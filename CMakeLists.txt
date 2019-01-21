@@ -16,6 +16,12 @@ option(ENABLE_EXAMPLE "Build example" ON)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
 
+option(ENABLE_ONNXIFI_BACKEND_DEBUG "" OFF)
+if(ENABLE_ONNXIFI_BACKEND_DEBUG)
+    message(STATUS "Set ENABLE_ONNIFI_BACKEND_DEBUG ON")
+    add_definitions(-DMENOH_ONNXIFI_BACKEND_DEBUG)
+endif()
+
 option(SHOW_ALL_VARIABLES "Debug: show all variables" OFF)
 
 ## C++ setup
@@ -99,8 +105,17 @@ configure_file(${EXTERNAL_DIR}/onnx-v1.3.0-patch_CMakeLists.txt ${EXTERNAL_DIR}/
 
 set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
 set(BUILD_SHARED_LIBS OFF)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    add_definitions(-DONNXIFI_LOADER_LOGGING)
+endif()
 add_subdirectory(${EXTERNAL_DIR}/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
 set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
+
+## Retrieve fmt
+set(FMT_SRC_DIR ${EXTERNAL_DIR}/fmt)
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- ${FMT_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_definitions(-DFMT_HEADER_ONLY=1)
+set(FMT_INCLUDE_DIR ${FMT_SRC_DIR}/include)
 
 if(${ENABLE_TEST})
     message(STATUS "Adding test")
