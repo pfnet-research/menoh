@@ -54,6 +54,9 @@ if(LINK_STATIC_LIBPROTOBUF)
     # Note: We can't use `set(PROTOBUF_BUILD_SHARED_LIBS OFF)` in `FindProtobuf` module
     # because `libprotobuf.a` produced by the package manager is not PIC. So we need to
     # build it by ourselves.
+    if(NOT BUILD_SHARED_LIBS)
+        message(FATAL_ERROR "LINK_STATIC_LIBPROTOBUF=ON is supported only when BUILD_SHARED_LIBS=ON")
+    endif()
     if(UNIX OR MINGW)
         include(BuildProtobuf)
     else()
