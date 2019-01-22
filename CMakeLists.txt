@@ -16,6 +16,8 @@ option(ENABLE_EXAMPLE "Build example" ON)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
 
+set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "installation path for pkg-config(.pc) file")
+
 option(SHOW_ALL_VARIABLES "Debug: show all variables" OFF)
 
 ## C++ setup
