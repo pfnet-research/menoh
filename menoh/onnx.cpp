@@ -21,22 +21,22 @@
 
 namespace menoh_impl {
 
-    dtype_t tensor_proto_data_type_to_dtype(onnx::TensorProto_DataType tpdt) {
-        if(tpdt == onnx::TensorProto_DataType_FLOAT) {
+    dtype_t tensor_proto_data_type_to_dtype(menoh_onnx::TensorProto_DataType tpdt) {
+        if(tpdt == menoh_onnx::TensorProto_DataType_FLOAT) {
             return dtype_t::float_;
-        } else if(tpdt == onnx::TensorProto_DataType_INT8) {
+        } else if(tpdt == menoh_onnx::TensorProto_DataType_INT8) {
             return dtype_t::int8;
-        } else if(tpdt == onnx::TensorProto_DataType_INT16) {
+        } else if(tpdt == menoh_onnx::TensorProto_DataType_INT16) {
             return dtype_t::int16;
-        } else if(tpdt == onnx::TensorProto_DataType_INT32) {
+        } else if(tpdt == menoh_onnx::TensorProto_DataType_INT32) {
             return dtype_t::int32;
-        } else if(tpdt == onnx::TensorProto_DataType_INT64) {
+        } else if(tpdt == menoh_onnx::TensorProto_DataType_INT64) {
             return dtype_t::int64;
         }
         throw invalid_dtype(std::to_string(tpdt));
     }
 
-    auto extract_parameter_name_set(onnx::GraphProto const& graph) {
+    auto extract_parameter_name_set(menoh_onnx::GraphProto const& graph) {
         std::set<std::string> parameter_name_set;
         for(int i = 0; i < graph.initializer_size(); ++i) {
             auto& tensor = graph.initializer(i);
@@ -83,7 +83,7 @@ namespace menoh_impl {
     }
 
     template <menoh_impl::dtype_t dtype>
-    auto move_tensor_from_onnx_data(int total_size, onnx::TensorProto& tensor) {
+    auto move_tensor_from_onnx_data(int total_size, menoh_onnx::TensorProto& tensor) {
         // libc++ workaround
         // Below 2 lines are equal to `data =
         // std::unique_ptr<float_t[]>(new float_t[total_size]);`
@@ -102,7 +102,7 @@ namespace menoh_impl {
     }
 
     auto extract_parameter_name_and_array_list_from_onnx_graph(
-      onnx::GraphProto& graph,
+      menoh_onnx::GraphProto& graph,
       std::vector<std::string> const& needed_parameter_name_list) {
         std::vector<std::pair<std::string, menoh_impl::array>>
           parameter_name_and_array_list;
@@ -147,7 +147,7 @@ namespace menoh_impl {
         return parameter_name_and_array_list;
     }
 
-    auto extract_node_list_from_onnx_graph(onnx::GraphProto const& graph) {
+    auto extract_node_list_from_onnx_graph(menoh_onnx::GraphProto const& graph) {
         std::vector<node> node_list;
         for(auto const& onnx_node : graph.node()) {
             std::unordered_map<std::string, attribute> attribute_table;
@@ -183,7 +183,7 @@ namespace menoh_impl {
         return node_list;
     }
 
-    model_data make_model_from_onnx(onnx::ModelProto& onnx_model) {
+    model_data make_model_from_onnx(menoh_onnx::ModelProto& onnx_model) {
         // onnx opset version check
         if(onnx_model.opset_import_size() != 0) {
             int version = onnx_model.opset_import(0).version();
@@ -233,7 +233,7 @@ namespace menoh_impl {
         gpio::CodedInputStream cis(&iis);
         cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
                                std::numeric_limits<int>::max());
-        onnx::ModelProto onnx_model;
+        menoh_onnx::ModelProto onnx_model;
         if(!onnx_model.ParseFromCodedStream(&cis)) {
             throw onnx_parse_error(filename);
         }
@@ -248,7 +248,7 @@ namespace menoh_impl {
         gpio::CodedInputStream cis(&ais);
         cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
                                std::numeric_limits<int>::max());
-        onnx::ModelProto onnx_model;
+        menoh_onnx::ModelProto onnx_model;
         if(!onnx_model.ParseFromCodedStream(&cis) ||
            !cis.ConsumedEntireMessage()) {
             throw onnx_parse_error("parse binary onnx data on memory");
