@@ -95,9 +95,8 @@ namespace menoh_impl {
         Inference::Inference(const Params& params)
           : m_Parser(), batchSize(params.batchSize),
             maxBatchSize(params.maxBatchSize), device_id(params.device_id),
-            builder(nullptr), engine(nullptr),
-            context(nullptr), input_name{}, output_name{}, m_Input{},
-            m_Output{} {
+            builder(nullptr), engine(nullptr), context(nullptr), input_name{},
+            output_name{}, m_Input{}, m_Output{} {
             menoh_impl::model_data const& model_data = *(params.model_data_);
 
             std::vector<node> all_nodes;
@@ -213,8 +212,8 @@ namespace menoh_impl {
             builder.reset(createInferBuilder(gLogger));
             assert(builder);
 
-            auto network =
-              m_Parser.CreateNetwork(builder, graph, parameter_table, outputs);
+            auto network = m_Parser.CreateNetwork(builder.get(), graph,
+                                                  parameter_table, outputs);
             assert(network);
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
