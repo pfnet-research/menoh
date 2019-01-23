@@ -46,7 +46,6 @@ namespace menoh_impl {
             int maxBatchSize;
             int device_id;
 
-            INetworkDefinition* m_Network;
             IBuilder* builder;
             ICudaEngine* engine;
             IExecutionContext* context;

@@ -95,7 +95,7 @@ namespace menoh_impl {
         Inference::Inference(const Params& params)
           : m_Parser(), batchSize(params.batchSize),
             maxBatchSize(params.maxBatchSize), device_id(params.device_id),
-            m_Network(nullptr), builder(nullptr), engine(nullptr),
+            builder(nullptr), engine(nullptr),
             context(nullptr), input_name{}, output_name{}, m_Input{},
             m_Output{} {
             menoh_impl::model_data const& model_data = *(params.model_data_);
@@ -213,9 +213,9 @@ namespace menoh_impl {
             builder = createInferBuilder(gLogger);
             assert(builder);
 
-            m_Network =
+            auto network =
               m_Parser.CreateNetwork(builder, graph, parameter_table, outputs);
-            assert(m_Network);
+            assert(network);
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "maxBatchSize = " << maxBatchSize << std::endl;
@@ -232,8 +232,10 @@ namespace menoh_impl {
             using clock = std::chrono::high_resolution_clock;
             auto start = clock::now();
 #endif
-            engine = builder->buildCudaEngine(*m_Network);
+            engine = builder->buildCudaEngine(*network);
             assert(engine);
+            // we don't need the network any more
+            network->destroy();
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
             auto end = clock::now();
             std::cout << "buildCudaEngine = "
