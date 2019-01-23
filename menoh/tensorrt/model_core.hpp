@@ -13,8 +13,7 @@ namespace menoh_impl {
             model_core(
               std::unordered_map<std::string, array> const& input_table,
               std::unordered_map<std::string, array> const& output_table,
-              menoh_impl::model_data const& model_data, int batch_size,
-              int max_batch_size, int device_id);
+              menoh_impl::model_data const& model_data, config const& config);
 
         private:
             virtual void do_run() override;

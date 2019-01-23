@@ -44,8 +44,8 @@ namespace menoh_impl {
 #if MENOH_WITH_TENSORRT
         if(backend_name == "tensorrt") {
             return std::make_unique<tensorrt_backend::model_core>(
-              tensorrt_backend::make_model_core(input_table, required_output_table,
-                                              model_data, config));
+              tensorrt_backend::make_model_core(
+                input_table, required_output_table, model_data, config));
         }
 #endif
         throw invalid_backend_name(backend_name);
