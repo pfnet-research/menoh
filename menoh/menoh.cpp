@@ -93,24 +93,26 @@ menoh_error_code check_error(Func func) {
  * dtype
  */
 
-menoh_error_code MENOH_API menoh_dtype_size(menoh_dtype dtype, int32_t *dst_size) {
-    switch (dtype) {
-#define MENOH_DTYPE_SIZE_CASE(dtype) \
-    case dtype: \
-        *dst_size = menoh_impl::size_in_bytes<static_cast<menoh_impl::dtype_t>(dtype)>; \
+menoh_error_code MENOH_API menoh_dtype_size(menoh_dtype dtype,
+                                            int32_t* dst_size) {
+    switch(dtype) {
+#define MENOH_DTYPE_SIZE_CASE(dtype)                                          \
+    case dtype:                                                               \
+        *dst_size =                                                           \
+          menoh_impl::size_in_bytes<static_cast<menoh_impl::dtype_t>(dtype)>; \
         break;
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_float)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_float16)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_float64)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_int8)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_int16)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_int32)
-    MENOH_DTYPE_SIZE_CASE(menoh_dtype_int64)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_float)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_float16)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_float64)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_int8)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_int16)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_int32)
+        MENOH_DTYPE_SIZE_CASE(menoh_dtype_int64)
 #undef MENOH_DTYPE_SIZE_CASE
-    default:
-        std::string msg("unknown dtype: " + std::to_string(dtype));
-        menoh_impl::set_last_error_message(msg.c_str());
-        return menoh_error_code_invalid_dtype;
+        default:
+            std::string msg("unknown dtype: " + std::to_string(dtype));
+            menoh_impl::set_last_error_message(msg.c_str());
+            return menoh_error_code_invalid_dtype;
     }
     return menoh_error_code_success;
 }
@@ -464,6 +466,16 @@ menoh_error_code menoh_variable_profile_table_get_dims_at(
       [&](auto const& profile) { *dst_size = profile.dims().at(index); });
 }
 
+menoh_error_code menoh_variable_profile_table_get_dims(
+  const menoh_variable_profile_table_handle variable_profile_table,
+  const char* name, int32_t* dst_size, const int32_t** dims) {
+    return impl::menoh_variable_profile_table_get_variable_attribute(
+      variable_profile_table, name, [&](auto const& profile) {
+          *dst_size = profile.dims().size();
+          *dims = profile.dims().data();
+      });
+}
+
 menoh_error_code menoh_model_data_optimize(
   menoh_model_data_handle model_data,
   const menoh_variable_profile_table_handle variable_profile_table) {
@@ -653,6 +665,17 @@ menoh_model_get_variable_dims_at(const menoh_model_handle model,
     return impl::menoh_model_get_variable_variable_attribute(
       model, variable_name,
       [&](menoh_impl::array const& arr) { *dst_size = arr.dims().at(index); });
+}
+
+menoh_error_code menoh_model_get_variable_dims(const menoh_model_handle model,
+                                               const char* variable_name,
+                                               int32_t* dst_size,
+                                               const int32_t** dims) {
+    return impl::menoh_model_get_variable_variable_attribute(
+      model, variable_name, [&](menoh_impl::array const& arr) {
+          *dst_size = arr.dims().size();
+          *dims = arr.dims().data();
+      });
 }
 
 menoh_error_code menoh_model_run(menoh_model_handle model) {

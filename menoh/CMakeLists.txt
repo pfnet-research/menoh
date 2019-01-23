@@ -3,7 +3,7 @@ option(LINK_STATIC_LIBSTDCXX OFF)
 
 # Create a object library for generating shared library
 add_library(menoh_objlib OBJECT)
-set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_dependencies(menoh_objlib gen_onnx_proto) # custom target defined in onnx
 target_sources(menoh_objlib PRIVATE
     array.cpp
