@@ -1,8 +1,14 @@
 #include <menoh/model_core.hpp>
 #include <menoh/model_core_factory.hpp>
 
+#if MENOH_WITH_MKLDNN
 #include <menoh/composite_backend/model_core.hpp>
 #include <menoh/mkldnn/model_core.hpp>
+#endif
+
+#if MENOH_WITH_TENSORRT
+#include <menoh/tensorrt/model_core.hpp>
+#endif
 
 #include <menoh/json.hpp>
 
@@ -15,6 +21,7 @@ namespace menoh_impl {
         output_profile_table,
       menoh_impl::model_data const& model_data, std::string const& backend_name,
       backend_config const& config) {
+#if MENOH_WITH_MKLDNN
         if(backend_name == "mkldnn") {
             return std::make_unique<mkldnn_backend::model_core>(
               mkldnn_backend::make_model_core(
@@ -33,7 +40,14 @@ namespace menoh_impl {
                 input_table, required_output_table, output_profile_table,
                 model_data, config));
         }
-
+#endif
+#if MENOH_WITH_TENSORRT
+        if(backend_name == "tensorrt") {
+            return std::make_unique<tensorrt_backend::model_core>(
+              tensorrt_backend::make_model_core(input_table, required_output_table,
+                                              model_data, config));
+        }
+#endif
         throw invalid_backend_name(backend_name);
     }
 

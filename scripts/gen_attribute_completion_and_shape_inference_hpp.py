@@ -168,7 +168,7 @@ namespace menoh_impl {{
             ("pads", "ints", "ints(2*(ndims_of(input(0))-2), 0)"),
             ("strides", "ints", "ints(ndims_of(input(0))-2, 1)"),  # WORKAROUND: None is correct # NOQA
         ], '''
-add_variable_to_table(output(0), dtype_of(input(0)),
+add_variable_to_table(output(0), dtype_of(input(0)), 
     calc_2d_output_dims(
         dims_of(input(0)), dims_of(input(0)).at(1),
         kernel_shape, strides, pads));
@@ -315,13 +315,18 @@ add_variable_to_table(output(0), dtype_of(input(0)),
     output_dims);
 '''))
     code_list.append(
+        make_completion_code("Identity", [], '''
+add_variable_to_table(output(0), dtype_of(input(0)),
+    dims_of(input(0)));
+'''))
+    code_list.append(
         make_completion_code("LeakyRelu", [("alpha", "float", "0.01f")]))
     code_list.append(
         make_completion_code("LRN", [
             ("alpha", "float", "0.0001f"),
             ("beta", "float", "0.75f"),
             ("bias", "float", "1.0f"),
-            ("size", "float", None),
+            ("size", "int", None),
         ]))
     code_list.append(
         make_completion_code("MaxPool", [
@@ -367,6 +372,22 @@ for(unsigned int i = 0; i < new_dims.size(); ++i) {
     }
 }
 add_variable_to_table(output(0), dtype_of(input(0)), new_dims);
+'''))
+    code_list.append(
+        make_completion_code("Unsqueeze", [
+            ("axes", "ints", None),
+        ], '''
+auto input_dims = dims_of(input(0));
+auto output_dims_size = input_dims.size() + axes.size();
+std::vector<int> output_dims(output_dims_size);
+        std::set<int> axes_set(axes.begin(), axes.end());
+for(unsigned int i = 0, j = 0; i < output_dims_size; ++i) {
+    if( axes_set.count(i) == 0 )
+        output_dims.at(i) = input_dims.at(j++);
+    else
+        output_dims.at(i) = 1;
+}
+add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 '''))
     code_list.append(make_completion_code("Sigmoid"))
     code_list.append(make_completion_code("Softmax", [("axis", "int", "1")]))
