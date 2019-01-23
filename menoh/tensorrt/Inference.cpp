@@ -92,19 +92,16 @@ namespace menoh_impl {
 #endif
         static Logger gLogger;
 
-        Inference::Inference(const Params& params)
-          : m_Parser(), batchSize(params.batchSize),
-            maxBatchSize(params.maxBatchSize), device_id(params.device_id),
-            builder(nullptr), engine(nullptr), context(nullptr), input_name{},
-            output_name{}, m_Input{}, m_Output{} {
-            menoh_impl::model_data const& model_data = *(params.model_data_);
+        Inference::Inference(
+          std::unordered_map<std::string, array> const& input_table,
+          std::unordered_map<std::string, array> const& output_table,
+          menoh_impl::model_data const& model_data, config const& config)
+          : config_(config) {
 
             std::vector<node> all_nodes;
             std::copy(model_data.node_list.begin(), model_data.node_list.end(),
                       back_inserter(all_nodes));
 
-            std::unordered_map<std::string, array> const& input_table =
-              *(params.input_table_);
             for(auto const& name_and_arr_pair : input_table) {
                 std::string name;
                 array arr;
@@ -156,8 +153,6 @@ namespace menoh_impl {
                 all_nodes.push_back(n);
             }
 
-            std::unordered_map<std::string, array> const& output_table =
-              *(params.output_table_);
             if(output_table.size() == 0) {
                 throw ParseException("output must have at least one entry");
             }
@@ -201,14 +196,14 @@ namespace menoh_impl {
             {
                 int count;
                 cudaGetDeviceCount(&count);
-                if(count <= device_id) {
+                if(count <= config_.device_id) {
                     throw ParseException("invalid device_id: " +
-                                         std::to_string(device_id) + " >= " +
-                                         std::to_string(count) +
+                                         std::to_string(config_.device_id) +
+                                         " >= " + std::to_string(count) +
                                          " (available device count)");
                 }
             }
-            CHECK(cudaSetDevice(device_id));
+            CHECK(cudaSetDevice(config_.device_id));
             builder.reset(createInferBuilder(gLogger));
             assert(builder);
 
@@ -219,37 +214,42 @@ namespace menoh_impl {
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
             std::cout << "maxBatchSize = " << maxBatchSize << std::endl;
 #endif
-            builder->setMaxBatchSize(maxBatchSize);
+            builder->setMaxBatchSize(config_.max_batch_size);
             builder->setMaxWorkspaceSize(1 << 20);
             builder->setFp16Mode(false);
             builder->setDebugSync(false);
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
-            std::cout << "buildCudaEngine::start" << std::endl;
+            if(config_.enable_profiler) {
+                std::cout << "buildCudaEngine::start" << std::endl;
+                using clock = std::chrono::high_resolution_clock;
+                auto start = clock::now();
 #endif
+                engine.reset(builder->buildCudaEngine(*network));
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
-            using clock = std::chrono::high_resolution_clock;
-            auto start = clock::now();
+                auto end = clock::now();
+                std::cout
+                  << "buildCudaEngine = "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(
+                       end - start)
+                         .count() /
+                       1000.0
+                  << " sec" << std::endl;
+                std::cout << "buildCudaEngine::done" << std::endl;
+            } else {
+                engine.reset(builder->buildCudaEngine(*network));
+            }
 #endif
-            engine.reset(builder->buildCudaEngine(*network));
             assert(engine);
             // we don't need the network any more
             network->destroy();
-#ifdef MENOH_ENABLE_TENSORRT_PROFILER
-            auto end = clock::now();
-            std::cout << "buildCudaEngine = "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           end - start)
-                             .count() /
-                           1000.0
-                      << " sec" << std::endl;
-            std::cout << "buildCudaEngine::done" << std::endl;
-#endif
             context.reset(engine->createExecutionContext());
             assert(context);
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
-            context->setProfiler(&gProfiler);
+            if(config_.enable_profiler) {
+                context->setProfiler(&gProfiler);
+            }
 #endif
 
             // allocate memory
@@ -284,15 +284,7 @@ namespace menoh_impl {
 
         void Inference::Run() {
 
-#ifdef MENOH_ENABLE_TENSORRT_PROFILER
-            std::cout << "Inference::Run::start" << std::endl;
-#endif
-
-#ifdef MENOH_ENABLE_TENSORRT_PRIFILER
-            using clock = std::chrono::high_resolution_clock;
-            auto start = clock::now();
-#endif
-            {
+            auto runner = [&, this]() {
                 cudaStream_t stream;
                 CHECK(cudaStreamCreate(&stream));
                 for(auto const& p : m_Input) {
@@ -306,7 +298,8 @@ namespace menoh_impl {
                                           cudaMemcpyHostToDevice, stream));
                 }
 
-                context->enqueue(batchSize, buffers_.data(), stream, nullptr);
+                context->enqueue(config_.batch_size, buffers_.data(), stream,
+                                 nullptr);
 
                 for(auto const& p : m_Output) {
                     auto const& name = p.first;
@@ -321,19 +314,28 @@ namespace menoh_impl {
 
                 CHECK(cudaStreamSynchronize(stream));
                 CHECK(cudaStreamDestroy(stream));
+            };
+
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+            if(config_.enable_profiler) {
+                std::cout << "Inference::Run::start" << std::endl;
+                using clock = std::chrono::high_resolution_clock;
+                auto start = clock::now();
+                runner();
+                auto end = clock::now();
+                std::cout
+                  << "Run time = "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(
+                       end - start)
+                         .count() /
+                       1000.0
+                  << " sec" << std::endl;
+
+                gProfiler.printLayerTimes();
+                std::cout << "Inference::Run::done" << std::endl;
+            } else {
+                runner();
             }
-
-#ifdef MENOH_ENABLE_TENSORRT_PRIFILER
-            auto end = clock::now();
-            std::cout << "Run time = "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           end - start)
-                             .count() /
-                           1000.0
-                      << " sec" << std::endl;
-
-            gProfiler.printLayerTimes();
-            std::cout << "Inference::Run::done" << std::endl;
 #endif
         }
 
