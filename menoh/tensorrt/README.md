@@ -7,9 +7,3 @@
 
 ##  Ubuntu 18.04LTS
     - Jetson AGX Xavier : JetPack 4.1.1 preview (TensorRT 5.0)
-
-##  test models
-    - VGG19       example/vgg19_example_in_cpp.cpp
-    - Resnet-50   example/resnet50_example_in_cpp.cpp
-    - SqueezeNet  example/squeezenet_example_in_cpp.cpp
-
