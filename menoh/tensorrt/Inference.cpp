@@ -210,7 +210,7 @@ namespace menoh_impl {
                 }
             }
             CHECK(cudaSetDevice(device_id));
-            builder = createInferBuilder(gLogger);
+            builder.reset(createInferBuilder(gLogger));
             assert(builder);
 
             auto network =
@@ -232,7 +232,7 @@ namespace menoh_impl {
             using clock = std::chrono::high_resolution_clock;
             auto start = clock::now();
 #endif
-            engine = builder->buildCudaEngine(*network);
+            engine.reset(builder->buildCudaEngine(*network));
             assert(engine);
             // we don't need the network any more
             network->destroy();
@@ -246,7 +246,7 @@ namespace menoh_impl {
                       << " sec" << std::endl;
             std::cout << "buildCudaEngine::done" << std::endl;
 #endif
-            context = engine->createExecutionContext();
+            context.reset(engine->createExecutionContext());
             assert(context);
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
@@ -334,21 +334,8 @@ namespace menoh_impl {
                       << " sec" << std::endl;
 
             gProfiler.printLayerTimes();
-#endif
-            Clear();
-
-#ifdef MENOH_ENABLE_TENSORRT_PRIFILER
             std::cout << "Inference::Run::done" << std::endl;
 #endif
-        }
-
-        void Inference::Clear() {
-            if(context)
-                context->destroy();
-            if(engine)
-                engine->destroy();
-            if(builder)
-                builder->destroy();
         }
 
     } // namespace tensorrt_backend

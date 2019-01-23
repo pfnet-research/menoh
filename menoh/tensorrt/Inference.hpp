@@ -33,7 +33,6 @@ namespace menoh_impl {
             Inference(const Params& param);
 
             void Run();
-            void Clear();
 
         private:
             void
@@ -46,9 +45,16 @@ namespace menoh_impl {
             int maxBatchSize;
             int device_id;
 
-            IBuilder* builder;
-            ICudaEngine* engine;
-            IExecutionContext* context;
+            template <typename T>
+            struct destroyer {
+                void operator()(T* p) const noexcept { p->destroy(); }
+            };
+            template <typename T>
+            using unique_ptr_with_destroyer = std::unique_ptr<T, destroyer<T>>;
+
+            unique_ptr_with_destroyer<IBuilder> builder;
+            unique_ptr_with_destroyer<ICudaEngine> engine;
+            unique_ptr_with_destroyer<IExecutionContext> context;
 
             std::vector<std::string> input_name;
             std::vector<std::string> output_name;
