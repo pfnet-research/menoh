@@ -4,33 +4,29 @@
 #include <string>
 
 namespace menoh_impl {
-namespace tensorrt_backend {
+    namespace tensorrt_backend {
 
-class Exception : public std::exception
-{
-public:
-    explicit Exception(const std::string& message);
+        class Exception : public std::exception {
+        public:
+            explicit Exception(const std::string& message);
 
-    virtual const char* what() const noexcept override;
+            virtual const char* what() const noexcept override;
 
-private:
-    std::string msg;
-};
+        private:
+            std::string msg;
+        };
 
-class InvalidArgumentException : public Exception
-{
-public:
-    using Exception::Exception;
-};
+        class InvalidArgumentException : public Exception {
+        public:
+            using Exception::Exception;
+        };
 
-class ParseException : public Exception
-{
-public:
-    using Exception::Exception;
-};
+        class ParseException : public Exception {
+        public:
+            using Exception::Exception;
+        };
 
-} // namespace tensorrt_backend
+    } // namespace tensorrt_backend
 } // menoh_impl
 
 #endif // EXCEPTION_HPP
-

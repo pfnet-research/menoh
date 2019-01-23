@@ -23,7 +23,6 @@ namespace menoh_impl {
         };
 
         cuda_memory make_cuda_memory_like(array const& a);
-
     }
 }
 

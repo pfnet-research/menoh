@@ -9,14 +9,12 @@ namespace menoh_impl {
         model_core::model_core(
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
-          menoh_impl::model_data const& model_data,
-          int batch_size, int max_batch_size, int device_id)
+          menoh_impl::model_data const& model_data, int batch_size,
+          int max_batch_size, int device_id)
           : m_inference(Params(&input_table, &output_table, &model_data,
                                batch_size, max_batch_size, device_id)) {}
 
-        void model_core::do_run() {
-            m_inference.Run();
-        }
+        void model_core::do_run() { m_inference.Run(); }
 
         model_core make_model_core(
           std::unordered_map<std::string, array> const& input_table,
@@ -24,8 +22,9 @@ namespace menoh_impl {
           menoh_impl::model_data const& model_data,
           backend_config const& config) {
             try {
-                int batch_size = input_table.begin()->second.dims().front(); // default
-                int max_batch_size = batch_size; // default
+                int batch_size =
+                  input_table.begin()->second.dims().front(); // default
+                int max_batch_size = batch_size;              // default
                 int device_id = 0;
                 if(!config.empty()) {
                     auto c = nlohmann::json::parse(config);
