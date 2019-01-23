@@ -7,8 +7,8 @@ set(MENOH_MINOR_VERSION 2)
 set(MENOH_PATCH_VERSION 0)
 
 # Options
-option(ENABLE_MKLDNN    "Use MKLDNN"      OFF)
-option(ENABLE_TENSORRT  "Use TensorRT"    ON)
+option(ENABLE_MKLDNN    "Use MKLDNN"      ON)
+option(ENABLE_TENSORRT  "Use TensorRT"    OFF)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
 
