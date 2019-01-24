@@ -21,13 +21,12 @@ namespace menoh_impl {
           backend_config const& config) {
             try {
                 // default values
-                int batch_size =
-                  input_table.begin()->second.dims().front();
+                int batch_size = input_table.begin()->second.dims().front();
                 int max_batch_size = batch_size;
                 int device_id = 0;
                 bool enable_profiler = false;
-                int allow_fp16 = 0;
-                int force_fp16 = 0;
+                bool allow_fp16_mode = false;
+                bool force_fp16_mode = false;
                 if(!config.empty()) {
                     auto c = nlohmann::json::parse(config);
                     if(c.find("batch_size") != c.end()) {
@@ -46,16 +45,17 @@ namespace menoh_impl {
                     if(c.find("enable_profiler") != c.end()) {
                         enable_profiler = c["enable_profiler"].get<int>();
                     }
-                    if(c.find("allow_fp16") != c.end()) {
-                        allow_fp16 = c["allow_fp16"].get<int>();
+                    if(c.find("allow_fp16_mode") != c.end()) {
+                        allow_fp16_mode = c["allow_fp16_mode"].get<int>();
                     }
-                    if(c.find("force_fp16") != c.end()) {
-                        force_fp16 = c["force_fp16"].get<int>();
+                    if(c.find("force_fp16_mode") != c.end()) {
+                        force_fp16_mode = c["force_fp16_mode"].get<int>();
                     }
                 }
                 assert(batch_size <= max_batch_size);
-                tensorrt_backend::config config{batch_size, max_batch_size,
-                                                device_id, enable_profiler};
+                tensorrt_backend::config config{
+                  batch_size,      max_batch_size,  device_id,
+                  enable_profiler, allow_fp16_mode, force_fp16_mode};
                 return model_core(input_table, output_table, model_data,
                                   config);
             } catch(nlohmann::json::parse_error const& e) {

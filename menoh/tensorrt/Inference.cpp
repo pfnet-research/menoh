@@ -216,7 +216,17 @@ namespace menoh_impl {
 #endif
             builder->setMaxBatchSize(config_.max_batch_size);
             builder->setMaxWorkspaceSize(1 << 20);
-            builder->setFp16Mode(false);
+            if(config_.force_fp16_mode) {
+                if(!builder->platformHasFastFp16()) {
+                    throw ParseException(
+                      "FP16 mode is not available on this device");
+                }
+                builder->setFp16Mode(true);
+                builder->setStrictTypeConstraints(true);
+            }
+            if(config_.allow_fp16_mode && builder->platformHasFastFp16()) {
+                builder->setFp16Mode(true);
+            }
             builder->setDebugSync(false);
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER

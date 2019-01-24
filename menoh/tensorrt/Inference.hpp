@@ -19,6 +19,8 @@ namespace menoh_impl {
             int max_batch_size;
             int device_id;
             bool enable_profiler;
+            bool allow_fp16_mode;
+            bool force_fp16_mode;
         };
 
         class Inference {
