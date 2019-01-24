@@ -27,7 +27,7 @@ namespace menoh_impl {
               mkldnn_backend::make_model_core(
                 input_table, required_output_table, model_data, config));
         } else if(backend_name == "mkldnn_with_generic_fallback") {
-            auto conf = nlohmann::json::parse(config.empty() ? "{}" : config);
+            auto conf = menoh_nlohmann::json::parse(config.empty() ? "{}" : config);
             conf.merge_patch(
               R"({"backends":[{"type":"mkldnn"}, {"type":"generic"}]})");
             return std::make_unique<composite_backend::model_core>(

@@ -27,7 +27,7 @@ namespace menoh_impl {
                 int max_batch_size = batch_size;              // default
                 int device_id = 0;
                 if(!config.empty()) {
-                    auto c = nlohmann::json::parse(config);
+                    auto c = menoh_nlohmann::json::parse(config);
                     if(c.find("batch_size") != c.end()) {
                         batch_size = c["batch_size"].get<int>();
                     }
@@ -45,7 +45,7 @@ namespace menoh_impl {
                 assert(batch_size <= max_batch_size);
                 return model_core(input_table, output_table, model_data,
                                   batch_size, max_batch_size, device_id);
-            } catch(nlohmann::json::parse_error const& e) {
+            } catch(menoh_nlohmann::json::parse_error const& e) {
                 throw json_parse_error(e.what());
             }
         }

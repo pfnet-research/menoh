@@ -29,7 +29,7 @@ namespace menoh_impl {
           backend_config const& config) {
             std::vector<std::pair<std::string, std::unique_ptr<context>>>
               context_list;
-            auto c = nlohmann::json::parse(config);
+            auto c = menoh_nlohmann::json::parse(config);
             if(c.find("backends") != c.end()) {
                 auto backends = c["backends"];
                 for(auto backend : backends) {
@@ -72,7 +72,7 @@ namespace menoh_impl {
             context_list_(std::move(context_list)),
             logger_(std::make_unique<std::ostream>(nullptr)) {
             if(!config.empty()) {
-                auto c = nlohmann::json::parse(config);
+                auto c = menoh_nlohmann::json::parse(config);
                 if(c.find("log_output") != c.end()) {
                     auto log_output = c["log_output"].get<std::string>();
                     if(log_output == "stdout") {

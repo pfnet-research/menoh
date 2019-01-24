@@ -239,7 +239,7 @@ namespace menoh_impl {
             try {
                 int cpu_id = 0;
                 if(!config.empty()) {
-                    auto c = nlohmann::json::parse(config);
+                    auto c = menoh_nlohmann::json::parse(config);
                     if(c.find("cpu_id") != c.end()) {
                         cpu_id = c["cpu_id"].get<int>();
                     }
@@ -247,7 +247,7 @@ namespace menoh_impl {
                 mkldnn::engine engine(mkldnn::engine::cpu, cpu_id);
                 return model_core(input_table, output_table, model_data,
                                   engine);
-            } catch(nlohmann::json::parse_error const& e) {
+            } catch(menoh_nlohmann::json::parse_error const& e) {
                 throw json_parse_error(e.what());
             } catch(mkldnn::error const& e) {
                 throw backend_error("mkldnn", std::string("status: ") +

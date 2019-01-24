@@ -1,4 +1,30 @@
 /*
+Copyright (c) 2019 Shintarou Okada
+Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+Copyright (c) 2017-2019 Shintarou Okada
+
+Permission is hereby  granted, free of charge, to any  person obtaining a copy
+of this software and associated  documentation files (the "Software"), to deal
+in the Software  without restriction, including without  limitation the rights
+to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
+copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
+IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
+FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
+AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
+LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+This file is a part of Menoh <https://github.com/pfnet-research/menoh>.
+Almost all codes are from Niels Lohmann's JSON for Modern C++, which is subject to the same license.
+Here is the original copyright notice for JSON for Modern C++:
+
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
 |  |  |__   |  |  | | | |  version 3.1.2
@@ -60,7 +86,7 @@ SOFTWARE.
 @see https://github.com/nlohmann
 @since version 1.0.0
 */
-namespace nlohmann
+namespace menoh_nlohmann
 {
 /*!
 @brief default JSONSerializer template argument
@@ -242,7 +268,7 @@ contains a `mapped_type`, whereas `std::vector` fails the test.
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 /*!
 @brief detail namespace with internal helper functions
@@ -497,7 +523,7 @@ constexpr T static_const<T>::value;
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -830,7 +856,7 @@ class other_error : public exception
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -923,7 +949,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -1243,7 +1269,7 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -1589,7 +1615,7 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -1852,7 +1878,7 @@ class input_adapter
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -3137,7 +3163,7 @@ scan_number_done:
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -3720,7 +3746,7 @@ class parser
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -3842,7 +3868,7 @@ class primitive_iterator_t
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -3884,7 +3910,7 @@ template<typename BasicJsonType> struct internal_iterator
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -4495,7 +4521,7 @@ class iter_impl
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -4594,7 +4620,7 @@ template<typename IteratorType> class iteration_proxy
 #include <iterator> // reverse_iterator
 #include <utility> // declval
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -4720,7 +4746,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 #include <string> // basic_string
 #include <vector> // vector
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -4850,7 +4876,7 @@ class output_adapter
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -6217,7 +6243,7 @@ class binary_reader
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -7186,7 +7212,7 @@ class binary_writer
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -8272,7 +8298,7 @@ char* to_chars(char* first, char* last, FloatType value)
 }
 
 } // namespace detail
-} // namespace nlohmann
+} // namespace menoh_nlohmann
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -8283,7 +8309,7 @@ char* to_chars(char* first, char* last, FloatType value)
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -8761,7 +8787,7 @@ class serializer
     void dump_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
     {
         char* begin = number_buffer.data();
-        char* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
+        char* end = ::menoh_nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
 
         o->write_characters(begin, static_cast<size_t>(end - begin));
     }
@@ -8899,7 +8925,7 @@ class serializer
 #include <initializer_list>
 #include <utility>
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 namespace detail
 {
@@ -8973,7 +8999,7 @@ class json_ref
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 template<typename BasicJsonType>
 class json_pointer
@@ -9669,7 +9695,7 @@ class json_pointer
 // #include <nlohmann/detail/conversions/to_json.hpp>
 
 
-namespace nlohmann
+namespace menoh_nlohmann
 {
 template<typename, typename>
 struct adl_serializer
@@ -9685,9 +9711,9 @@ struct adl_serializer
     */
     template<typename BasicJsonType, typename ValueType>
     static void from_json(BasicJsonType&& j, ValueType& val) noexcept(
-        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
+        noexcept(::menoh_nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
     {
-        ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
+        ::menoh_nlohmann::from_json(std::forward<BasicJsonType>(j), val);
     }
 
     /*!
@@ -9701,9 +9727,9 @@ struct adl_serializer
     */
     template<typename BasicJsonType, typename ValueType>
     static void to_json(BasicJsonType& j, ValueType&& val) noexcept(
-        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
+        noexcept(::menoh_nlohmann::to_json(j, std::forward<ValueType>(val))))
     {
-        ::nlohmann::to_json(j, std::forward<ValueType>(val));
+        ::menoh_nlohmann::to_json(j, std::forward<ValueType>(val));
     }
 };
 }
@@ -9714,7 +9740,7 @@ struct adl_serializer
 @see https://github.com/nlohmann
 @since version 1.0.0
 */
-namespace nlohmann
+namespace menoh_nlohmann
 {
 
 /*!
@@ -9803,44 +9829,44 @@ class basic_json
 {
   private:
     template<detail::value_t> friend struct detail::external_constructor;
-    friend ::nlohmann::json_pointer<basic_json>;
-    friend ::nlohmann::detail::parser<basic_json>;
-    friend ::nlohmann::detail::serializer<basic_json>;
+    friend ::menoh_nlohmann::json_pointer<basic_json>;
+    friend ::menoh_nlohmann::detail::parser<basic_json>;
+    friend ::menoh_nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
-    friend class ::nlohmann::detail::iter_impl;
+    friend class ::menoh_nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
-    friend class ::nlohmann::detail::binary_writer;
+    friend class ::menoh_nlohmann::detail::binary_writer;
     template<typename BasicJsonType>
-    friend class ::nlohmann::detail::binary_reader;
+    friend class ::menoh_nlohmann::detail::binary_reader;
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
 
     // convenience aliases for types residing in namespace detail;
-    using lexer = ::nlohmann::detail::lexer<basic_json>;
-    using parser = ::nlohmann::detail::parser<basic_json>;
+    using lexer = ::menoh_nlohmann::detail::lexer<basic_json>;
+    using parser = ::menoh_nlohmann::detail::parser<basic_json>;
 
-    using primitive_iterator_t = ::nlohmann::detail::primitive_iterator_t;
+    using primitive_iterator_t = ::menoh_nlohmann::detail::primitive_iterator_t;
     template<typename BasicJsonType>
-    using internal_iterator = ::nlohmann::detail::internal_iterator<BasicJsonType>;
+    using internal_iterator = ::menoh_nlohmann::detail::internal_iterator<BasicJsonType>;
     template<typename BasicJsonType>
-    using iter_impl = ::nlohmann::detail::iter_impl<BasicJsonType>;
+    using iter_impl = ::menoh_nlohmann::detail::iter_impl<BasicJsonType>;
     template<typename Iterator>
-    using iteration_proxy = ::nlohmann::detail::iteration_proxy<Iterator>;
-    template<typename Base> using json_reverse_iterator = ::nlohmann::detail::json_reverse_iterator<Base>;
+    using iteration_proxy = ::menoh_nlohmann::detail::iteration_proxy<Iterator>;
+    template<typename Base> using json_reverse_iterator = ::menoh_nlohmann::detail::json_reverse_iterator<Base>;
 
     template<typename CharType>
-    using output_adapter_t = ::nlohmann::detail::output_adapter_t<CharType>;
+    using output_adapter_t = ::menoh_nlohmann::detail::output_adapter_t<CharType>;
 
-    using binary_reader = ::nlohmann::detail::binary_reader<basic_json>;
-    template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
+    using binary_reader = ::menoh_nlohmann::detail::binary_reader<basic_json>;
+    template<typename CharType> using binary_writer = ::menoh_nlohmann::detail::binary_writer<basic_json, CharType>;
 
-    using serializer = ::nlohmann::detail::serializer<basic_json>;
+    using serializer = ::menoh_nlohmann::detail::serializer<basic_json>;
 
   public:
     using value_t = detail::value_t;
-    /// @copydoc nlohmann::json_pointer
-    using json_pointer = ::nlohmann::json_pointer<basic_json>;
+    /// @copydoc menoh_nlohmann::json_pointer
+    using json_pointer = ::menoh_nlohmann::json_pointer<basic_json>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// helper type for initializer lists of basic_json values
@@ -17206,7 +17232,7 @@ class basic_json
 
     /// @}
 };
-} // namespace nlohmann
+} // namespace menoh_nlohmann
 
 ///////////////////////
 // nonmember support //
@@ -17221,10 +17247,10 @@ namespace std
 @since version 1.0.0
 */
 template<>
-inline void swap(nlohmann::json& j1,
-                 nlohmann::json& j2) noexcept(
-                     is_nothrow_move_constructible<nlohmann::json>::value and
-                     is_nothrow_move_assignable<nlohmann::json>::value
+inline void swap(menoh_nlohmann::json& j1,
+                 menoh_nlohmann::json& j2) noexcept(
+                     is_nothrow_move_constructible<menoh_nlohmann::json>::value and
+                     is_nothrow_move_assignable<menoh_nlohmann::json>::value
                  )
 {
     j1.swap(j2);
@@ -17232,17 +17258,17 @@ inline void swap(nlohmann::json& j1,
 
 /// hash value for JSON objects
 template<>
-struct hash<nlohmann::json>
+struct hash<menoh_nlohmann::json>
 {
     /*!
     @brief return a hash value for a JSON object
 
     @since version 1.0.0
     */
-    std::size_t operator()(const nlohmann::json& j) const
+    std::size_t operator()(const menoh_nlohmann::json& j) const
     {
         // a naive hashing via the string representation
-        const auto& h = hash<nlohmann::json::string_t>();
+        const auto& h = hash<menoh_nlohmann::json::string_t>();
         return h(j.dump());
     }
 };
@@ -17251,16 +17277,16 @@ struct hash<nlohmann::json>
 /// @note: do not remove the space after '<',
 ///        see https://github.com/nlohmann/json/pull/679
 template<>
-struct less< ::nlohmann::detail::value_t>
+struct less< ::menoh_nlohmann::detail::value_t>
 {
     /*!
     @brief compare two value_t enum values
     @since version 3.0.0
     */
-    bool operator()(nlohmann::detail::value_t lhs,
-                    nlohmann::detail::value_t rhs) const noexcept
+    bool operator()(menoh_nlohmann::detail::value_t lhs,
+                    menoh_nlohmann::detail::value_t rhs) const noexcept
     {
-        return nlohmann::detail::operator<(lhs, rhs);
+        return menoh_nlohmann::detail::operator<(lhs, rhs);
     }
 };
 
@@ -17279,9 +17305,9 @@ if no parse error occurred.
 
 @since version 1.0.0
 */
-inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+inline menoh_nlohmann::json operator "" _json(const char* s, std::size_t n)
 {
-    return nlohmann::json::parse(s, s + n);
+    return menoh_nlohmann::json::parse(s, s + n);
 }
 
 /*!
@@ -17297,9 +17323,9 @@ object if no parse error occurred.
 
 @since version 2.0.0
 */
-inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+inline menoh_nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
 {
-    return nlohmann::json::json_pointer(std::string(s, n));
+    return menoh_nlohmann::json::json_pointer(std::string(s, n));
 }
 
 // #include <nlohmann/detail/macro_unscope.hpp>
