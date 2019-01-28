@@ -234,9 +234,9 @@ namespace menoh_impl {
                 std::cout << "buildCudaEngine::start" << std::endl;
                 using clock = std::chrono::high_resolution_clock;
                 auto start = clock::now();
-#endif
+
                 engine.reset(builder->buildCudaEngine(*network));
-#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+
                 auto end = clock::now();
                 std::cout
                   << "buildCudaEngine = "
@@ -247,7 +247,9 @@ namespace menoh_impl {
                   << " sec" << std::endl;
                 std::cout << "buildCudaEngine::done" << std::endl;
             } else {
+#endif
                 engine.reset(builder->buildCudaEngine(*network));
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
             }
 #endif
             assert(engine);
@@ -331,20 +333,23 @@ namespace menoh_impl {
                 std::cout << "Inference::Run::start" << std::endl;
                 using clock = std::chrono::high_resolution_clock;
                 auto start = clock::now();
+
                 runner();
+
                 auto end = clock::now();
+                std::cout << "Inference::Run::done" << std::endl;
                 std::cout
                   << "Run time = "
                   << std::chrono::duration_cast<std::chrono::milliseconds>(
                        end - start)
-                         .count() /
-                       1000.0
-                  << " sec" << std::endl;
+                       .count()
+                  << " msec" << std::endl;
 
                 gProfiler.printLayerTimes();
-                std::cout << "Inference::Run::done" << std::endl;
             } else {
+#endif
                 runner();
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
             }
 #endif
         }
