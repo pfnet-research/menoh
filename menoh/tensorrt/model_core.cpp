@@ -43,13 +43,13 @@ namespace menoh_impl {
                         device_id = c["device_id"].get<int>();
                     }
                     if(c.find("enable_profiler") != c.end()) {
-                        enable_profiler = c["enable_profiler"].get<int>();
+                        enable_profiler = c["enable_profiler"].get<bool>();
                     }
                     if(c.find("allow_fp16_mode") != c.end()) {
-                        allow_fp16_mode = c["allow_fp16_mode"].get<int>();
+                        allow_fp16_mode = c["allow_fp16_mode"].get<bool>();
                     }
                     if(c.find("force_fp16_mode") != c.end()) {
-                        force_fp16_mode = c["force_fp16_mode"].get<int>();
+                        force_fp16_mode = c["force_fp16_mode"].get<bool>();
                     }
                 }
                 assert(batch_size <= max_batch_size);
