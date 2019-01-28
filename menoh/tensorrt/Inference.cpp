@@ -223,8 +223,8 @@ namespace menoh_impl {
                 }
                 builder->setFp16Mode(true);
                 builder->setStrictTypeConstraints(true);
-            }
-            if(config_.allow_fp16_mode && builder->platformHasFastFp16()) {
+            } else if(config_.allow_fp16_mode &&
+                      builder->platformHasFastFp16()) {
                 builder->setFp16Mode(true);
             }
             builder->setDebugSync(false);
