@@ -15,12 +15,15 @@ namespace menoh_impl {
     namespace tensorrt_backend {
 
         struct config {
+            std::string raw_config; // for hashing
             int batch_size;
             int max_batch_size;
             int device_id;
             bool enable_profiler;
             bool allow_fp16_mode;
             bool force_fp16_mode;
+            bool enable_model_caching;
+            std::string cached_model_dir;
         };
 
         class Inference {
@@ -33,12 +36,18 @@ namespace menoh_impl {
             void Run();
 
         private:
+            std::string calc_model_hash(
+              std::unordered_map<std::string, array> const& input_table,
+              std::unordered_map<std::string, array> const& output_table,
+              menoh_impl::model_data const& model_data, config const& config);
+
             void
             Build(graph& menoh_graph,
                   std::unordered_map<std::string, array> const& parameter_table,
                   std::vector<std::string>& outputs);
 
             config config_;
+            std::string model_hash_;
 
             Parser m_Parser;
 

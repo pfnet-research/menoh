@@ -1,5 +1,9 @@
+#include <algorithm>
 #include <chrono>
+#include <cstdint>
+#include <fstream>
 #include <iostream>
+#include <vector>
 
 #include <menoh/array.hpp>
 #include <menoh/exception.hpp>
@@ -9,8 +13,11 @@
 #include <NvInfer.h>
 #include <cuda_runtime_api.h>
 
+#include <menoh/hash/hasher.hpp>
+
 #include <menoh/tensorrt/Exception.hpp>
 #include <menoh/tensorrt/Inference.hpp>
+#include <menoh/tensorrt/host_memory.hpp>
 
 using namespace nvinfer1;
 
@@ -92,12 +99,119 @@ namespace menoh_impl {
 #endif
         static Logger gLogger;
 
+        std::string Inference::calc_model_hash(
+          std::unordered_map<std::string, array> const& input_table,
+          std::unordered_map<std::string, array> const& output_table,
+          menoh_impl::model_data const& model_data, config const& config) {
+            hasher hasher;
+            auto add_variable_table =
+              [](menoh_impl::hasher& h,
+                 std::unordered_map<std::string, array> const& table) {
+                  std::vector<std::pair<std::string, array>> variables(
+                    table.begin(), table.end());
+                  std::sort(variables.begin(), variables.end(),
+                            [](auto const& a, auto const& b) {
+                                return a.first < b.first;
+                            });
+                  for(auto const& p : variables) {
+                      add_str(h, p.first);
+                      // Do not process p.second (= values in array)
+                  }
+              };
+            add_variable_table(hasher, input_table);  // [input_table]
+            add_variable_table(hasher, output_table); // [output_table]
+            auto add_str_vec = [](menoh_impl::hasher& h,
+                                  std::vector<std::string> const& sv) {
+                std::for_each(sv.begin(), sv.end(),
+                              [&h](auto const& s) { add_str(h, s); });
+            };
+            auto add_attr = [](menoh_impl::hasher& h, auto const& a) {
+                int* i;
+                float* f;
+                std::vector<int>* is;
+                std::vector<float>* fs;
+                if(i = const_cast<int*>(get_if<int>(&a))) {
+                    add_str(h, "int" + std::to_string(*i));
+                } else if(f = const_cast<float*>(get_if<float>(&a))) {
+                    add_str(h, "float" + std::to_string(*f));
+                } else if(is = const_cast<std::vector<int>*>(
+                            get_if<std::vector<int>>(&a))) {
+                    add_str(h, "ints");
+                    std::for_each(is->begin(), is->end(), [&h](auto i) {
+                        add_str(h, std::to_string(i));
+                    });
+                } else if(fs = const_cast<std::vector<float>*>(
+                            get_if<std::vector<float>>(&a))) {
+                    add_str(h, "floats");
+                    std::for_each(fs->begin(), fs->end(), [&h](auto f) {
+                        add_str(h, std::to_string(f));
+                    });
+                }
+            };
+
+            // [model_data]
+            for(auto const& node : model_data.node_list) {
+                add_str(hasher, node.op_type);
+                add_str_vec(hasher, node.input_name_list);
+                add_str_vec(hasher, node.output_name_list);
+                std::vector<std::pair<std::string, attribute>> attributes(
+                  node.attribute_table.begin(), node.attribute_table.end());
+                std::sort(attributes.begin(), attributes.end(),
+                          [](auto const& a, auto const& b) {
+                              return a.first < b.first;
+                          });
+                std::for_each(attributes.begin(), attributes.end(),
+                              [&hasher, add_attr](auto const& p) {
+                                  add_str(hasher, p.first);
+                                  add_attr(hasher, p.second);
+                              });
+            }
+            for(auto const& p : model_data.parameter_name_and_array_list) {
+                add_str(hasher, p.first);
+                hasher.add(static_cast<std::uint8_t*>(p.second.data()),
+                           total_size_in_bytes(p.second));
+            }
+            add_str(hasher, config.raw_config); // [config]
+
+            cudaDeviceProp device_prop;
+            cudaGetDeviceProperties(&device_prop, config_.device_id);
+            add_str(hasher, std::string(device_prop.name));
+            return hasher.finish();
+        }
+
         Inference::Inference(
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
           menoh_impl::model_data const& model_data, config const& config)
           : config_(config) {
+            if(config_.enable_model_caching) {
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                if(config_.enable_profiler) {
+                    std::cout << "calc_model_hash::start" << std::endl;
+                    using clock = std::chrono::high_resolution_clock;
+                    auto start = clock::now();
 
+                    model_hash_ = calc_model_hash(input_table, output_table,
+                                                  model_data, config);
+
+                    auto end = clock::now();
+                    std::cout
+                      << "calc_model_hash = "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(
+                           end - start)
+                             .count() /
+                           1000.0
+                      << " sec" << std::endl;
+                    std::cout << "calc_model_hash::done" << std::endl;
+                } else {
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+                    model_hash_ = calc_model_hash(input_table, output_table,
+                                                  model_data, config);
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                }
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+                std::cout << "model_hash: " << model_hash_ << std::endl;
+            }
             std::vector<node> all_nodes;
             std::copy(model_data.node_list.begin(), model_data.node_list.end(),
                       back_inserter(all_nodes));
@@ -255,6 +369,16 @@ namespace menoh_impl {
             assert(engine);
             // we don't need the network any more
             network->destroy();
+
+            if(config_.enable_model_caching) {
+                std::ofstream ofs(
+                  (config_.cached_model_dir + "/" + model_hash_ + ".trt")
+                    .c_str(),
+                  std::ios::binary);
+                host_memory serialized_engine(engine->serialize());
+                dump(serialized_engine, ofs);
+            }
+
             context.reset(engine->createExecutionContext());
             assert(context);
 

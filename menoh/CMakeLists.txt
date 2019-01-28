@@ -83,8 +83,16 @@ if(ENABLE_TENSORRT)
     if(NOT CUDA_FOUND)
         message(FATAL_ERROR "CUDA is not found")
     endif()
-    file(GLOB TENSORRT_SOURCES "tensorrt/*.cpp")
-    target_sources(menoh_objlib PRIVATE "${TENSORRT_SOURCES}")
+    add_definitions(-DXXH_NAMESPACE=menoh_)
+    target_sources(menoh_objlib PRIVATE
+        hash/xxhash.c
+        hash/hasher.cpp
+        tensorrt/cuda_memory.cpp
+        tensorrt/Exception.cpp
+        tensorrt/Parser.cpp
+        tensorrt/Inference.cpp
+        tensorrt/model_core.cpp
+    )
     target_include_directories(menoh_objlib PRIVATE
         "${CUDA_INCLUDE_DIRS}"
         "${TENSORRT_INCLUDE_DIRS}")
