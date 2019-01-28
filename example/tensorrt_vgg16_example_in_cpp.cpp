@@ -14,6 +14,7 @@
 #include <menoh/menoh.hpp>
 
 #include "../external/cmdline.h"
+#include "../external/nlohmann/json.hpp"
 
 auto reorder_bgr_hwc_to_rgb_chw(cv::Mat const& mat) {
     assert(mat.channels() == 3);
@@ -84,6 +85,13 @@ int main(int argc, char** argv) {
     a.add<std::string>("synset_words", 's', "synset words path", false,
                        "../data/synset_words.txt");
     a.add<int>("device_id", '\0', "device id", false, 0);
+    a.add("enable_profiler", '\0', "output profiling result");
+    a.add("allow_fp16_mode", '\0',
+          "allow fp16 mode if it is available and effective");
+    a.add("force_fp16_mode", '\0',
+          "force fp16 mode but if it is not available, this throws error. "
+          "Probably force_fp16_mode is less effective than allow_fp16_mode. "
+          "force_fp16_mode is only for checking");
     a.parse_check(argc, argv);
 
     auto input_image_path = a.get<std::string>("input_image");
@@ -132,9 +140,16 @@ int main(int argc, char** argv) {
       fc6_out_name, static_cast<void*>(fc6_out_data.data()));
 
     // Build model
-    auto model = model_builder.build_model(model_data, "tensorrt",
-                                           R"({"batch_size":1, "device_id":)" +
-                                             std::to_string(device_id) + "}");
+    nlohmann::json config{
+      {"batch_size", 1},
+      {"device_id", a.get<int>("device_id")},
+      {"enable_profiler", a.exist("enable_profiler")},
+      {"allow_fp16_mode", a.exist("allow_fp16_mode")},
+      {"force_fp16_mode", a.exist("force_fp16_mode")},
+    };
+    std::cout << "backend config: " << config << std::endl;
+    auto model =
+      model_builder.build_model(model_data, "tensorrt", config.dump());
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
