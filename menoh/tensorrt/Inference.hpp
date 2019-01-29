@@ -5,8 +5,10 @@
 #include <unordered_map>
 
 #include <menoh/array.hpp>
+#include <menoh/json.hpp>
 #include <menoh/model_core.hpp>
 #include <menoh/model_data.hpp>
+#include <menoh/optional.hpp>
 
 #include <menoh/tensorrt/Parser.hpp>
 #include <menoh/tensorrt/cuda_memory.hpp>
@@ -15,7 +17,7 @@ namespace menoh_impl {
     namespace tensorrt_backend {
 
         struct config {
-            std::string raw_config; // for hashing
+            optional<nlohmann::json> config_json_objct_opt; // for hashing
             int batch_size;
             int max_batch_size;
             int device_id;

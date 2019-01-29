@@ -29,8 +29,10 @@ namespace menoh_impl {
                 bool force_fp16_mode = false;
                 bool enable_model_caching = true;
                 std::string cached_model_dir = ".";
+                optional<nlohmann::json> c_opt;
                 if(!backend_config.empty()) {
-                    auto c = nlohmann::json::parse(backend_config);
+                    c_opt = nlohmann::json::parse(backend_config);
+                    auto& c = *c_opt;
                     if(c.find("batch_size") != c.end()) {
                         batch_size = c["batch_size"].get<int>();
                     }
@@ -63,7 +65,7 @@ namespace menoh_impl {
                 }
                 assert(batch_size <= max_batch_size);
                 tensorrt_backend::config config{
-                  backend_config,  batch_size,           max_batch_size,
+                  c_opt,           batch_size,           max_batch_size,
                   device_id,       enable_profiler,      allow_fp16_mode,
                   force_fp16_mode, enable_model_caching, cached_model_dir};
                 return model_core(input_table, output_table, model_data,

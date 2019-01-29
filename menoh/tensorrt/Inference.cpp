@@ -171,7 +171,16 @@ namespace menoh_impl {
                 hasher.add(static_cast<std::uint8_t*>(p.second.data()),
                            total_size_in_bytes(p.second));
             }
-            add_str(hasher, config.raw_config); // [config]
+            if(config.config_json_objct_opt) {
+                auto j = *config.config_json_objct_opt;
+                // ignore options independent from model itself
+                j.erase("device_id");
+                j.erase("enable_model_caching");
+                j.erase("cached_model_dir");
+                if(!j.empty()) {
+                    add_str(hasher, j.dump()); // [config]
+                }
+            }
 
             cudaDeviceProp device_prop;
             cudaGetDeviceProperties(&device_prop, config_.device_id);
