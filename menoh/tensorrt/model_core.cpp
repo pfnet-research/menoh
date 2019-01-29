@@ -9,10 +9,8 @@ namespace menoh_impl {
         model_core::model_core(
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
-          menoh_impl::model_data const& model_data, int batch_size,
-          int max_batch_size, int device_id)
-          : m_inference(Params(&input_table, &output_table, &model_data,
-                               batch_size, max_batch_size, device_id)) {}
+          menoh_impl::model_data const& model_data, config const& config)
+          : m_inference(input_table, output_table, model_data, config) {}
 
         void model_core::do_run() { m_inference.Run(); }
 
@@ -22,10 +20,13 @@ namespace menoh_impl {
           menoh_impl::model_data const& model_data,
           backend_config const& config) {
             try {
-                int batch_size =
-                  input_table.begin()->second.dims().front(); // default
-                int max_batch_size = batch_size;              // default
+                // default values
+                int batch_size = input_table.begin()->second.dims().front();
+                int max_batch_size = batch_size;
                 int device_id = 0;
+                bool enable_profiler = false;
+                bool allow_fp16_mode = false;
+                bool force_fp16_mode = false;
                 if(!config.empty()) {
                     auto c = nlohmann::json::parse(config);
                     if(c.find("batch_size") != c.end()) {
@@ -41,10 +42,22 @@ namespace menoh_impl {
                     if(c.find("device_id") != c.end()) {
                         device_id = c["device_id"].get<int>();
                     }
+                    if(c.find("enable_profiler") != c.end()) {
+                        enable_profiler = c["enable_profiler"].get<bool>();
+                    }
+                    if(c.find("allow_fp16_mode") != c.end()) {
+                        allow_fp16_mode = c["allow_fp16_mode"].get<bool>();
+                    }
+                    if(c.find("force_fp16_mode") != c.end()) {
+                        force_fp16_mode = c["force_fp16_mode"].get<bool>();
+                    }
                 }
                 assert(batch_size <= max_batch_size);
+                tensorrt_backend::config config{
+                  batch_size,      max_batch_size,  device_id,
+                  enable_profiler, allow_fp16_mode, force_fp16_mode};
                 return model_core(input_table, output_table, model_data,
-                                  batch_size, max_batch_size, device_id);
+                                  config);
             } catch(nlohmann::json::parse_error const& e) {
                 throw json_parse_error(e.what());
             }
