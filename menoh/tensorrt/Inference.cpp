@@ -118,7 +118,8 @@ namespace menoh_impl {
                       h.add(static_cast<const std::uint8_t*>(
                               static_cast<const void*>(p.second.dims().data())),
                             p.second.dims().size());
-                      // Do not process values in p.second because it is a placeholder
+                      // Do not process values in p.second because it is a
+                      // placeholder
                   }
               };
             add_variable_table(hasher, input_table);  // [input_table]
@@ -200,6 +201,7 @@ namespace menoh_impl {
           std::unordered_map<std::string, array> const& output_table,
           menoh_impl::model_data const& model_data, config const& config)
           : config_(config) {
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
             if(config_.enable_model_caching) {
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
                 if(config_.enable_profiler) {
@@ -228,6 +230,7 @@ namespace menoh_impl {
 #endif // MENOH_ENABLE_TENSORRT_PROFILER
                 std::cout << "model_hash: " << model_hash_ << std::endl;
             }
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
             std::vector<node> all_nodes;
             std::copy(model_data.node_list.begin(), model_data.node_list.end(),
                       back_inserter(all_nodes));
@@ -387,7 +390,8 @@ namespace menoh_impl {
 #endif
             };
 
-            // build or deserialize engine
+// build or deserialize engine
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
             if(config_.enable_model_caching) {
                 auto model_cache_path =
                   config_.cached_model_dir + "/" + model_hash_ + ".trt";
@@ -444,8 +448,11 @@ namespace menoh_impl {
                     dump(serialized_engine, ofs);
                 }
             } else {
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
                 build_cuda_engine();
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
             }
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
             assert(engine);
 
             context.reset(engine->createExecutionContext());

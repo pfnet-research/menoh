@@ -12,6 +12,8 @@ option(ENABLE_MKLDNN    "Use MKLDNN"      ON)
 option(ENABLE_TENSORRT  "Use TensorRT"    OFF)
 cmake_dependent_option(ENABLE_TENSORRT_PROFILER "Make TneosrRT Profiler feature available" ON
                                                 "ENABLE_TENSORRT" OFF)
+cmake_dependent_option(ENABLE_TENSORRT_MODEL_CACHING "Make TneosrRT model caching feature available" ON
+                                                     "ENABLE_TENSORRT" OFF)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
 
@@ -55,6 +57,9 @@ if(ENABLE_TENSORRT)
     add_definitions(-DMENOH_WITH_TENSORRT)
     if(ENABLE_TENSORRT_PROFILER)
         add_definitions(-DMENOH_ENABLE_TENSORRT_PROFILER)
+    endif()
+    if(ENABLE_TENSORRT_MODEL_CACHING)
+        add_definitions(-DMENOH_ENABLE_TENSORRT_MODEL_CACHING)
     endif()
     if(CMAKE_BUILD_TYPE=="Debug")
         add_definitions(-DMENOH_ENABLE_TENSORRT_DEBUG)
