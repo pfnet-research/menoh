@@ -38,10 +38,6 @@ namespace menoh_impl {
             void Run();
 
         private:
-            std::string calc_model_hash(
-              std::unordered_map<std::string, array> const& input_table,
-              std::unordered_map<std::string, array> const& output_table,
-              menoh_impl::model_data const& model_data, config const& config);
 
             void
             Build(graph& menoh_graph,
@@ -61,9 +57,17 @@ namespace menoh_impl {
             using unique_ptr_with_destroyer = std::unique_ptr<T, destroyer<T>>;
 
             unique_ptr_with_destroyer<IBuilder> builder;
-            unique_ptr_with_destroyer<IRuntime> runtime;
             unique_ptr_with_destroyer<ICudaEngine> engine;
             unique_ptr_with_destroyer<IExecutionContext> context;
+
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
+            std::string calc_model_hash(
+              std::unordered_map<std::string, array> const& input_table,
+              std::unordered_map<std::string, array> const& output_table,
+              menoh_impl::model_data const& model_data, config const& config);
+
+            unique_ptr_with_destroyer<IRuntime> runtime;
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
 
             std::vector<std::string> input_name;
             std::vector<std::string> output_name;

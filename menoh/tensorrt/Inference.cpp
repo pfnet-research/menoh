@@ -99,6 +99,7 @@ namespace menoh_impl {
 #endif // MENOH_ENABLE_TENSORRT_PROFILER
         static Logger gLogger;
 
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
         std::string Inference::calc_model_hash(
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
@@ -195,6 +196,7 @@ namespace menoh_impl {
             add_container(hasher, std::string(device_prop.name));
             return hasher.finish();
         }
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
 
         Inference::Inference(
           std::unordered_map<std::string, array> const& input_table,
