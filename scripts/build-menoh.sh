@@ -45,6 +45,10 @@ while [[ $# != 0 ]]; do
             readonly ARG_LINK_STATIC_LIBPROTOBUF="$2"
             shift 2
             ;;
+        --build-shared-libs)
+            readonly ARG_BUILD_SHARED_LIBS="$2"
+            shift 2
+	    ;;
         -*)
             echo Unknown option \"$1\" 1>&2
             exit
@@ -71,6 +75,7 @@ test -n "${ARG_PYTHON_EXECUTABLE}" || readonly ARG_PYTHON_EXECUTABLE=python
 test -n "${ARG_LINK_STATIC_LIBGCC}" || readonly ARG_LINK_STATIC_LIBGCC='OFF'
 test -n "${ARG_LINK_STATIC_LIBSTDCXX}" || readonly ARG_LINK_STATIC_LIBSTDCXX='OFF'
 test -n "${ARG_LINK_STATIC_LIBPROTOBUF}" || readonly ARG_LINK_STATIC_LIBPROTOBUF='OFF'
+test -n "${ARG_BUILD_SHARED_LIBS}" || readonly ARG_BUILD_SHARED_LIBS='ON'
 
 echo -e "\e[33;1mBuilding Menoh\e[0m"
 
@@ -86,6 +91,7 @@ cmake \
     -DLINK_STATIC_LIBGCC=${ARG_LINK_STATIC_LIBGCC} \
     -DLINK_STATIC_LIBSTDCXX=${ARG_LINK_STATIC_LIBSTDCXX} \
     -DLINK_STATIC_LIBPROTOBUF=${ARG_LINK_STATIC_LIBPROTOBUF} \
+    -DBUILD_SHARED_LIBS=${ARG_BUILD_SHARED_LIBS} \
     -DENABLE_TEST=ON \
     "${ARG_SOURCE_DIR}"
 
