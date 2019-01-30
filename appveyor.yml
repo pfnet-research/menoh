@@ -16,6 +16,8 @@ environment:
     - TARGET: mingw
     - TARGET: mingw
       STATIC: 1
+    - TARGET: mingw
+      BUILD_SHARED_LIBS: 0
     - TARGET: msvc
 
 install:
@@ -73,7 +75,14 @@ build_script:
     )
   )
 - if [%TARGET%]==[mingw] (
-    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON %STATIC_OPTION% -DCMAKE_INSTALL_PREFIX=/mingw64 -DPYTHON_EXECUTABLE=/mingw64/bin/python3 .. &&
+    if [%BUILD_SHARED_LIBS%]==[0] (
+      set BUILD_SHARED_LIBS_OPTION="-DBUILD_SHARED_LIBS=OFF"
+    ) else (
+      set BUILD_SHARED_LIBS_OPTION=""
+    )
+  )
+- if [%TARGET%]==[mingw] (
+    cmake -G "MSYS Makefiles" -DENABLE_TEST=ON %STATIC_OPTION% %BUILD_SHARED_LIBS_OPTION% -DCMAKE_INSTALL_PREFIX=/mingw64 -DPYTHON_EXECUTABLE=/mingw64/bin/python3 .. &&
     make
   ) else (
     cmake -G "Visual Studio 14 Win64" -DENABLE_TEST=OFF -DENABLE_BENCHMARK=OFF -DENABLE_EXAMPLE=OFF -DCMAKE_INSTALL_PREFIX=c:\menoh-%MENOH_REV%-msvc .. &&
@@ -84,8 +93,12 @@ test_script:
 # to find libmenoh.dll, libgtest.dll and libgtest_main.dll
 - if [%TARGET%]==[mingw] set PATH=C:\projects\menoh\build\menoh;C:\projects\menoh\build\test\lib\googletest\googlemock\gtest;C:\msys64\mkl-dnn-86b7129-mingw\bin;%PATH%
 - if [%TARGET%]==[mingw] (
-    echo "ldd libmenoh.dll" &&
-    ldd /c/projects/menoh/build/menoh/libmenoh.dll &&
+    if not [%BUILD_SHARED_LIBS%]==[0] (
+      echo "ldd libmenoh.dll" &&
+      ldd /c/projects/menoh/build/menoh/libmenoh.dll
+    )
+  )
+- if [%TARGET%]==[mingw] (
     echo "ldd libmkldnn.dll" &&
     ldd /mingw64/bin/libmkldnn.dll &&
     echo "ldd menoh_test.exe" &&
