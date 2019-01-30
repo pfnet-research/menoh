@@ -114,8 +114,11 @@ namespace menoh_impl {
                                 return a.first < b.first;
                             });
                   for(auto const& p : variables) {
-                      add_str(h, p.first);
-                      // Do not process p.second (= values in array)
+                      add_container(h, p.first);
+                      h.add(static_cast<const std::uint8_t*>(
+                              static_cast<const void*>(p.second.dims().data())),
+                            p.second.dims().size());
+                      // Do not process values in p.second because it is a placeholder
                   }
               };
             add_variable_table(hasher, input_table);  // [input_table]
@@ -123,35 +126,38 @@ namespace menoh_impl {
             auto add_str_vec = [](menoh_impl::hasher& h,
                                   std::vector<std::string> const& sv) {
                 std::for_each(sv.begin(), sv.end(),
-                              [&h](auto const& s) { add_str(h, s); });
+                              [&h](auto const& s) { add_container(h, s); });
             };
             auto add_attr = [](menoh_impl::hasher& h, auto const& a) {
                 int* i;
                 float* f;
                 std::vector<int>* is;
                 std::vector<float>* fs;
-                if(i = const_cast<int*>(get_if<int>(&a))) {
-                    add_str(h, "int" + std::to_string(*i));
-                } else if(f = const_cast<float*>(get_if<float>(&a))) {
-                    add_str(h, "float" + std::to_string(*f));
-                } else if(is = const_cast<std::vector<int>*>(
-                            get_if<std::vector<int>>(&a))) {
-                    add_str(h, "ints");
+                if((i = const_cast<int*>(get_if<int>(&a)))) {
+                    add_container(h, "int" + std::to_string(*i));
+                } else if((f = const_cast<float*>(get_if<float>(&a)))) {
+                    add_container(h, "float" + std::to_string(*f));
+                } else if((is = const_cast<std::vector<int>*>(
+                             get_if<std::vector<int>>(&a)))) {
+                    add_c_str(h, "ints");
                     std::for_each(is->begin(), is->end(), [&h](auto i) {
-                        add_str(h, std::to_string(i));
+                        add_container(h, std::to_string(i));
                     });
-                } else if(fs = const_cast<std::vector<float>*>(
-                            get_if<std::vector<float>>(&a))) {
-                    add_str(h, "floats");
+                } else if((fs = const_cast<std::vector<float>*>(
+                             get_if<std::vector<float>>(&a)))) {
+                    add_c_str(h, "floats");
                     std::for_each(fs->begin(), fs->end(), [&h](auto f) {
-                        add_str(h, std::to_string(f));
+                        add_container(h, std::to_string(f));
                     });
+                } else {
+                    // TODO other types
+                    assert(!"Don't come here");
                 }
             };
 
             // [model_data]
             for(auto const& node : model_data.node_list) {
-                add_str(hasher, node.op_type);
+                add_container(hasher, node.op_type);
                 add_str_vec(hasher, node.input_name_list);
                 add_str_vec(hasher, node.output_name_list);
                 std::vector<std::pair<std::string, attribute>> attributes(
@@ -162,12 +168,13 @@ namespace menoh_impl {
                           });
                 std::for_each(attributes.begin(), attributes.end(),
                               [&hasher, add_attr](auto const& p) {
-                                  add_str(hasher, p.first);
+                                  add_container(hasher, p.first);
                                   add_attr(hasher, p.second);
                               });
             }
             for(auto const& p : model_data.parameter_name_and_array_list) {
-                add_str(hasher, p.first);
+                add_container(hasher, p.first);
+                add_container(hasher, p.second.dims());
                 hasher.add(static_cast<std::uint8_t*>(p.second.data()),
                            total_size_in_bytes(p.second));
             }
@@ -178,13 +185,13 @@ namespace menoh_impl {
                 j.erase("enable_model_caching");
                 j.erase("cached_model_dir");
                 if(!j.empty()) {
-                    add_str(hasher, j.dump()); // [config]
+                    add_container(hasher, j.dump()); // [config]
                 }
             }
 
             cudaDeviceProp device_prop;
             cudaGetDeviceProperties(&device_prop, config_.device_id);
-            add_str(hasher, std::string(device_prop.name));
+            add_container(hasher, std::string(device_prop.name));
             return hasher.finish();
         }
 
@@ -316,7 +323,7 @@ namespace menoh_impl {
           std::unordered_map<std::string, array> const& parameter_table,
           std::vector<std::string>& outputs) {
 
-            {
+            { // device_id check
                 int count;
                 cudaGetDeviceCount(&count);
                 if(count <= config_.device_id) {
@@ -327,66 +334,119 @@ namespace menoh_impl {
                 }
             }
             CHECK(cudaSetDevice(config_.device_id));
-            builder.reset(createInferBuilder(gLogger));
-            assert(builder);
 
-            auto network = m_Parser.CreateNetwork(builder.get(), graph,
-                                                  parameter_table, outputs);
-            assert(network);
+            auto build_cuda_engine = [&, this]() {
+                builder.reset(createInferBuilder(gLogger));
+                assert(builder);
+
+                unique_ptr_with_destroyer<INetworkDefinition> network(
+                  m_Parser.CreateNetwork(builder.get(), graph, parameter_table,
+                                         outputs));
+                assert(network);
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
-            std::cout << "maxBatchSize = " << maxBatchSize << std::endl;
+                std::cout << "maxBatchSize = " << maxBatchSize << std::endl;
 #endif
-            builder->setMaxBatchSize(config_.max_batch_size);
-            builder->setMaxWorkspaceSize(1 << 20);
-            if(config_.force_fp16_mode) {
-                if(!builder->platformHasFastFp16()) {
-                    throw ParseException(
-                      "FP16 mode is not available on this device");
+                builder->setMaxBatchSize(config_.max_batch_size);
+                builder->setMaxWorkspaceSize(1 << 20);
+                if(config_.force_fp16_mode) {
+                    if(!builder->platformHasFastFp16()) {
+                        throw ParseException(
+                          "FP16 mode is not available on this device");
+                    }
+                    builder->setFp16Mode(true);
+                    builder->setStrictTypeConstraints(true);
+                } else if(config_.allow_fp16_mode &&
+                          builder->platformHasFastFp16()) {
+                    builder->setFp16Mode(true);
                 }
-                builder->setFp16Mode(true);
-                builder->setStrictTypeConstraints(true);
-            } else if(config_.allow_fp16_mode &&
-                      builder->platformHasFastFp16()) {
-                builder->setFp16Mode(true);
-            }
-            builder->setDebugSync(false);
+                builder->setDebugSync(false);
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
-            if(config_.enable_profiler) {
-                std::cout << "buildCudaEngine::start" << std::endl;
-                using clock = std::chrono::high_resolution_clock;
-                auto start = clock::now();
+                if(config_.enable_profiler) {
+                    std::cout << "buildCudaEngine::start" << std::endl;
+                    using clock = std::chrono::high_resolution_clock;
+                    auto start = clock::now();
 
-                engine.reset(builder->buildCudaEngine(*network));
+                    engine.reset(builder->buildCudaEngine(*network));
 
-                auto end = clock::now();
-                std::cout
-                  << "buildCudaEngine = "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(
-                       end - start)
-                         .count() /
-                       1000.0
-                  << " sec" << std::endl;
-                std::cout << "buildCudaEngine::done" << std::endl;
-            } else {
+                    auto end = clock::now();
+                    std::cout
+                      << "buildCudaEngine = "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(
+                           end - start)
+                             .count() /
+                           1000.0
+                      << " sec" << std::endl;
+                    std::cout << "buildCudaEngine::done" << std::endl;
+                } else {
 #endif
-                engine.reset(builder->buildCudaEngine(*network));
+                    engine.reset(builder->buildCudaEngine(*network));
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
-            }
+                }
 #endif
-            assert(engine);
-            // we don't need the network any more
-            network->destroy();
+            };
 
+            // build or deserialize engine
             if(config_.enable_model_caching) {
-                std::ofstream ofs(
-                  (config_.cached_model_dir + "/" + model_hash_ + ".trt")
-                    .c_str(),
-                  std::ios::binary);
-                host_memory serialized_engine(engine->serialize());
-                dump(serialized_engine, ofs);
+                auto model_cache_path =
+                  config_.cached_model_dir + "/" + model_hash_ + ".trt";
+                std::ifstream ifs(model_cache_path, std::ios::binary);
+                if(ifs.good()) { // exist cache
+                    // load cache
+                    auto load_cached_engine = [&, this]() {
+                        auto begin = ifs.tellg();
+                        ifs.seekg(0, std::ios::end);
+                        auto file_size = ifs.tellg() - begin;
+                        std::vector<std::uint8_t> data(file_size);
+                        ifs.seekg(0, std::ios_base::beg);
+                        ifs.read(
+                          static_cast<char*>(static_cast<void*>(data.data())),
+                          file_size);
+                        ifs.close();
+                        runtime.reset(nvinfer1::createInferRuntime(gLogger));
+                        // deserialize engine
+                        engine.reset(runtime->deserializeCudaEngine(
+                          data.data(), data.size(), nullptr));
+                    };
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                    if(config_.enable_profiler) {
+                        std::cout << "Inference::LoadCachedEngine::start"
+                                  << std::endl;
+                        using clock = std::chrono::high_resolution_clock;
+                        auto start = clock::now();
+
+                        load_cached_engine();
+
+                        auto end = clock::now();
+                        std::cout << "LoadCachedEngine = "
+                                  << std::chrono::duration_cast<
+                                       std::chrono::milliseconds>(end - start)
+                                         .count() /
+                                       1000.0
+                                  << " sec" << std::endl;
+                        std::cout << "Inference::LoadCachedEngine::done"
+                                  << std::endl;
+
+                        gProfiler.printLayerTimes();
+                    } else {
+#endif
+                        load_cached_engine();
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                    }
+#endif
+                } else { // not exist cache
+                    build_cuda_engine();
+
+                    // make cache
+                    std::ofstream ofs(model_cache_path, std::ios::binary);
+                    host_memory serialized_engine(engine->serialize());
+                    dump(serialized_engine, ofs);
+                }
+            } else {
+                build_cuda_engine();
             }
+            assert(engine);
 
             context.reset(engine->createExecutionContext());
             assert(context);
@@ -401,8 +461,7 @@ namespace menoh_impl {
             buffers_ = std::vector<void*>(engine->getNbBindings(), nullptr);
             for(auto const& p : m_Input) {
                 auto name = p.first;
-                auto index = engine->getBindingIndex(
-                  m_Parser.ConvertToInputTensorName(name).c_str());
+                auto index = engine->getBindingIndex(name.c_str());
                 input_memory_table_.emplace(p.first,
                                             make_cuda_memory_like(p.second));
                 if(index == -1) {
@@ -412,8 +471,7 @@ namespace menoh_impl {
             }
             for(auto const& p : m_Output) {
                 auto name = p.first;
-                auto index = engine->getBindingIndex(
-                  m_Parser.ConvertToOutputTensorName(name).c_str());
+                auto index = engine->getBindingIndex(name.c_str());
                 output_memory_table_.emplace(p.first,
                                              make_cuda_memory_like(p.second));
                 if(index == -1) {

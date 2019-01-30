@@ -73,9 +73,6 @@ namespace menoh_impl {
 
             INetworkDefinition* Network();
 
-            std::string ConvertToInputTensorName(std::string const& name);
-            std::string ConvertToOutputTensorName(std::string const& name);
-
         private:
             template <typename T>
             friend class ConstOperation;
@@ -198,11 +195,6 @@ namespace menoh_impl {
             std::unordered_map<std::string, const node*> m_Nodes;
             std::unordered_map<std::string, array> m_Params;
             std::unordered_map<std::string, OperationPtr> m_Operations;
-
-            std::unordered_map<std::string, std::string>
-              input_tensor_name_table;
-            std::unordered_map<std::string, std::string>
-              output_tensor_name_table;
         };
 
     } // namespace tensorrt_backend

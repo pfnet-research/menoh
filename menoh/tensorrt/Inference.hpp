@@ -61,6 +61,7 @@ namespace menoh_impl {
             using unique_ptr_with_destroyer = std::unique_ptr<T, destroyer<T>>;
 
             unique_ptr_with_destroyer<IBuilder> builder;
+            unique_ptr_with_destroyer<IRuntime> runtime;
             unique_ptr_with_destroyer<ICudaEngine> engine;
             unique_ptr_with_destroyer<IExecutionContext> context;
 

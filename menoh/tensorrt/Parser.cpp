@@ -41,9 +41,8 @@ namespace menoh_impl {
           std::vector<std::string> const& required_outputs) {
             if(std::find(required_outputs.begin(), required_outputs.end(),
                          output_name) != required_outputs.end()) {
+                output_tensor->setName(output_name.c_str());
                 Network()->markOutput(*output_tensor);
-                output_tensor_name_table.emplace(output_name,
-                                                 output_tensor->getName());
             }
         }
 
@@ -638,8 +637,7 @@ namespace menoh_impl {
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 0);
 
-            auto dims =
-              (std::vector<uint32_t> const&)attribute_ints(node, "dims");
+            auto const& dims = attribute_ints(node, "dims");
 
             ITensor* placeholder;
             {
@@ -647,8 +645,8 @@ namespace menoh_impl {
                 inputDims.nbDims = dims.size() - 1;
 
                 // delete batch axis
-                for(int i = 1; i < dims.size(); ++i) {
-                    inputDims.d[i - 1] = dims.at(i);
+                for(std::size_t i = 1; i < dims.size(); ++i) {
+                    inputDims.d[i - 1] = static_cast<std::uint32_t>(dims.at(i));
                 }
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
@@ -665,12 +663,9 @@ namespace menoh_impl {
                               << "] = " << inputDims.d[i];
                 std::cout << std::endl;
 #endif
-                auto prefixed_node_name = PrefixNodeName(node);
                 placeholder =
-                  Network()->addInput(prefixed_node_name.c_str(),
+                  Network()->addInput(node.output_name_list.front().c_str(),
                                       nvinfer1::DataType::kFLOAT, inputDims);
-                input_tensor_name_table.emplace(node.output_name_list.front(),
-                                                prefixed_node_name);
                 assert(placeholder);
             }
 
@@ -1175,14 +1170,6 @@ namespace menoh_impl {
         }
 
         INetworkDefinition* Parser::Network() { return m_Network; }
-
-        std::string Parser::ConvertToInputTensorName(std::string const& name) {
-            return input_tensor_name_table.at(name);
-        }
-
-        std::string Parser::ConvertToOutputTensorName(std::string const& name) {
-            return output_tensor_name_table.at(name);
-        }
 
         void Parser::Cleanup() {
             m_Nodes.clear();
