@@ -96,7 +96,7 @@ namespace menoh_impl {
                        totalTime / TIMING_ITERATIONS);
             }
         } gProfiler;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
         static Logger gLogger;
 
         std::string Inference::calc_model_hash(
@@ -249,7 +249,7 @@ namespace menoh_impl {
                 for(auto size : arr.dims())
                     std::cerr << size << " ";
                 std::cout << ")" << std::endl;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
                 m_Input[name] = arr;
                 std::vector<std::string> inputs, outputs;
                 outputs.push_back(name);
@@ -276,7 +276,7 @@ namespace menoh_impl {
                 for(auto size : arr.dims())
                     std::cerr << size << " ";
                 std::cout << ")" << std::endl;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
                 std::vector<std::string> inputs, outputs;
                 outputs.push_back(name);
                 std::unordered_map<std::string, attribute> attribute;
@@ -301,7 +301,7 @@ namespace menoh_impl {
                 for(auto size : arr.dims())
                     std::cerr << size << " ";
                 std::cout << ")" << std::endl;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
                 m_Output[name] = arr;
             }
 
@@ -349,7 +349,7 @@ namespace menoh_impl {
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
                 std::cout << "maxBatchSize = " << maxBatchSize << std::endl;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
                 builder->setMaxBatchSize(config_.max_batch_size);
                 builder->setMaxWorkspaceSize(1 << 20);
                 if(config_.force_fp16_mode) {
@@ -383,11 +383,11 @@ namespace menoh_impl {
                       << " sec" << std::endl;
                     std::cout << "buildCudaEngine::done" << std::endl;
                 } else {
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
                     engine.reset(builder->buildCudaEngine(*network));
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
                 }
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
             };
 
 // build or deserialize engine
@@ -434,12 +434,13 @@ namespace menoh_impl {
 
                         gProfiler.printLayerTimes();
                     } else {
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
                         load_cached_engine();
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
                     }
-#endif
-                } else { // not exist cache
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+                } else {
+                    // not exist cache
                     build_cuda_engine();
 
                     // make cache
@@ -462,7 +463,7 @@ namespace menoh_impl {
             if(config_.enable_profiler) {
                 context->setProfiler(&gProfiler);
             }
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
 
             // allocate memory
             buffers_ = std::vector<void*>(engine->getNbBindings(), nullptr);
@@ -545,11 +546,11 @@ namespace menoh_impl {
 
                 gProfiler.printLayerTimes();
             } else {
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
                 runner();
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
             }
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
         }
 
     } // namespace tensorrt_backend
