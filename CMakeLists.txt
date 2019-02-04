@@ -12,7 +12,7 @@ option(ENABLE_MKLDNN    "Use MKLDNN"      ON)
 option(ENABLE_TENSORRT  "Use TensorRT"    OFF)
 cmake_dependent_option(ENABLE_TENSORRT_PROFILER "Make TneosrRT Profiler feature available" ON
                                                 "ENABLE_TENSORRT" OFF)
-cmake_dependent_option(ENABLE_TENSORRT_MODEL_CACHING "Make TneosrRT model caching feature available" ON
+cmake_dependent_option(ENABLE_TENSORRT_MODEL_CACHING "Make TensorRT model caching feature available" ON
                                                      "ENABLE_TENSORRT" OFF)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
