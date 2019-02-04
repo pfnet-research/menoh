@@ -105,24 +105,27 @@ namespace menoh_impl {
           std::unordered_map<std::string, array> const& output_table,
           menoh_impl::model_data const& model_data, config const& config) {
             hasher hasher;
-            auto add_variable_table =
-              [](menoh_impl::hasher& h,
-                 std::unordered_map<std::string, array> const& table) {
-                  std::vector<std::pair<std::string, array>> variables(
-                    table.begin(), table.end());
-                  std::sort(variables.begin(), variables.end(),
-                            [](auto const& a, auto const& b) {
-                                return a.first < b.first;
-                            });
-                  for(auto const& p : variables) {
-                      add_container(h, p.first);
-                      h.add(static_cast<const std::uint8_t*>(
-                              static_cast<const void*>(p.second.dims().data())),
-                            p.second.dims().size());
-                      // Do not process values in p.second because it is a
-                      // placeholder
-                  }
-              };
+            auto add_variable_table = [](
+              menoh_impl::hasher& h,
+              std::unordered_map<std::string, array> const& table) {
+                std::vector<std::pair<std::string, array>> variables(
+                  table.begin(), table.end());
+                std::sort(variables.begin(), variables.end(),
+                          [](auto const& a, auto const& b) {
+                              return a.first < b.first;
+                          });
+                for(auto const& p : variables) {
+                    add_container(h, p.first);
+                    h.add(
+                      static_cast<const std::uint8_t*>(
+                        static_cast<const void*>(p.second.dims().data())),
+                      p.second.dims().size() *
+                        sizeof(
+                          std::decay_t<decltype(p.second.dims())>::value_type));
+                    // Do not process values in p.second because it is a
+                    // placeholder
+                }
+            };
             add_variable_table(hasher, input_table);  // [input_table]
             add_variable_table(hasher, output_table); // [output_table]
             auto add_str_vec = [](menoh_impl::hasher& h,
