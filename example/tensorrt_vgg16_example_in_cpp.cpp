@@ -92,6 +92,9 @@ int main(int argc, char** argv) {
           "force fp16 mode but if it is not available, this throws error. "
           "Probably force_fp16_mode is less effective than allow_fp16_mode. "
           "force_fp16_mode is only for checking");
+    a.add("enable_model_caching", '\0', "enable built model caching");
+    a.add<std::string>("cached_model_dir", '\0',
+                       "directory path to place cached model", false, ".");
     a.parse_check(argc, argv);
 
     auto input_image_path = a.get<std::string>("input_image");
@@ -146,6 +149,8 @@ int main(int argc, char** argv) {
       {"enable_profiler", a.exist("enable_profiler")},
       {"allow_fp16_mode", a.exist("allow_fp16_mode")},
       {"force_fp16_mode", a.exist("force_fp16_mode")},
+      {"enable_model_caching", a.exist("enable_model_caching")},
+      {"cached_model_dir", a.get<std::string>("cached_model_dir")},
     };
     std::cout << "backend config: " << config << std::endl;
     auto model =

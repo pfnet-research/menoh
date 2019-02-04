@@ -5,8 +5,10 @@
 #include <unordered_map>
 
 #include <menoh/array.hpp>
+#include <menoh/json.hpp>
 #include <menoh/model_core.hpp>
 #include <menoh/model_data.hpp>
+#include <menoh/optional.hpp>
 
 #include <menoh/tensorrt/Parser.hpp>
 #include <menoh/tensorrt/cuda_memory.hpp>
@@ -15,12 +17,15 @@ namespace menoh_impl {
     namespace tensorrt_backend {
 
         struct config {
+            optional<nlohmann::json> config_json_object_opt; // for hashing
             int batch_size;
             int max_batch_size;
             int device_id;
             bool enable_profiler;
             bool allow_fp16_mode;
             bool force_fp16_mode;
+            bool enable_model_caching;
+            std::string cached_model_dir;
         };
 
         class Inference {
@@ -33,12 +38,14 @@ namespace menoh_impl {
             void Run();
 
         private:
+
             void
             Build(graph& menoh_graph,
                   std::unordered_map<std::string, array> const& parameter_table,
                   std::vector<std::string>& outputs);
 
             config config_;
+            std::string model_hash_;
 
             Parser m_Parser;
 
@@ -52,6 +59,15 @@ namespace menoh_impl {
             unique_ptr_with_destroyer<IBuilder> builder;
             unique_ptr_with_destroyer<ICudaEngine> engine;
             unique_ptr_with_destroyer<IExecutionContext> context;
+
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
+            std::string calc_model_hash(
+              std::unordered_map<std::string, array> const& input_table,
+              std::unordered_map<std::string, array> const& output_table,
+              menoh_impl::model_data const& model_data, config const& config);
+
+            unique_ptr_with_destroyer<IRuntime> runtime;
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
 
             std::vector<std::string> input_name;
             std::vector<std::string> output_name;

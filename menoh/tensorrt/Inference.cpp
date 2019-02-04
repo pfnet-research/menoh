@@ -1,5 +1,9 @@
+#include <algorithm>
 #include <chrono>
+#include <cstdint>
+#include <fstream>
 #include <iostream>
+#include <vector>
 
 #include <menoh/array.hpp>
 #include <menoh/exception.hpp>
@@ -9,8 +13,11 @@
 #include <NvInfer.h>
 #include <cuda_runtime_api.h>
 
+#include <menoh/hash/hasher.hpp>
+
 #include <menoh/tensorrt/Exception.hpp>
 #include <menoh/tensorrt/Inference.hpp>
+#include <menoh/tensorrt/host_memory.hpp>
 
 using namespace nvinfer1;
 
@@ -89,15 +96,146 @@ namespace menoh_impl {
                        totalTime / TIMING_ITERATIONS);
             }
         } gProfiler;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
         static Logger gLogger;
+
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
+        std::string Inference::calc_model_hash(
+          std::unordered_map<std::string, array> const& input_table,
+          std::unordered_map<std::string, array> const& output_table,
+          menoh_impl::model_data const& model_data, config const& config) {
+            hasher hasher;
+            auto add_variable_table = [](
+              menoh_impl::hasher& h,
+              std::unordered_map<std::string, array> const& table) {
+                std::vector<std::pair<std::string, array>> variables(
+                  table.begin(), table.end());
+                std::sort(variables.begin(), variables.end(),
+                          [](auto const& a, auto const& b) {
+                              return a.first < b.first;
+                          });
+                for(auto const& p : variables) {
+                    add_container(h, p.first);
+                    h.add(
+                      static_cast<const std::uint8_t*>(
+                        static_cast<const void*>(p.second.dims().data())),
+                      p.second.dims().size() *
+                        sizeof(
+                          std::decay_t<decltype(p.second.dims())>::value_type));
+                    // Do not process values in p.second because it is a
+                    // placeholder
+                }
+            };
+            add_variable_table(hasher, input_table);  // [input_table]
+            add_variable_table(hasher, output_table); // [output_table]
+            auto add_str_vec = [](menoh_impl::hasher& h,
+                                  std::vector<std::string> const& sv) {
+                std::for_each(sv.begin(), sv.end(),
+                              [&h](auto const& s) { add_container(h, s); });
+            };
+            auto add_attr = [](menoh_impl::hasher& h, auto const& a) {
+                auto* i = get_if<int>(&a);
+                auto* f = get_if<float>(&a);
+                auto* is = get_if<std::vector<int>>(&a);
+                auto* fs = get_if<std::vector<float>>(&a);
+                if(i) {
+                    add_container(h, "int" + std::to_string(*i));
+                } else if(f) {
+                    add_container(h, "float" + std::to_string(*f));
+                } else if(is) {
+                    add_c_str(h, "ints");
+                    std::for_each(is->begin(), is->end(), [&h](auto i) {
+                        add_container(h, std::to_string(i));
+                    });
+                } else if(fs) {
+                    add_c_str(h, "floats");
+                    std::for_each(fs->begin(), fs->end(), [&h](auto f) {
+                        add_container(h, std::to_string(f));
+                    });
+                } else {
+                    // TODO other types
+                    assert(!"Don't come here");
+                }
+            };
+
+            // [model_data]
+            for(auto const& node : model_data.node_list) {
+                add_container(hasher, node.op_type);
+                add_str_vec(hasher, node.input_name_list);
+                add_str_vec(hasher, node.output_name_list);
+                std::vector<std::pair<std::string, attribute>> attributes(
+                  node.attribute_table.begin(), node.attribute_table.end());
+                std::sort(attributes.begin(), attributes.end(),
+                          [](auto const& a, auto const& b) {
+                              return a.first < b.first;
+                          });
+                std::for_each(attributes.begin(), attributes.end(),
+                              [&hasher, add_attr](auto const& p) {
+                                  add_container(hasher, p.first);
+                                  add_attr(hasher, p.second);
+                              });
+            }
+            for(auto const& p : model_data.parameter_name_and_array_list) {
+                add_container(hasher, p.first);
+                add_container(hasher, p.second.dims());
+                hasher.add(static_cast<std::uint8_t*>(p.second.data()),
+                           total_size_in_bytes(p.second));
+            }
+            if(config.config_json_object_opt) {
+                auto j = *config.config_json_object_opt;
+                // ignore options independent from model itself
+                j.erase("device_id");
+                j.erase("enable_model_caching");
+                j.erase("cached_model_dir");
+                if(!j.empty()) {
+                    add_container(hasher, j.dump()); // [config]
+                }
+            }
+
+            cudaDeviceProp device_prop;
+            cudaGetDeviceProperties(&device_prop, config_.device_id);
+            add_container(hasher, std::string(device_prop.name));
+            return hasher.finish();
+        }
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
 
         Inference::Inference(
           std::unordered_map<std::string, array> const& input_table,
           std::unordered_map<std::string, array> const& output_table,
           menoh_impl::model_data const& model_data, config const& config)
           : config_(config) {
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
+            if(config_.enable_model_caching) {
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                if(config_.enable_profiler) {
+                    std::cout << "calc_model_hash::start" << std::endl;
+                    using clock = std::chrono::high_resolution_clock;
+                    auto start = clock::now();
 
+                    model_hash_ = calc_model_hash(input_table, output_table,
+                                                  model_data, config);
+
+                    auto end = clock::now();
+                    std::cout
+                      << "calc_model_hash = "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(
+                           end - start)
+                             .count() /
+                           1000.0
+                      << " sec" << std::endl;
+                    std::cout << "calc_model_hash::done" << std::endl;
+                } else {
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+                    model_hash_ = calc_model_hash(input_table, output_table,
+                                                  model_data, config);
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                }
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
+                std::cout << "model_hash: " << model_hash_ << std::endl;
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
+            }
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
             std::vector<node> all_nodes;
             std::copy(model_data.node_list.begin(), model_data.node_list.end(),
                       back_inserter(all_nodes));
@@ -116,7 +254,7 @@ namespace menoh_impl {
                 for(auto size : arr.dims())
                     std::cerr << size << " ";
                 std::cout << ")" << std::endl;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
                 m_Input[name] = arr;
                 std::vector<std::string> inputs, outputs;
                 outputs.push_back(name);
@@ -143,7 +281,7 @@ namespace menoh_impl {
                 for(auto size : arr.dims())
                     std::cerr << size << " ";
                 std::cout << ")" << std::endl;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
                 std::vector<std::string> inputs, outputs;
                 outputs.push_back(name);
                 std::unordered_map<std::string, attribute> attribute;
@@ -168,7 +306,7 @@ namespace menoh_impl {
                 for(auto size : arr.dims())
                     std::cerr << size << " ";
                 std::cout << ")" << std::endl;
-#endif
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
                 m_Output[name] = arr;
             }
 
@@ -193,7 +331,7 @@ namespace menoh_impl {
           std::unordered_map<std::string, array> const& parameter_table,
           std::vector<std::string>& outputs) {
 
-            {
+            { // device_id check
                 int count;
                 cudaGetDeviceCount(&count);
                 if(count <= config_.device_id) {
@@ -204,57 +342,125 @@ namespace menoh_impl {
                 }
             }
             CHECK(cudaSetDevice(config_.device_id));
-            builder.reset(createInferBuilder(gLogger));
-            assert(builder);
 
-            auto network = m_Parser.CreateNetwork(builder.get(), graph,
-                                                  parameter_table, outputs);
-            assert(network);
+            auto build_cuda_engine = [&, this]() {
+                builder.reset(createInferBuilder(gLogger));
+                assert(builder);
+
+                unique_ptr_with_destroyer<INetworkDefinition> network(
+                  m_Parser.CreateNetwork(builder.get(), graph, parameter_table,
+                                         outputs));
+                assert(network);
 
 #ifdef MENOH_ENABLE_TENSORRT_DEBUG
-            std::cout << "maxBatchSize = " << maxBatchSize << std::endl;
-#endif
-            builder->setMaxBatchSize(config_.max_batch_size);
-            builder->setMaxWorkspaceSize(1 << 20);
-            if(config_.force_fp16_mode) {
-                if(!builder->platformHasFastFp16()) {
-                    throw ParseException(
-                      "FP16 mode is not available on this device");
+                std::cout << "maxBatchSize = " << maxBatchSize << std::endl;
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
+                builder->setMaxBatchSize(config_.max_batch_size);
+                builder->setMaxWorkspaceSize(1 << 20);
+                if(config_.force_fp16_mode) {
+                    if(!builder->platformHasFastFp16()) {
+                        throw ParseException(
+                          "FP16 mode is not available on this device");
+                    }
+                    builder->setFp16Mode(true);
+                    builder->setStrictTypeConstraints(true);
+                } else if(config_.allow_fp16_mode &&
+                          builder->platformHasFastFp16()) {
+                    builder->setFp16Mode(true);
                 }
-                builder->setFp16Mode(true);
-                builder->setStrictTypeConstraints(true);
-            } else if(config_.allow_fp16_mode &&
-                      builder->platformHasFastFp16()) {
-                builder->setFp16Mode(true);
-            }
-            builder->setDebugSync(false);
+                builder->setDebugSync(false);
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
-            if(config_.enable_profiler) {
-                std::cout << "buildCudaEngine::start" << std::endl;
-                using clock = std::chrono::high_resolution_clock;
-                auto start = clock::now();
+                if(config_.enable_profiler) {
+                    std::cout << "buildCudaEngine::start" << std::endl;
+                    using clock = std::chrono::high_resolution_clock;
+                    auto start = clock::now();
 
-                engine.reset(builder->buildCudaEngine(*network));
+                    engine.reset(builder->buildCudaEngine(*network));
 
-                auto end = clock::now();
-                std::cout
-                  << "buildCudaEngine = "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(
-                       end - start)
-                         .count() /
-                       1000.0
-                  << " sec" << std::endl;
-                std::cout << "buildCudaEngine::done" << std::endl;
+                    auto end = clock::now();
+                    std::cout
+                      << "buildCudaEngine = "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(
+                           end - start)
+                             .count() /
+                           1000.0
+                      << " sec" << std::endl;
+                    std::cout << "buildCudaEngine::done" << std::endl;
+                } else {
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+                    engine.reset(builder->buildCudaEngine(*network));
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                }
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+            };
+
+// build or deserialize engine
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
+            if(config_.enable_model_caching) {
+                auto model_cache_path =
+                  config_.cached_model_dir + "/" + model_hash_ + ".trt";
+                std::ifstream ifs(model_cache_path, std::ios::binary);
+                if(ifs.good()) { // exist cache
+                    // load cache
+                    auto load_cached_engine = [&, this]() {
+                        auto begin = ifs.tellg();
+                        ifs.seekg(0, std::ios::end);
+                        auto file_size = ifs.tellg() - begin;
+                        std::vector<std::uint8_t> data(file_size);
+                        ifs.seekg(0, std::ios_base::beg);
+                        ifs.read(
+                          static_cast<char*>(static_cast<void*>(data.data())),
+                          file_size);
+                        ifs.close();
+                        runtime.reset(nvinfer1::createInferRuntime(gLogger));
+                        // deserialize engine
+                        engine.reset(runtime->deserializeCudaEngine(
+                          data.data(), data.size(), nullptr));
+                    };
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                    if(config_.enable_profiler) {
+                        std::cout << "Inference::LoadCachedEngine::start"
+                                  << std::endl;
+                        using clock = std::chrono::high_resolution_clock;
+                        auto start = clock::now();
+
+                        load_cached_engine();
+
+                        auto end = clock::now();
+                        std::cout << "LoadCachedEngine = "
+                                  << std::chrono::duration_cast<
+                                       std::chrono::milliseconds>(end - start)
+                                         .count() /
+                                       1000.0
+                                  << " sec" << std::endl;
+                        std::cout << "Inference::LoadCachedEngine::done"
+                                  << std::endl;
+
+                        gProfiler.printLayerTimes();
+                    } else {
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+                        load_cached_engine();
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+                    }
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+                } else {
+                    // not exist cache
+                    build_cuda_engine();
+
+                    // make cache
+                    std::ofstream ofs(model_cache_path, std::ios::binary);
+                    host_memory serialized_engine(engine->serialize());
+                    dump(serialized_engine, ofs);
+                }
             } else {
-#endif
-                engine.reset(builder->buildCudaEngine(*network));
-#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
+                build_cuda_engine();
+#ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
             }
-#endif
+#endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
             assert(engine);
-            // we don't need the network any more
-            network->destroy();
+
             context.reset(engine->createExecutionContext());
             assert(context);
 
@@ -262,14 +468,13 @@ namespace menoh_impl {
             if(config_.enable_profiler) {
                 context->setProfiler(&gProfiler);
             }
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
 
             // allocate memory
             buffers_ = std::vector<void*>(engine->getNbBindings(), nullptr);
             for(auto const& p : m_Input) {
                 auto name = p.first;
-                auto index = engine->getBindingIndex(
-                  m_Parser.ConvertToInputTensorName(name).c_str());
+                auto index = engine->getBindingIndex(name.c_str());
                 input_memory_table_.emplace(p.first,
                                             make_cuda_memory_like(p.second));
                 if(index == -1) {
@@ -279,8 +484,7 @@ namespace menoh_impl {
             }
             for(auto const& p : m_Output) {
                 auto name = p.first;
-                auto index = engine->getBindingIndex(
-                  m_Parser.ConvertToOutputTensorName(name).c_str());
+                auto index = engine->getBindingIndex(name.c_str());
                 output_memory_table_.emplace(p.first,
                                              make_cuda_memory_like(p.second));
                 if(index == -1) {
@@ -347,11 +551,11 @@ namespace menoh_impl {
 
                 gProfiler.printLayerTimes();
             } else {
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
                 runner();
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
             }
-#endif
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
         }
 
     } // namespace tensorrt_backend
