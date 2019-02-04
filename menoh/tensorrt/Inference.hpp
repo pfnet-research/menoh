@@ -17,7 +17,7 @@ namespace menoh_impl {
     namespace tensorrt_backend {
 
         struct config {
-            optional<nlohmann::json> config_json_objct_opt; // for hashing
+            optional<nlohmann::json> config_json_object_opt; // for hashing
             int batch_size;
             int max_batch_size;
             int device_id;

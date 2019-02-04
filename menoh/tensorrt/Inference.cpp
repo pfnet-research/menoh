@@ -181,8 +181,8 @@ namespace menoh_impl {
                 hasher.add(static_cast<std::uint8_t*>(p.second.data()),
                            total_size_in_bytes(p.second));
             }
-            if(config.config_json_objct_opt) {
-                auto j = *config.config_json_objct_opt;
+            if(config.config_json_object_opt) {
+                auto j = *config.config_json_object_opt;
                 // ignore options independent from model itself
                 j.erase("device_id");
                 j.erase("enable_model_caching");
