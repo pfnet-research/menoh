@@ -231,7 +231,9 @@ namespace menoh_impl {
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
                 }
 #endif // MENOH_ENABLE_TENSORRT_PROFILER
+#ifdef MENOH_ENABLE_TENSORRT_DEBUG
                 std::cout << "model_hash: " << model_hash_ << std::endl;
+#endif // MENOH_ENABLE_TENSORRT_DEBUG
             }
 #endif // MENOH_ENABLE_TENSORRT_MODEL_CACHING
             std::vector<node> all_nodes;
