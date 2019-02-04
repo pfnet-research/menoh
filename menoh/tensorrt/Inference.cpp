@@ -134,22 +134,20 @@ namespace menoh_impl {
                               [&h](auto const& s) { add_container(h, s); });
             };
             auto add_attr = [](menoh_impl::hasher& h, auto const& a) {
-                int* i;
-                float* f;
-                std::vector<int>* is;
-                std::vector<float>* fs;
-                if((i = const_cast<int*>(get_if<int>(&a)))) {
+                auto* i = get_if<int>(&a);
+                auto* f = get_if<float>(&a);
+                auto* is = get_if<std::vector<int>>(&a);
+                auto* fs = get_if<std::vector<float>>(&a);
+                if(i) {
                     add_container(h, "int" + std::to_string(*i));
-                } else if((f = const_cast<float*>(get_if<float>(&a)))) {
+                } else if(f) {
                     add_container(h, "float" + std::to_string(*f));
-                } else if((is = const_cast<std::vector<int>*>(
-                             get_if<std::vector<int>>(&a)))) {
+                } else if(is) {
                     add_c_str(h, "ints");
                     std::for_each(is->begin(), is->end(), [&h](auto i) {
                         add_container(h, std::to_string(i));
                     });
-                } else if((fs = const_cast<std::vector<float>*>(
-                             get_if<std::vector<float>>(&a)))) {
+                } else if(fs) {
                     add_c_str(h, "floats");
                     std::for_each(fs->begin(), fs->end(), [&h](auto f) {
                         add_container(h, std::to_string(f));
