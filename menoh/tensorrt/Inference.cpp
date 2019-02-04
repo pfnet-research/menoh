@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -466,7 +467,7 @@ namespace menoh_impl {
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
             if(config_.enable_profiler) {
-                context->setProfiler(&gProfiler);
+                context->setProfiler(profiler_.get());
             }
 #endif // MENOH_ENABLE_TENSORRT_PROFILER
 
@@ -549,7 +550,7 @@ namespace menoh_impl {
                        .count()
                   << " msec" << std::endl;
 
-                gProfiler.printLayerTimes();
+                profiler_->print_layer_times();
             } else {
 #endif // MENOH_ENABLE_TENSORRT_PROFILER
                 runner();
