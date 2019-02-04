@@ -124,38 +124,40 @@ make
 ./test/menoh_test.out
 ```
 
+# Current supported backends
+- MKLDNN (Intel CPU)
+- TensorRT (NVIDIA GPU)
+
 # Current supported operators
 
-### Activation functions
-- Elu
-- LeakyRelu
-- Relu
-- Softmax
-- Tanh
-
-### Array manipulations
-- Concat
-
-### Neural network connections
-- Conv
-- ConvTranspose
-- FC
-
-### Mathematical functions
-- Abs
-- Add
-- Sqrt
-- Sum
-
-### Normalization functions
-- BatchNormalization
-- LRN
-
-### Spatial pooling
-- AveragePool
-- GlobalAveragePool
-- GlobalMaxPool
-- MaxPool
+|                            |                    | MKLDNN (with generic) | TensorRT |
+|----------------------------|--------------------|:---------------------:|:--------:|
+| Constants                  | Const              |                       |     ○    |
+|                            | Identity           |                       |     ○    |
+| Activations                | Elu                |           ○           |          |
+|                            | LeakyRelu          |           ○           |          |
+|                            | Relu               |           ○           |     ○    |
+|                            | Sigmoid            |           ○           |     ○    |
+|                            | Softmax            |           ○           |     ○    |
+|                            | Tanh               |           ○           |     ○    |
+| Array manipurations        | Concat             |                       |     ○    |
+|                            | Reshape            |           ○           |          |
+|                            | Transpose          |           ○           |          |
+|                            | Unsqueeze          |                       |     ○    |
+| Neural network connections | Conv               |           ○           |     ○    |
+|                            | ConvTranspose      |                       |          |
+|                            | Gemm               |           ○           |     ○    |
+| Mathematical functions     | Abs                |           ○           |          |
+|                            | Add                |           ○           |     ○    |
+|                            | Mul                |           ○           |     ○    |
+|                            | Sqrt               |           ○           |          |
+|                            | Sum                |           ○           |     ○    |
+| Normalization functions    | BatchNormalization |           ○           |     ○    |
+|                            | LRN                |                       |          |
+| Spatial pooling            | AveragePool        |           ○           |     ○    |
+|                            | GlobalAveragePool  |                       |     ○    |
+|                            | GlobalMaxPool      |                       |     ○    |
+|                            | MaxPool            |           ○           |     ○    |
 
 # License
 
