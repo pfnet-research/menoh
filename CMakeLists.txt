@@ -101,7 +101,7 @@ configure_file(${EXTERNAL_DIR}/onnx-v1.3.0-patch_CMakeLists.txt ${EXTERNAL_DIR}/
 
 set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
 set(BUILD_SHARED_LIBS OFF)
-set(ONNX_NAMESPACE "menoh_onnx")
+set(ONNX_NAMESPACE "menoh_onnx" CACHE INTERNAL "onnx namespace")
 add_subdirectory(${EXTERNAL_DIR}/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
 if(NOT ${BUILD_SHARED_LIBS_SAVED}) # install libmenoh_onnx and lib_menoh_onnx_proto
     set_target_properties(onnx_proto PROPERTIES OUTPUT_NAME "menoh_onnx_proto")
