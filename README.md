@@ -61,7 +61,7 @@ Execute following commands in root directory.
 ```
 python scripts/retrieve_data.py
 mkdir build && cd build
-cmake ..
+cmake .. //-DENABLE_TENSORRT=ON // to enable TensorRT backend
 make
 ```
 
@@ -80,7 +80,7 @@ make install
 Execute following command in root directory.
 
 ```
-./example/vgg16_example_in_cpp
+./example/mkldnn_vgg16_example_in_cpp // for tensorrt, tensorrt_vgg16_example_in_cpp is available
 ```
 
 Result is here
@@ -100,13 +100,13 @@ top 5 categories are
 You can also run ResNet-50
 
 ```
-./example/vgg16_example_in_cpp -m ../data/resnet50.onnx
+./example/mkldnn_vgg16_example_in_cpp -m ../data/resnet50.onnx
 ```
 
 Please give `--help` option for details
 
 ```
-./example/vgg16_example_in_cpp --help
+./example/mkldnn_vgg16_example_in_cpp --help
 ```
 
 
@@ -125,8 +125,35 @@ make
 ```
 
 # Current supported backends
-- MKLDNN (Intel CPU)
-- TensorRT (NVIDIA GPU)
+
+Users can specify backend and backend_config.
+
+backend_config options are specified with JSON format.
+
+e.g. For `tensorrt` backend, backend_config can be specified `{"device_id":2, "allow_fp16_mode":true, "enable_model_caching":false, "cached_model_dir":"/tmp"}`.
+
+For more information, see `example/tensorrt_vgg16_example_in_cpp.cpp`.
+
+
+## MKLDNN (Intel CPU)
+
+backend name: `mkldnn_with_generic_fallback`
+
+backend_config options:
+- `cpu_id`: The specification of device id where computation is processed. The default value is 0.
+
+## TensorRT (NVIDIA GPU)
+
+backend name: `tensorrt`
+
+backend_config options:
+- `batch_size`: The specification of batch size of input data. This is optional and when it is omitted, the first dimension size of the first input specified add_input_profile() is set as batch size.
+- `device_id`: The specification of device id where computation is processed. The default value is 0. 
+- `enable_profiler`: Enabling profiling feature or not.
+- `allow_fp16_mode`: Allowing to use FP16 kernel. It doesn’t guarantee FP16 kernel to be used. The default value is false. 
+- `force_fp16_mode`: Forcing to use FP16 kernel. The default value is false. This option override allow_fp16_mode when this option is true.
+- `enable_model_caching`: Enabling model caching or not. The default value is true.
+- `cached_model_dir`: Specification of the directory where cached models placed and loaded. The default value is “.”. This option is ignored when enable_model_caching is false.
 
 # Current supported operators
 
