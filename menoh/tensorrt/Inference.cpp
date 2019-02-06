@@ -501,35 +501,25 @@ namespace menoh_impl {
         void Inference::Run() {
 
             auto runner = [&, this]() {
-                cudaStream_t stream;
-                CHECK(cudaStreamCreate(&stream));
                 for(auto const& p : m_Input) {
                     auto const& name = p.first;
                     auto const& arr = p.second;
-                    input_memory_table_.emplace(
-                      p.first, make_cuda_memory_like(p.second));
-                    CHECK(cudaMemcpyAsync(input_memory_table_.at(name).get(),
-                                          static_cast<float*>(arr.data()),
-                                          total_size_in_bytes(arr),
-                                          cudaMemcpyHostToDevice, stream));
+                    CHECK(cudaMemcpy(input_memory_table_.at(name).get(),
+                                     static_cast<float*>(arr.data()),
+                                     total_size_in_bytes(arr),
+                                     cudaMemcpyHostToDevice));
                 }
 
-                context->enqueue(config_.batch_size, buffers_.data(), stream,
-                                 nullptr);
+                context->execute(config_.batch_size, buffers_.data());
 
                 for(auto const& p : m_Output) {
                     auto const& name = p.first;
                     auto const& arr = p.second;
-                    output_memory_table_.emplace(
-                      p.first, make_cuda_memory_like(p.second));
-                    CHECK(cudaMemcpyAsync(static_cast<float*>(arr.data()),
-                                          output_memory_table_.at(name).get(),
-                                          total_size_in_bytes(arr),
-                                          cudaMemcpyDeviceToHost, stream));
+                    CHECK(cudaMemcpy(static_cast<float*>(arr.data()),
+                                     output_memory_table_.at(name).get(),
+                                     total_size_in_bytes(arr),
+                                     cudaMemcpyDeviceToHost));
                 }
-
-                CHECK(cudaStreamSynchronize(stream));
-                CHECK(cudaStreamDestroy(stream));
             };
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
