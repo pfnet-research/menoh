@@ -35,7 +35,7 @@ namespace {
         gpio::CodedInputStream cis(&iis);
         cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
                                std::numeric_limits<int>::max());
-        onnx::TensorProto tensor;
+        menoh_onnx::TensorProto tensor;
         if(!tensor.ParseFromCodedStream(&cis)) {
             std::cout << "invalid filename" << std::endl;
             throw "onnx_parse_error";
@@ -52,7 +52,7 @@ namespace {
         auto total_size =
           std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<int>());
         assert(tensor.has_raw_data());
-        if(tensor.data_type() == onnx::TensorProto_DataType_FLOAT) {
+        if(tensor.data_type() == menoh_onnx::TensorProto_DataType_FLOAT) {
             assert(tensor.raw_data().length() ==
                    static_cast<decltype(tensor.raw_data().length())>(
                      total_size * 4));
@@ -64,7 +64,7 @@ namespace {
             return named_array_data{tensor.name(), menoh::dtype_t::float32,
                                     std::move(dims), std::move(data)};
         }
-        if(tensor.data_type() == onnx::TensorProto_DataType_INT64) {
+        if(tensor.data_type() == menoh_onnx::TensorProto_DataType_INT64) {
             assert(tensor.raw_data().length() ==
                    static_cast<decltype(tensor.raw_data().length())>(
                      total_size * 8));
