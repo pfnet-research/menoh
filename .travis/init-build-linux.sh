@@ -4,6 +4,7 @@ test -n "${MKLDNN_VERSION}" || { echo "MKLDNN_VERSION can't be empty" 1>&2; exit
 test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS can't be empty" 1>&2; exit 1; }
 
 test -n "${LINK_STATIC}" || LINK_STATIC=false
+test -n "${BUILD_STATIC_LIBS}" || BUILD_STATIC_LIBS=false
 
 # TODO: make them configurable for outside Travis
 export WORK_DIR=${HOME}
@@ -74,7 +75,14 @@ function prepare_menoh_data() {
 }
 
 function build_menoh() {
-    if [ "${LINK_STATIC}" != "true" ]; then
+    if [ "${BUILD_STATIC_LIBS}" = "true" ]; then
+        docker_exec_script \
+            "${PROJ_DIR}/scripts/build-menoh.sh" \
+                --build-type Release \
+                --source-dir "${PROJ_DIR}" \
+                --python-executable python3 \
+                --build-shared-libs OFF
+    elif [ "${LINK_STATIC}" != "true" ]; then
         docker_exec_script \
             "${PROJ_DIR}/scripts/build-menoh.sh" \
                 --build-type Release \
@@ -97,5 +105,7 @@ function test_menoh() {
 }
 
 function check_menoh_artifact() {
-    docker_exec "ldd \"${PROJ_DIR}/build/menoh/libmenoh.so\""
+    if [ "${BUILD_STATIC_LIBS}" != "true" ]; then
+        docker_exec "ldd \"${PROJ_DIR}/build/menoh/libmenoh.so\""
+    fi
 }

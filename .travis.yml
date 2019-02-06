@@ -26,10 +26,14 @@ matrix:
           env: PLATFORM=macosx-x86_64
         - os: osx
           env: PLATFORM=macosx-x86_64 LINK_STATIC=true
+        - os: osx
+          env: PLATFORM=macosx-x86_64 BUILD_STATIC_LIBS=true
         - os: linux
           env: PLATFORM=linux-x86_64 BUILDENV_IMAGE=okapies/buildenv:linux-x64-devtoolset-6
         - os: linux
           env: PLATFORM=linux-x86_64 BUILDENV_IMAGE=okapies/buildenv:linux-x64-devtoolset-6 LINK_STATIC=true
+        - os: linux
+          env: PLATFORM=linux-x86_64 BUILDENV_IMAGE=okapies/buildenv:linux-x64-devtoolset-6 BUILD_STATIC_LIBS=true
         # Use Travis directly instead of container to run static code analysis using Coverity
         - if: branch = coverity_scan
           os: linux
