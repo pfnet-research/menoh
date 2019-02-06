@@ -61,7 +61,7 @@ Execute following commands in root directory.
 ```
 python scripts/retrieve_data.py
 mkdir build && cd build
-cmake .. //-DENABLE_TENSORRT=ON // to enable TensorRT backend
+cmake .. #-DENABLE_TENSORRT=ON # to enable TensorRT
 make
 ```
 
@@ -130,7 +130,7 @@ Users can specify backend and backend_config.
 
 backend_config options are specified with JSON format.
 
-e.g. For `tensorrt` backend, backend_config can be specified `{"device_id":2, "allow_fp16_mode":true, "enable_model_caching":false, "cached_model_dir":"/tmp"}`.
+e.g. For `tensorrt`, backend_config can be specified `{"device_id":2, "allow_fp16_mode":true, "enable_model_caching":false, "cached_model_dir":"/tmp"}`.
 
 For more information, see `example/tensorrt_vgg16_example_in_cpp.cpp`.
 
