@@ -11,7 +11,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include <onnx/onnx.pb.h>
+#include <onnx/onnx_pb.h>
 
 #include <menoh/array.hpp>
 #include <menoh/exception.hpp>
@@ -21,7 +21,7 @@
 
 namespace menoh_impl {
 
-    dtype_t tensor_proto_data_type_to_dtype(menoh_onnx::TensorProto_DataType tpdt) {
+    dtype_t tensor_proto_data_type_to_dtype(google::protobuf::int32 tpdt) {
         if(tpdt == menoh_onnx::TensorProto_DataType_FLOAT) {
             return dtype_t::float_;
         } else if(tpdt == menoh_onnx::TensorProto_DataType_INT8) {
