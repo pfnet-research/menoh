@@ -301,7 +301,7 @@ namespace menoh {
         //! Add output profile. That profile contains name and dtype
         /*! dims of output are calculated automatically.
          * \note This function is deprecated. Given dtype is totally ignored and
-         * inferenced by dtype of input. Use add_output_name() instead.
+         * inferred by dtype of input. Use add_output_name() instead.
          */
         [[deprecated("Use add_output_name() instead")]]
         void add_output_profile(std::string const& name, dtype_t) {
