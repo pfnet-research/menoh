@@ -76,6 +76,7 @@ namespace {
             return named_array_data{tensor.name(), menoh::dtype_t::int64,
                                     std::move(dims), std::move(data)};
         }
+        throw "unexpected tensor data type";
     }
 
     class OperatorTest : public ::testing::Test {
