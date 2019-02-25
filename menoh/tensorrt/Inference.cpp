@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -67,36 +68,6 @@ public:
 
 namespace menoh_impl {
     namespace tensorrt_backend {
-#ifdef MENOH_ENABLE_TENSORRT_PROFILER
-        struct Profiler : public IProfiler {
-            const int TIMING_ITERATIONS = 1;
-
-            typedef std::pair<std::string, float> Record;
-            std::vector<Record> mProfile;
-
-            virtual void reportLayerTime(const char* layerName, float ms) {
-                auto record = std::find_if(
-                  mProfile.begin(), mProfile.end(),
-                  [&](const Record& r) { return r.first == layerName; });
-                if(record == mProfile.end())
-                    mProfile.push_back(std::make_pair(layerName, ms));
-                else
-                    record->second += ms;
-            }
-
-            void printLayerTimes() {
-                float totalTime = 0;
-                printf("\n=== Profiling ===\n");
-                for(size_t i = 0; i < mProfile.size(); i++) {
-                    printf("  %-40.40s %4.3f ms\n", mProfile[i].first.c_str(),
-                           mProfile[i].second / TIMING_ITERATIONS);
-                    totalTime += mProfile[i].second;
-                }
-                printf("=== Time over all layers: %4.3f ms ===\n\n",
-                       totalTime / TIMING_ITERATIONS);
-            }
-        } gProfiler;
-#endif // MENOH_ENABLE_TENSORRT_PROFILER
         static Logger gLogger;
 
 #ifdef MENOH_ENABLE_TENSORRT_MODEL_CACHING
@@ -436,8 +407,7 @@ namespace menoh_impl {
                                   << " sec" << std::endl;
                         std::cout << "Inference::LoadCachedEngine::done"
                                   << std::endl;
-
-                        gProfiler.printLayerTimes();
+                        profiler_->print_layer_times();
                     } else {
 #endif // MENOH_ENABLE_TENSORRT_PROFILER
                         load_cached_engine();
@@ -466,7 +436,7 @@ namespace menoh_impl {
 
 #ifdef MENOH_ENABLE_TENSORRT_PROFILER
             if(config_.enable_profiler) {
-                context->setProfiler(&gProfiler);
+                context->setProfiler(profiler_.get());
             }
 #endif // MENOH_ENABLE_TENSORRT_PROFILER
 
@@ -539,7 +509,7 @@ namespace menoh_impl {
                        .count()
                   << " msec" << std::endl;
 
-                gProfiler.printLayerTimes();
+                profiler_->print_layer_times();
             } else {
 #endif // MENOH_ENABLE_TENSORRT_PROFILER
                 runner();

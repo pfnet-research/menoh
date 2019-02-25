@@ -44,6 +44,48 @@ namespace menoh_impl {
                   std::unordered_map<std::string, array> const& parameter_table,
                   std::vector<std::string>& outputs);
 
+#ifdef MENOH_ENABLE_TENSORRT_PROFILER
+            class profiler : public nvinfer1::IProfiler {
+            public:
+                virtual void reportLayerTime(const char* layer_name,
+                                             float ms) override {
+                    auto record = profile_.find(layer_name);
+                    if(record == profile_.end()) {
+                        profile_.emplace(layer_name, ms);
+                    } else {
+                        record->second += ms;
+                    }
+                }
+
+                void print_layer_times() const {
+                    std::vector<std::pair<std::string, float>> record_list(
+                      profile_.begin(), profile_.end());
+                    std::sort(record_list.begin(), record_list.end(),
+                              [](auto const& a, auto const& b) {
+                                  return a.second > b.second;
+                              });
+
+                    float total_time = 0;
+                    std::printf("\n=== Profiling ===\n");
+                    for(auto const& r : record_list) {
+                        std::printf("  %-40.40s %4.3f ms\n", r.first.c_str(),
+                                    r.second / timing_iterations);
+                        total_time += r.second;
+                    }
+                    std::printf("=== Time over all layers: %4.3f ms ===\n\n",
+                                total_time / timing_iterations);
+                }
+
+            private:
+                static constexpr int timing_iterations = 1;
+
+                std::unordered_map<std::string, float> profile_;
+            };
+            std::unique_ptr<profiler> profiler_{std::make_unique<
+              profiler>()}; // FIXME this indirection seems unnecessary
+
+#endif // MENOH_ENABLE_TENSORRT_PROFILER
+
             config config_;
             std::string model_hash_;
 
