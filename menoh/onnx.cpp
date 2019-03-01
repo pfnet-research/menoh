@@ -164,27 +164,28 @@ namespace menoh_impl {
         return parameter_name_and_array_list;
     }
 
-    auto extract_node_list_from_onnx_graph(menoh_onnx::GraphProto const& graph) {
+    auto
+    extract_node_list_from_onnx_graph(menoh_onnx::GraphProto const& graph) {
         std::vector<node> node_list;
         for(auto const& onnx_node : graph.node()) {
             std::unordered_map<std::string, attribute> attribute_table;
             for(auto const& attr : onnx_node.attribute()) {
                 if(attr.has_i()) {
-                    attribute_table.insert(
-                      {attr.name(), static_cast<int>(attr.i())}); // TODO int64
+                    attribute_table.emplace(
+                      attr.name(), static_cast<int>(attr.i())); // TODO int64
                 } else if(attr.has_f()) {
-                    attribute_table.insert({attr.name(), attr.f()});
+                    attribute_table.emplace(attr.name(), attr.f());
                 } else if(attr.ints_size()) {
-                    attribute_table.insert(
-                      {attr.name(), std::vector<int>(attr.ints().begin(),
-                                                     attr.ints().end())});
+                    attribute_table.emplace(
+                      attr.name(),
+                      std::vector<int>(attr.ints().begin(), attr.ints().end()));
                 } else if(attr.floats_size()) {
-                    attribute_table.insert(
-                      {attr.name(), std::vector<float>(attr.floats().begin(),
-                                                       attr.floats().end())});
+                    attribute_table.emplace(
+                      attr.name(), std::vector<float>(attr.floats().begin(),
+                                                      attr.floats().end()));
                 } else if(attr.has_t()) {
-                    attribute_table.insert(
-                      {attr.name(), tensor_to_array(attr.t())});
+                    attribute_table.emplace(attr.name(),
+                                            tensor_to_array(attr.t()));
                 } else {
                     throw invalid_attribute_type(
                       attr.name(),
