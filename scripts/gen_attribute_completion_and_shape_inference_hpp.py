@@ -193,6 +193,12 @@ for(unsigned int i = 1; i < node.input_name_list.size(); ++i) {
 add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 '''))
     code_list.append(
+        make_completion_code("Constant", [
+            ("value", "array", None),
+        ], '''
+add_variable_to_table(output(0), value.dtype(), value.dims());
+'''))
+    code_list.append(
         make_completion_code(
             "Conv", [
                 ("dilations", "ints", "ints(kernel_ndims, 1)"),

@@ -5,12 +5,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include <menoh/array.hpp>
 #include <menoh/variant.hpp>
 
 namespace menoh_impl {
 
-    using attribute =
-      menoh_impl::variant<int, float, std::vector<int>, std::vector<float>>;
+    using attribute = menoh_impl::variant<int, float, std::vector<int>,
+                                          std::vector<float>, array>;
 
     struct node {
         std::string op_type;
@@ -38,6 +39,7 @@ namespace menoh_impl {
                               std::vector<float> const& default_value);
     std::vector<float> const& attribute_floats(node const& n,
                                                std::string const& attr_name);
+    array const& attribute_tensor(node const& n, std::string const& attr_name);
 
     std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
     attributes_for_2d_data_processing(node const& n);

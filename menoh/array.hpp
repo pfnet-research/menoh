@@ -60,6 +60,10 @@ namespace menoh_impl {
         void* data_handle_ = nullptr;
     };
 
+    inline bool operator==(array const& lhs, array const& rhs) {
+        return lhs.data() == rhs.data();
+    }
+
     std::size_t total_size(array const& a);
 
     float* fbegin(array const& a);

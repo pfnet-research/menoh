@@ -50,6 +50,10 @@ namespace menoh_impl {
         return menoh_impl::get<float>(find_value(n.attribute_table, attr_name));
     }
 
+    array const& attribute_tensor(node const& n, std::string const& attr_name) {
+        return menoh_impl::get<array>(find_value(n.attribute_table, attr_name));
+    }
+
     std::vector<int>
     optional_attribute_ints(node const& n, std::string const& attr_name,
                             std::vector<int> const& default_value) {

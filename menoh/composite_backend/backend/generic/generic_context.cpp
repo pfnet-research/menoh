@@ -6,6 +6,7 @@ namespace menoh_impl {
         namespace generic_backend {
 
             generic_context::generic_context() : context() {
+                procedure_factory_table_.emplace("Constant", make_constant);
                 procedure_factory_table_.emplace("Relu", make_relu);
                 procedure_factory_table_.emplace("Reshape", make_reshape);
                 procedure_factory_table_.emplace("Mul", make_mul);
