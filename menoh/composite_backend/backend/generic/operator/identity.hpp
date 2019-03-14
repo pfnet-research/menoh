@@ -1,10 +1,10 @@
 #ifndef MENOH_IMPL_COMPOSITE_BACKEND_BACKEND_GENERIC_OPERATOR_IDENTITY_HPP
 #define MENOH_IMPL_COMPOSITE_BACKEND_BACKEND_GENERIC_OPERATOR_IDENTITY_HPP
 
+#include <algorithm>
+
 #include <menoh/array.hpp>
 #include <menoh/composite_backend/procedure.hpp>
-
-#include <iostream>
 
 namespace menoh_impl {
     namespace composite_backend {
@@ -21,6 +21,12 @@ namespace menoh_impl {
                     for(decltype(total_size(input)) i = 0;
                         i < total_size(input); ++i) {
                         fat(output, i) = fat(input, i);
+                        std::copy(
+                          static_cast<char*>(input.data()),
+                          static_cast<char*>(
+                            input.data() + total_size(input) *
+                                             get_size_in_bytes(input.dtype())),
+                          static_cast<char*>(output.data()));
                     }
                 };
 
