@@ -1,6 +1,8 @@
 #ifndef MENOH_IMPL_COMPOSITE_BACKEND_BACKEND_GENERIC_OPERATOR_CONSTANT_HPP
 #define MENOH_IMPL_COMPOSITE_BACKEND_BACKEND_GENERIC_OPERATOR_CONSTANT_HPP
 
+#include <algorithm>
+
 #include <menoh/array.hpp>
 #include <menoh/composite_backend/procedure.hpp>
 
@@ -16,12 +18,10 @@ namespace menoh_impl {
                 assert(input_list.size() == 0);
                 assert(output_list.size() == 1);
                 array value = attribute_tensor(node, "value");
-                std::cout << total_size(value) << std::endl;
-                for(decltype(total_size(value)) i = 0; i < total_size(value);
-                    ++i) {
-                    std::cout << fat(value, i) << std::endl;
-                    fat(output_list[0], i) = fat(value, i);
-                }
+                std::copy(static_cast<char*>(value.data()),
+                          static_cast<char*>(value.data()) +
+                            total_size(value) * get_size_in_bytes(value.dtype()),
+                          static_cast<char*>(output_list[0].data()));
                 auto procedure = []() {};
 
                 return procedure;
