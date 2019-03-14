@@ -6,8 +6,6 @@
 #include <menoh/array.hpp>
 #include <menoh/composite_backend/procedure.hpp>
 
-#include <iostream>
-
 namespace menoh_impl {
     namespace composite_backend {
         namespace generic_backend {
