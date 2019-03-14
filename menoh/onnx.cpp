@@ -83,22 +83,67 @@ namespace menoh_impl {
     }
 
     template <menoh_impl::dtype_t dtype>
-    auto move_tensor_from_onnx_data(int total_size, menoh_onnx::TensorProto& tensor) {
+    auto move_tensor_from_onnx_data(int total_size,
+                                    menoh_onnx::TensorProto const& tensor) {
         // libc++ workaround
         // Below 2 lines are equal to `data =
         // std::unique_ptr<float_t[]>(new float_t[total_size]);`
         using dtype_type = dtype_to_type_t<dtype>;
         auto u = std::make_unique<dtype_type[]>(total_size);
         auto data = std::shared_ptr<void>(u.release(), u.get_deleter());
-        // TODO other format: float_data
-        assert(tensor.has_raw_data());
-        assert(tensor.raw_data().length() ==
-               static_cast<decltype(tensor.raw_data().length())>(
-                 total_size * size_in_bytes<dtype>));
-        std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
-                  static_cast<char*>(data.get()));
-        delete tensor.release_raw_data();
+        if(tensor.has_raw_data()) {
+            assert(tensor.raw_data().length() ==
+                   static_cast<decltype(tensor.raw_data().length())>(
+                     total_size * size_in_bytes<dtype>));
+            std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
+                      static_cast<char*>(data.get()));
+        } else if(dtype == dtype_t::float_) {
+            assert(tensor.float_data_size());
+            std::copy(tensor.float_data().begin(), tensor.float_data().end(),
+                      static_cast<float*>(data.get()));
+        } else if(dtype == dtype_t::int32) {
+            assert(tensor.int32_data_size());
+            std::copy(tensor.int32_data().begin(), tensor.int32_data().end(),
+                      static_cast<std::int32_t*>(data.get()));
+        } else if(dtype == dtype_t::int64) {
+            assert(tensor.int64_data_size());
+            std::copy(tensor.int64_data().begin(), tensor.int64_data().end(),
+                      static_cast<std::int64_t*>(data.get()));
+        } else {
+            throw invalid_dtype(std::to_string(tensor.data_type()));
+        }
         return data;
+    }
+
+    auto tensor_to_array(menoh_onnx::TensorProto const& tensor) {
+        assert(tensor.has_data_type());
+
+        std::vector<int> dims(tensor.dims().begin(), tensor.dims().end());
+        auto total_size =
+          std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<int>());
+
+        dtype_t d = tensor_proto_data_type_to_dtype(tensor.data_type());
+
+        std::shared_ptr<void> data;
+        if(d == menoh_impl::dtype_t::float_) {
+            data = move_tensor_from_onnx_data<menoh_impl::dtype_t::float_>(
+              total_size, tensor);
+        } else if(d == menoh_impl::dtype_t::int8) {
+            data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int8>(
+              total_size, tensor);
+        } else if(d == menoh_impl::dtype_t::int16) {
+            data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int16>(
+              total_size, tensor);
+        } else if(d == menoh_impl::dtype_t::int32) {
+            data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int32>(
+              total_size, tensor);
+        } else if(d == menoh_impl::dtype_t::int64) {
+            data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int64>(
+              total_size, tensor);
+        } else {
+            throw invalid_dtype(std::to_string(tensor.data_type()));
+        }
+        return menoh_impl::array(d, std::move(dims), std::move(data));
     }
 
     auto extract_parameter_name_and_array_list_from_onnx_graph(
@@ -113,58 +158,34 @@ namespace menoh_impl {
                          tensor.name()) == needed_parameter_name_list.end()) {
                 continue;
             }
-            assert(tensor.has_data_type());
-
-            std::vector<int> dims(tensor.dims().begin(), tensor.dims().end());
-            auto total_size = std::accumulate(dims.begin(), dims.end(), 1,
-                                              std::multiplies<int>());
-
-            dtype_t d = tensor_proto_data_type_to_dtype(tensor.data_type());
-
-            std::shared_ptr<void> data;
-            if(d == menoh_impl::dtype_t::float_) {
-                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::float_>(
-                  total_size, tensor);
-            } else if(d == menoh_impl::dtype_t::int8) {
-                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int8>(
-                  total_size, tensor);
-            } else if(d == menoh_impl::dtype_t::int16) {
-                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int16>(
-                  total_size, tensor);
-            } else if(d == menoh_impl::dtype_t::int32) {
-                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int32>(
-                  total_size, tensor);
-            } else if(d == menoh_impl::dtype_t::int64) {
-                data = move_tensor_from_onnx_data<menoh_impl::dtype_t::int64>(
-                  total_size, tensor);
-            } else {
-                throw invalid_dtype(std::to_string(tensor.data_type()));
-            }
             parameter_name_and_array_list.push_back(
-              {tensor.name(),
-               menoh_impl::array(d, std::move(dims), std::move(data))});
+              {tensor.name(), tensor_to_array(tensor)});
         }
         return parameter_name_and_array_list;
     }
 
-    auto extract_node_list_from_onnx_graph(menoh_onnx::GraphProto const& graph) {
+    auto
+    extract_node_list_from_onnx_graph(menoh_onnx::GraphProto const& graph) {
         std::vector<node> node_list;
         for(auto const& onnx_node : graph.node()) {
             std::unordered_map<std::string, attribute> attribute_table;
             for(auto const& attr : onnx_node.attribute()) {
                 if(attr.has_i()) {
-                    attribute_table.insert(
-                      {attr.name(), static_cast<int>(attr.i())}); // TODO int64
+                    attribute_table.emplace(
+                      attr.name(), static_cast<int>(attr.i())); // TODO int64
                 } else if(attr.has_f()) {
-                    attribute_table.insert({attr.name(), attr.f()});
+                    attribute_table.emplace(attr.name(), attr.f());
                 } else if(attr.ints_size()) {
-                    attribute_table.insert(
-                      {attr.name(), std::vector<int>(attr.ints().begin(),
-                                                     attr.ints().end())});
+                    attribute_table.emplace(
+                      attr.name(),
+                      std::vector<int>(attr.ints().begin(), attr.ints().end()));
                 } else if(attr.floats_size()) {
-                    attribute_table.insert(
-                      {attr.name(), std::vector<float>(attr.floats().begin(),
-                                                       attr.floats().end())});
+                    attribute_table.emplace(
+                      attr.name(), std::vector<float>(attr.floats().begin(),
+                                                      attr.floats().end()));
+                } else if(attr.has_t()) {
+                    attribute_table.emplace(attr.name(),
+                                            tensor_to_array(attr.t()));
                 } else {
                     throw invalid_attribute_type(
                       attr.name(),

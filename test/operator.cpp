@@ -249,6 +249,8 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_and_asymmetric_padding, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_no_padding, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_padding, eps);
+
+    TEST_OP(mkldnn_with_generic_fallback, test_constant, eps);
   
     // Eltwise
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_abs, eps);

@@ -9,16 +9,15 @@ namespace menoh_impl {
         namespace mkldnn_backend {
 
             mkldnn_context::mkldnn_context() : context() {
-                using namespace composite_backend::
-                  mkldnn_backend;
-              
+                using namespace composite_backend::mkldnn_backend;
+
                 // BatchNormalization
                 procedure_factory_table_.emplace(
                   "BatchNormalization", mkldnn_backend::make_batch_norm);
 
                 // Conv
                 procedure_factory_table_.emplace("Conv", make_conv);
-              
+
                 // Gemm
                 procedure_factory_table_.emplace("Gemm", make_gemm);
 
@@ -29,11 +28,12 @@ namespace menoh_impl {
                 procedure_factory_table_.emplace("Relu", make_relu);
                 procedure_factory_table_.emplace("Sqrt", make_sqrt);
                 procedure_factory_table_.emplace("Tanh", make_tanh);
-              
+
                 // Pool
-                procedure_factory_table_.emplace("AveragePool", make_average_pool);
+                procedure_factory_table_.emplace("AveragePool",
+                                                 make_average_pool);
                 procedure_factory_table_.emplace("MaxPool", make_max_pool);
-              
+
                 // Softmax
                 procedure_factory_table_.emplace("Softmax", make_softmax);
 

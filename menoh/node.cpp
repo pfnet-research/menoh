@@ -50,6 +50,10 @@ namespace menoh_impl {
         return menoh_impl::get<float>(find_value(n.attribute_table, attr_name));
     }
 
+    array const& attribute_tensor(node const& n, std::string const& attr_name) {
+        return menoh_impl::get<array>(find_value(n.attribute_table, attr_name));
+    }
+
     std::vector<int>
     optional_attribute_ints(node const& n, std::string const& attr_name,
                             std::vector<int> const& default_value) {
@@ -96,10 +100,10 @@ namespace menoh_impl {
           output_channel_num, kernel_shape, strides, pads);
     }
 
-    std::vector<int>
-    calc_2d_output_dims_for_conv_transpose(menoh_impl::node const& node, int output_channel_num,
-                        std::unordered_map<std::string, std::vector<int>> const&
-                          variable_dims_table) {
+    std::vector<int> calc_2d_output_dims_for_conv_transpose(
+      menoh_impl::node const& node, int output_channel_num,
+      std::unordered_map<std::string, std::vector<int>> const&
+        variable_dims_table) {
         std::vector<int> strides, kernel_shape, pads;
         std::tie(strides, kernel_shape, pads) =
           attributes_for_2d_data_processing(node);
