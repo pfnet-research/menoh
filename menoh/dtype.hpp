@@ -107,7 +107,7 @@ namespace menoh_impl {
         if(d == dtype_t::int64) {
             return size_in_bytes<dtype_t::int64>;
         }
-        assert(!"not come here");
+        throw invalid_dtype(std::to_string(static_cast<int>(dtype)));
     }
 
 } // namespace menoh_impl
