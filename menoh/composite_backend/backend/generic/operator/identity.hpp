@@ -10,7 +10,7 @@ namespace menoh_impl {
     namespace composite_backend {
         namespace generic_backend {
             inline procedure
-            make_identity(node const& node,
+            make_identity(node const& /*node*/,
                           std::vector<array> const& input_list,
                           std::vector<array> const& output_list) {
                 assert(input_list.size() == 1);
@@ -21,12 +21,11 @@ namespace menoh_impl {
                     for(decltype(total_size(input)) i = 0;
                         i < total_size(input); ++i) {
                         fat(output, i) = fat(input, i);
-                        std::copy(
-                          static_cast<char*>(input.data()),
-                          static_cast<char*>(
-                            input.data() + total_size(input) *
-                                             get_size_in_bytes(input.dtype())),
-                          static_cast<char*>(output.data()));
+                        std::copy(static_cast<char*>(input.data()),
+                                  static_cast<char*>(input.data()) +
+                                    total_size(input) *
+                                      get_size_in_bytes(input.dtype()),
+                                  static_cast<char*>(output.data()));
                     }
                 };
 
