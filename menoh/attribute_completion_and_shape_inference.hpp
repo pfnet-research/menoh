@@ -702,6 +702,7 @@ if(node.op_type == "Identity") {
         
 assert(node.input_name_list.size() == 1);
 assert(node.output_name_list.size() == 1);
+add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 
     }
 }
