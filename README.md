@@ -80,7 +80,7 @@ make install
 Execute following command in root directory.
 
 ```
-./example/mkldnn_vgg16_example_in_cpp // for tensorrt, tensorrt_vgg16_example_in_cpp is available
+./example/mkldnn_vgg16_example_in_cpp # for tensorrt, tensorrt_vgg16_example_in_cpp is available
 ```
 
 Result is here
