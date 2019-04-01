@@ -28,11 +28,29 @@ Windows (MINGW):
 You also need to install the dependent libraries on your system:
 
 - [Protocol Buffers](https://developers.google.com/protocol-buffers/) 2.6.1 or later (building instructions are [here](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md))
-- [MKL-DNN](https://github.com/intel/mkl-dnn) 0.14 or later (for `mkldnn` backend) (building instructions are [here](https://github.com/intel/mkl-dnn/blob/master/README.md#installation))
+- [MKL-DNN](https://github.com/intel/mkl-dnn) 0.14 or later (for `mkldnn_with_generic_fallback` backend) (building instructions are [here](https://github.com/intel/mkl-dnn/blob/master/README.md#installation))
+- [TensorRT](https://developer.nvidia.com/tensorrt) 4 or later (for `tensorrt` backend)
 
 `protobuf` can be installed through most package managers instead of building it yourself. `mkl-dnn` package, unfortunatelly, is not available in many environments at the moment (except for `brew` in macOS).
 
 Note that you can use ProtoBuf either version 2 or 3, but the runtime version should be the same as `protoc` in your system.
+
+### CMake options
+
+- `ENABLE_TEST`: Specifying to enable testing (default is OFF)
+- `ENABLE_BENCHMARK`: Specifying to enable testing (default is ON)
+- `ENABLE_EXAMPLE`: Specifying to enable testing (default is ON)
+
+
+- `ENABLE_MKLDNN`: Specifying to use `mkldnn_with_generic_fallback` backend or not (default is ON)
+
+
+- `ENABLE_TENSORRT`: Specifying to use `tensorrt` backend or not (default is OFF)
+- `ENABLE_TENSORRT_PROFILER`: Specifying to enable `tensorrt`'s profiling feature (default is ON)
+- `ENABLE_TENSORRT_MODEL_CACHING`: Specifying to enable `tensorrt`'s model caching feature (default is OFF)
+
+
+e.g. `cmake .. -DENABLE_TEST=ON -DENABLE_TENSORRT=ON -DENABLE_MKLDNN=OFF`
 
 ### Debian/Ubuntu
 ```
