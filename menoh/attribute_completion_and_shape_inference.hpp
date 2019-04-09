@@ -280,6 +280,32 @@ add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 else
 
 
+if(node.op_type == "Constant") {
+    
+    
+{
+    auto found = node.attribute_table.find("value");
+    if(found == node.attribute_table.end()) {
+        
+assert(!"attribute not found: value");
+
+    }
+}
+
+    
+    {
+        
+auto value = get<array>(node.attribute_table.at("value"));
+static_cast<void>(value); // maybe unused
+
+        
+add_variable_to_table(output(0), value.dtype(), value.dims());
+
+    }
+}
+else
+
+
 if(node.op_type == "Conv") {
     
 auto kernel_ndims = ndims_of(input(1))-2;

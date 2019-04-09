@@ -31,6 +31,7 @@ This codebase contains C API and C++ API.
 - Ruby wrapper : [menoh-ruby](https://github.com/pfnet-research/menoh-ruby)
 - Rust wrapper : [menoh-rs](https://github.com/pfnet-research/menoh-rs)
   - There is also [unofficial Rust wrapper by Y-Nak san](https://github.com/Y-Nak/menoh-rs)
+- Java wrapper : [menoh-java](https://github.com/pfnet-research/menoh-java)
 - [Unofficial] ROS interface by Akio Ochiai san : [menoh_ros](https://github.com/akio/menoh_ros)
 - [Unofficial] OCaml wrapper by wkwkes san : [Menohcaml](https://github.com/wkwkes/Menohcaml)
 

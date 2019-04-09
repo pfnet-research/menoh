@@ -7,7 +7,7 @@
 #include <filesystem/path.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <onnx/onnx.pb.h>
+#include <onnx/onnx_pb.h>
 
 #include <menoh/menoh.hpp>
 
@@ -35,7 +35,7 @@ namespace {
         gpio::CodedInputStream cis(&iis);
         cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
                                std::numeric_limits<int>::max());
-        onnx::TensorProto tensor;
+        menoh_onnx::TensorProto tensor;
         if(!tensor.ParseFromCodedStream(&cis)) {
             std::cout << "invalid filename" << std::endl;
             throw "onnx_parse_error";
@@ -62,7 +62,7 @@ namespace {
           std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<int>());
         std::cout << "total_size " << total_size << std::endl;
         assert(tensor.has_raw_data());
-        if(tensor.data_type() == onnx::TensorProto_DataType_FLOAT) {
+        if(tensor.data_type() == menoh_onnx::TensorProto_DataType_FLOAT) {
             assert(tensor.raw_data().length() ==
                    static_cast<decltype(tensor.raw_data().length())>(
                      total_size * 4));
@@ -74,7 +74,7 @@ namespace {
             return named_array_data{tensor.name(), menoh::dtype_t::float32,
                                     std::move(dims), std::move(data)};
         }
-        if(tensor.data_type() == onnx::TensorProto_DataType_INT64) {
+        if(tensor.data_type() == menoh_onnx::TensorProto_DataType_INT64) {
             assert(tensor.raw_data().length() ==
                    static_cast<decltype(tensor.raw_data().length())>(
                      total_size * 8));
@@ -86,9 +86,7 @@ namespace {
             return named_array_data{tensor.name(), menoh::dtype_t::int64,
                                     std::move(dims), std::move(data)};
         }
-
-        assert(!"something wrong");
-        return named_array_data{};
+        throw "unexpected tensor data type";
     }
 
     class OperatorTest : public ::testing::Test {
@@ -283,6 +281,8 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_and_asymmetric_padding, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_no_padding, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_padding, eps);
+
+    TEST_OP(mkldnn_with_generic_fallback, test_constant, eps);
   
     // Eltwise
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_abs, eps);

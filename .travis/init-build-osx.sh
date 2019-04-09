@@ -1,6 +1,8 @@
 # check if variables are set
 test -n "${MAKE_JOBS}" || { echo "MAKE_JOBS can't be empty" 1>&2; exit 1; }
 
+test -n "${BUILD_STATIC_LIBS}" || BUILD_STATIC_LIBS=false
+
 # TODO: make them configurable for outside Travis
 export WORK_DIR=${HOME}
 export PROJ_DIR=${TRAVIS_BUILD_DIR} # = ${HOME}/build/${TRAVIS_REPO_SLUG}
@@ -14,7 +16,13 @@ function prepare_menoh_data() {
 }
 
 function build_menoh() {
-    if [ "${LINK_STATIC}" != "true" ]; then
+    if [ "${BUILD_STATIC_LIBS}" = "true" ]; then
+        bash -ex "${PROJ_DIR}/scripts/build-menoh.sh" \
+            --build-type Release \
+            --source-dir "${PROJ_DIR}" \
+            --python-executable python \
+            --build-shared-libs OFF
+    elif [ "${LINK_STATIC}" != "true" ]; then
         bash -ex "${PROJ_DIR}/scripts/build-menoh.sh" \
             --build-type Release \
             --source-dir "${PROJ_DIR}" \
@@ -35,5 +43,7 @@ function test_menoh() {
 }
 
 function check_menoh_artifact() {
-    otool -L "${PROJ_DIR}/build/menoh/libmenoh.dylib"
+    if [ "${BUILD_STATIC_LIBS}" != "true" ]; then
+      otool -L "${PROJ_DIR}/build/menoh/libmenoh.dylib"
+    fi
 }

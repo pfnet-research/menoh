@@ -21,6 +21,8 @@ target_include_directories(menoh_objlib PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:${ONNX_INCLUDE_DIRS}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external/onnx>
+    $<BUILD_INTERFACE:${MKLDNN_INCLUDE_DIR}>
 )
 
 add_library(menoh $<TARGET_OBJECTS:menoh_objlib>)

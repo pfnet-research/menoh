@@ -26,6 +26,8 @@ option(ENABLE_EXAMPLE   "Build example"   ON)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
 
+set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "installation path for pkg-config(.pc) file")
+
 option(SHOW_ALL_VARIABLES "Debug: show all variables" OFF)
 
 ## C++ setup
@@ -45,6 +47,9 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
+        message(FATAL_ERROR "GCC is too old. Please use GCC version >= 4.9")
+    endif()
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
     set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s")
 endif()
@@ -81,6 +86,9 @@ if(LINK_STATIC_LIBPROTOBUF)
     # Note: We can't use `set(PROTOBUF_BUILD_SHARED_LIBS OFF)` in `FindProtobuf` module
     # because `libprotobuf.a` produced by the package manager is not PIC. So we need to
     # build it by ourselves.
+    if(NOT BUILD_SHARED_LIBS)
+        message(FATAL_ERROR "LINK_STATIC_LIBPROTOBUF=ON is supported only when BUILD_SHARED_LIBS=ON")
+    endif()
     if(UNIX OR MINGW)
         include(BuildProtobuf)
     else()
@@ -116,16 +124,20 @@ message(STATUS "Adding external/onnx")
 set(ONNX_SRC_DIR ${EXTERNAL_DIR}/onnx)
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-# see https://github.com/onnx/onnx/pull/1466
-message(STATUS "Patching to external/onnx")
-configure_file(${EXTERNAL_DIR}/onnx-v1.3.0-patch_CMakeLists.txt ${EXTERNAL_DIR}/onnx/CMakeLists.txt COPYONLY)
-
 # TODO: enable the following option when it is ready for migrating to onnx-ml
 #set(ONNX_ML 1)
 
 set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
 set(BUILD_SHARED_LIBS OFF)
+set(ONNX_NAMESPACE "menoh_onnx" CACHE INTERNAL "onnx namespace")
 add_subdirectory(${EXTERNAL_DIR}/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
+if(NOT ${BUILD_SHARED_LIBS_SAVED}) # install libmenoh_onnx and lib_menoh_onnx_proto
+    set_target_properties(onnx_proto PROPERTIES OUTPUT_NAME "menoh_onnx_proto")
+    set_target_properties(onnx PROPERTIES OUTPUT_NAME "menoh_onnx")
+    find_library(MENOH_ONNX_PROTO_LIB "menoh_onnx_proto" "${CMAKE_CURRENT_BINARY_DIR}/external/onnx")
+    find_library(MENOH_ONNX_LIB "menoh_onnx" "${CMAKE_CURRENT_BINARY_DIR}/external/onnx")
+    install(FILES "${MENOH_ONNX_LIB}" "${MENOH_ONNX_PROTO_LIB}" DESTINATION "lib")
+endif()
 set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 
 if(${ENABLE_TEST})
