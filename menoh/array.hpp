@@ -66,6 +66,8 @@ namespace menoh_impl {
 
     std::size_t total_size(array const& a);
 
+    std::size_t total_size_in_bytes(array const& a);
+
     float* fbegin(array const& a);
     float* fend(array const& a);
 

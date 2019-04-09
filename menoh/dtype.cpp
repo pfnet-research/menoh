@@ -11,7 +11,7 @@ namespace menoh_impl {
         throw invalid_dtype(std::to_string(static_cast<int>(dtype)));
     }
 
-    int get_size_in_bytes(dtype_t d) {
+    std::size_t get_size_in_bytes(dtype_t d) {
         if(d == dtype_t::float16) {
             return size_in_bytes<dtype_t::float16>;
         } else

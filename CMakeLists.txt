@@ -7,12 +7,22 @@ set(MENOH_MINOR_VERSION 2)
 set(MENOH_PATCH_VERSION 0)
 
 # Options
+include(CMakeDependentOption)
+option(ENABLE_MKLDNN    "Use MKLDNN"      ON)
+option(ENABLE_TENSORRT  "Use TensorRT"    OFF)
+cmake_dependent_option(ENABLE_TENSORRT_PROFILER "Make TneosrRT Profiler feature available" ON
+                                                "ENABLE_TENSORRT" OFF)
+cmake_dependent_option(ENABLE_TENSORRT_MODEL_CACHING "Make TensorRT model caching feature available" ON
+                                                     "ENABLE_TENSORRT" OFF)
+
+option(BUILD_SHARED_LIBS "Build shared libs" ON)
+
 option(USE_OLD_GLIBCXX_ABI "Generate binaries for the old libstdc++ ABI" OFF)
 option(LINK_STATIC_LIBPROTOBUF "Link static libprotobuf to libmenoh" OFF)
 
-option(ENABLE_TEST "Build test" OFF)
+option(ENABLE_TEST      "Build test"      OFF)
 option(ENABLE_BENCHMARK "Build benchmark" ON)
-option(ENABLE_EXAMPLE "Build example" ON)
+option(ENABLE_EXAMPLE   "Build example"   ON)
 
 option(BUILD_SHARED_LIBS "Build shared libs" ON)
 
@@ -41,7 +51,24 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         message(FATAL_ERROR "GCC is too old. Please use GCC version >= 4.9")
     endif()
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s")
+endif()
+
+if(ENABLE_MKLDNN)
+    add_definitions(-DMENOH_WITH_MKLDNN)
+endif()
+
+if(ENABLE_TENSORRT)
+    add_definitions(-DMENOH_WITH_TENSORRT)
+    if(ENABLE_TENSORRT_PROFILER)
+        add_definitions(-DMENOH_ENABLE_TENSORRT_PROFILER)
+    endif()
+    if(ENABLE_TENSORRT_MODEL_CACHING)
+        add_definitions(-DMENOH_ENABLE_TENSORRT_MODEL_CACHING)
+    endif()
+    if(CMAKE_BUILD_TYPE=="Debug")
+        add_definitions(-DMENOH_ENABLE_TENSORRT_DEBUG)
+    endif()
 endif()
 
 ## Configure to use the new `libstdc++` ABI
@@ -72,7 +99,6 @@ else()
     # See external/onnx/CMakeLists.txt for more details.
     include(FindProtobuf)
     find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)
-
     # Note: `protobuf::protoc` is not supported in CMake 3.9.4 or older
     if(NOT TARGET protobuf::protoc)
         find_program(Protobuf_PROTOC_EXECUTABLE
@@ -120,13 +146,8 @@ if(${ENABLE_TEST})
     add_subdirectory(test)
 endif()
 
-if(${ENABLE_BENCHMARK})
-    message(STATUS "Adding benchmark")
-    add_subdirectory(benchmark)
-endif()
-
 if(${ENABLE_EXAMPLE})
-    message(STATUS "Adding example")
+    message(STATUS "# add_subdirectory\(example\)")
     add_subdirectory(example)
 endif()
 

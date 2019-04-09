@@ -41,7 +41,8 @@ int main(int argc, char** argv) {
 
     // Build model
     menoh::model_builder model_builder(vpt);
-    auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
+    //auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
+    auto model = model_builder.build_model(model_data, "tensorrt");
     model_data
       .reset(); // you can delete model_data explicitly after model building
 

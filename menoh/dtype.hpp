@@ -85,7 +85,7 @@ namespace menoh_impl {
     template <dtype_t d>
     constexpr int size_in_bytes = sizeof(dtype_to_type_t<d>);
 
-    int get_size_in_bytes(dtype_t d);
+    std::size_t get_size_in_bytes(dtype_t dtype);
 
 } // namespace menoh_impl
 

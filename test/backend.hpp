@@ -35,7 +35,7 @@ namespace menoh {
             std::tie(std::ignore, input_dims, data) =
               menoh_impl::load_np_array(input_filename);
             dtype_t dtype = dtype_t::float_; // TODO other dtype
-            input_table.insert({input_name, {input_dims, data}});
+            input_table.insert({input_name, std::make_tuple(input_dims, data)});
             if(input_dims.size() == 2 ||
                input_dims.size() == 4) { // FIXME dirty hack
                 vpt_builder.add_input_profile(input_name, dtype, input_dims);
