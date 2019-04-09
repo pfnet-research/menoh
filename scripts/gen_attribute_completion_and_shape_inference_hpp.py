@@ -61,8 +61,7 @@ else
         attribute_definition="\n".join(attribute_definition_list),
         shape_inference_code=shape_inference_code,
         postprocess=postprocess,
-        attribute_completion_code="\n".join(
-            attribute_completion_code_list))
+        attribute_completion_code="\n".join(attribute_completion_code_list))
 
 
 def main():
@@ -162,17 +161,22 @@ namespace menoh_impl {{
     code_list.append(make_completion_code("Abs"))
     code_list.append(make_completion_code("Add"))
     code_list.append(
-        make_completion_code("AveragePool", [
-            ("count_include_pad", "int", "0"),
-            ("kernel_shape", "ints", None),
-            ("pads", "ints", "ints(2*(ndims_of(input(0))-2), 0)"),
-            ("strides", "ints", "ints(ndims_of(input(0))-2, 1)"),  # WORKAROUND: None is correct # NOQA
-        ], '''
+        make_completion_code(
+            "AveragePool",
+            [
+                ("count_include_pad", "int", "0"),
+                ("kernel_shape", "ints", None),
+                ("pads", "ints", "ints(2*(ndims_of(input(0))-2), 0)"),
+                ("strides", "ints", "ints(ndims_of(input(0))-2, 1)"
+                 ),  # WORKAROUND: None is correct # NOQA
+            ],
+            '''
 add_variable_to_table(output(0), dtype_of(input(0)),
     calc_2d_output_dims(
         dims_of(input(0)), dims_of(input(0)).at(1),
         kernel_shape, strides, pads));
-''', preprocess='''
+''',
+            preprocess='''
 assert(2 <= ndims_of(input(0)));
 '''))
     code_list.append(
@@ -182,9 +186,10 @@ assert(2 <= ndims_of(input(0)));
             ("spatial", "int", "1"),
         ]))
     code_list.append(
-        make_completion_code("Concat", [
-            ("axis", "int", None),
-        ], '''
+        make_completion_code(
+            "Concat", [
+                ("axis", "int", None),
+            ], '''
 auto output_dims = dims_of(input(0));
 for(unsigned int i = 1; i < node.input_name_list.size(); ++i) {
     // TODO dim check
@@ -193,9 +198,10 @@ for(unsigned int i = 1; i < node.input_name_list.size(); ++i) {
 add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 '''))
     code_list.append(
-        make_completion_code("Constant", [
-            ("value", "array", None),
-        ], '''
+        make_completion_code(
+            "Constant", [
+                ("value", "array", None),
+            ], '''
 add_variable_to_table(output(0), value.dtype(), value.dims());
 '''))
     code_list.append(
@@ -206,7 +212,8 @@ add_variable_to_table(output(0), value.dtype(), value.dims());
                 ("kernel_shape", "ints", "kernel_shape"),
                 ("pads", "ints", "ints(kernel_ndims*2, 0)"),
                 ("strides", "ints", "ints(kernel_ndims, 1)"),
-            ], '''
+            ],
+            '''
 add_variable_to_table(output(0), dtype_of(input(0)),
     calc_2d_output_dims(
         dims_of(input(0)), dims_of(input(1)).at(0),
@@ -228,7 +235,8 @@ auto kernel_shape = ints(weights_shape.begin()+2, weights_shape.end());
                 # ("output_shape", "ints", None),
                 # ("pads", "ints", None),
                 ("strides", "ints", "ints(kernel_ndims, 1)"),
-            ], '''
+            ],
+            '''
 add_variable_to_table(output(0), dtype_of(input(0)),
     calc_2d_output_dims_for_conv_transpose(
         dims_of(input(0)), dims_of(input(1)).at(0),
@@ -268,18 +276,20 @@ auto kernel_shape = ints(weights_shape.begin()+2, weights_shape.end());
 '''))
     code_list.append(make_completion_code("Elu", [("alpha", "float", "1.f")]))
     code_list.append(
-        make_completion_code("FC", [], '''
+        make_completion_code(
+            "FC", [], '''
 auto output_dims = ints({dims_of(input(0)).at(0), dims_of(input(1)).at(0)});
 add_variable_to_table(output(0), dtype_of(input(0)),
     output_dims);
 '''))
     code_list.append(
-        make_completion_code("Gemm", [
-            ("alpha", "float", "1.f"),
-            ("beta", "float", "1.f"),
-            ("transA", "int", "0"),
-            ("transB", "int", "0"),
-        ], '''
+        make_completion_code(
+            "Gemm", [
+                ("alpha", "float", "1.f"),
+                ("beta", "float", "1.f"),
+                ("transA", "int", "0"),
+                ("transB", "int", "0"),
+            ], '''
 auto a_dims = dims_of(input(0));
 if(ndims_of(input(0)) != 2) {
     int feature_size = std::accumulate(
@@ -307,18 +317,28 @@ auto output_dims = ints({a_dims.at(0), b_dims.at(1)});
 add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 '''))
     code_list.append(
-        make_completion_code("GlobalAveragePool", [], '''
+        make_completion_code(
+            "GlobalAveragePool", [], '''
 auto input_dims = dims_of(input(0));
 auto output_dims = ints({input_dims[0], input_dims[1], 1, 1});
 add_variable_to_table(output(0), dtype_of(input(0)),
     output_dims);
 '''))
     code_list.append(
-        make_completion_code("GlobalMaxPool", [], '''
+        make_completion_code(
+            "GlobalMaxPool", [], '''
 auto input_dims = dims_of(input(0));
 auto output_dims = ints({input_dims[0], input_dims[1], 1, 1});
 add_variable_to_table(output(0), dtype_of(input(0)),
     output_dims);
+'''))
+    code_list.append(
+        make_completion_code(
+            "Identity",
+            shape_inference_code='''
+assert(node.input_name_list.size() == 1);
+assert(node.output_name_list.size() == 1);
+add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
 '''))
     code_list.append(
         make_completion_code("LeakyRelu", [("alpha", "float", "0.01f")]))
@@ -330,24 +350,32 @@ add_variable_to_table(output(0), dtype_of(input(0)),
             ("size", "float", None),
         ]))
     code_list.append(
-        make_completion_code("MaxPool", [
-            ("kernel_shape", "ints", None),
-            ("pads", "ints", "ints(2*(ndims_of(input(0))-2), 0)"),
-            ("storage_order", "int", "0"),
-            ("strides", "ints", "ints(ndims_of(input(0))-2, 1)"), # WORKAROUND: None is correct # NOQA
-        ], '''
+        make_completion_code(
+            "MaxPool",
+            [
+                ("kernel_shape", "ints", None),
+                ("pads", "ints", "ints(2*(ndims_of(input(0))-2), 0)"),
+                ("storage_order", "int", "0"),
+                ("strides", "ints", "ints(ndims_of(input(0))-2, 1)"
+                 ),  # WORKAROUND: None is correct # NOQA
+            ],
+            '''
 add_variable_to_table(output(0), dtype_of(input(0)),
     calc_2d_output_dims(
         dims_of(input(0)), dims_of(input(0)).at(1),
         kernel_shape, strides, pads));
 '''))
-    code_list.append(make_completion_code("Mul", [], '''
+    code_list.append(
+        make_completion_code(
+            "Mul", [], '''
 add_variable_to_table(output(0), dtype_of(input(0)),
     broadcast_shape(
         dims_of(input(0)), dims_of(input(1))));
 '''))
     code_list.append(make_completion_code("Relu"))
-    code_list.append(make_completion_code("Reshape", [], '''
+    code_list.append(
+        make_completion_code(
+            "Reshape", [], '''
 auto found = std::find_if(model_data.parameter_name_and_array_list.begin(),
                           model_data.parameter_name_and_array_list.end(),
                           [shape_name=node.input_name_list.at(1)](
@@ -380,22 +408,29 @@ add_variable_to_table(output(0), dtype_of(input(0)), new_dims);
     code_list.append(make_completion_code("Sqrt"))
     code_list.append(make_completion_code("Tanh"))
     code_list.append(
-        make_completion_code("Transpose", [
-            ("perm", "ints", "perm"),
-        ], '''
+        make_completion_code(
+            "Transpose", [
+                ("perm", "ints", "perm"),
+            ],
+            '''
 auto input_dims = dims_of(input(0));
 ints output_dims(input_dims.size());
 for(unsigned int i = 0; i < input_dims.size(); ++i) {
     output_dims.at(i) = input_dims.at(perm.at(i));
 }
 add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
-''', preprocess="""
+''',
+            preprocess="""
 ints perm(ndims_of(input(0)));
 for(unsigned int i = 0; i < perm.size(); ++i) {{
     perm.at(i) = perm.size()-i-1;
 }}
 """))
-    print(template.format(script_name=os.path.basename(__file__), code="\n".join(code_list), unsupported_operator='''
+    print(
+        template.format(
+            script_name=os.path.basename(__file__),
+            code="\n".join(code_list),
+            unsupported_operator='''
 {
     throw unsupported_operator(node.op_type);
 }

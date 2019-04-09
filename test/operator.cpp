@@ -263,6 +263,8 @@ namespace {
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_tanh, eps);
 
     //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+    
+    TEST_OP(mkldnn_with_generic_fallback, test_identity, eps);
 
     // Mul
     TEST_OP(mkldnn_with_generic_fallback, test_mul, eps);
