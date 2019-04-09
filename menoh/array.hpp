@@ -60,6 +60,10 @@ namespace menoh_impl {
         void* data_handle_ = nullptr;
     };
 
+    inline bool operator==(array const& lhs, array const& rhs) {
+        return lhs.data() == rhs.data();
+    }
+
     std::size_t total_size(array const& a);
 
     float* fbegin(array const& a);
@@ -80,6 +84,24 @@ namespace menoh_impl {
     }
 
     array zeros(dtype_t d, std::vector<int> const& dims);
+
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>* begin(array const& a) {
+        assert(a.dtype() == dtype);
+        return static_cast<dtype_to_type_t<dtype>*>(a.data());
+    }
+
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>* end(array const& a) {
+        assert(a.dtype() == dtype);
+        return static_cast<dtype_to_type_t<dtype>*>(a.data()) + total_size(a);
+    }
+
+    template <dtype_t dtype>
+    dtype_to_type_t<dtype>& at(array const& a, std::size_t i) {
+        assert(a.dtype() == dtype);
+        return *(static_cast<dtype_to_type_t<dtype>*>(a.data()) + i);
+    }
 
 } // namespace menoh_impl
 

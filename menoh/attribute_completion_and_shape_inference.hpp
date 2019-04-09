@@ -280,6 +280,32 @@ add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 else
 
 
+if(node.op_type == "Constant") {
+    
+    
+{
+    auto found = node.attribute_table.find("value");
+    if(found == node.attribute_table.end()) {
+        
+assert(!"attribute not found: value");
+
+    }
+}
+
+    
+    {
+        
+auto value = get<array>(node.attribute_table.at("value"));
+static_cast<void>(value); // maybe unused
+
+        
+add_variable_to_table(output(0), value.dtype(), value.dims());
+
+    }
+}
+else
+
+
 if(node.op_type == "Conv") {
     
 auto kernel_ndims = ndims_of(input(1))-2;
@@ -633,6 +659,56 @@ add_variable_to_table(output(0), dtype_of(input(0)), output_dims);
 else
 
 
+if(node.op_type == "GlobalAveragePool") {
+    
+    
+    
+    {
+        
+        
+auto input_dims = dims_of(input(0));
+auto output_dims = ints({input_dims[0], input_dims[1], 1, 1});
+add_variable_to_table(output(0), dtype_of(input(0)),
+    output_dims);
+
+    }
+}
+else
+
+
+if(node.op_type == "GlobalMaxPool") {
+    
+    
+    
+    {
+        
+        
+auto input_dims = dims_of(input(0));
+auto output_dims = ints({input_dims[0], input_dims[1], 1, 1});
+add_variable_to_table(output(0), dtype_of(input(0)),
+    output_dims);
+
+    }
+}
+else
+
+
+if(node.op_type == "Identity") {
+    
+    
+    
+    {
+        
+        
+assert(node.input_name_list.size() == 1);
+assert(node.output_name_list.size() == 1);
+add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
+
+    }
+}
+else
+
+
 if(node.op_type == "LeakyRelu") {
     
     
@@ -835,6 +911,44 @@ if(node.op_type == "Relu") {
 assert(node.input_name_list.size() > 0);
 assert(node.output_name_list.size() > 0);
 add_variable_to_table(output(0), dtype_of(input(0)), dims_of(input(0)));
+
+    }
+}
+else
+
+
+if(node.op_type == "Reshape") {
+    
+    
+    
+    {
+        
+        
+auto found = std::find_if(model_data.parameter_name_and_array_list.begin(),
+                          model_data.parameter_name_and_array_list.end(),
+                          [shape_name=node.input_name_list.at(1)](
+                            auto const& p){ return p.first == shape_name; });
+assert(found != model_data.parameter_name_and_array_list.end());
+auto shape = found->second;
+std::vector<int> new_dims(menoh_impl::begin<dtype_t::int64>(shape),
+                          menoh_impl::end<dtype_t::int64>(shape));
+for(unsigned int i = 0; i < new_dims.size(); ++i) {
+    if(new_dims.at(i) == 0) {
+        assert(i < ndims_of(input(0)));
+        new_dims.at(i) = dims_of(input(0)).at(i);
+    }
+    auto found =
+      std::find(new_dims.begin(), new_dims.end(), -1);
+    if(found != new_dims.end()) {
+        auto other_size =
+          -std::accumulate(new_dims.begin(), new_dims.end(),
+                           1, std::multiplies<>());
+        auto total_size = calc_total_size(dims_of(input(0)));
+        assert(total_size % other_size == 0);
+        *found = total_size / other_size;
+    }
+}
+add_variable_to_table(output(0), dtype_of(input(0)), new_dims);
 
     }
 }

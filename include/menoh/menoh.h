@@ -11,7 +11,7 @@
 #define MENOH_API
 #endif
 
-#define MENOH_SUPPORTED_ONNX_OPSET_VERSION 8
+#define MENOH_SUPPORTED_ONNX_OPSET_VERSION 9
 
 #ifndef MENOH_ERROR_MESSAGE_MAX_LENGTH
 #define MENOH_ERROR_MESSAGE_MAX_LENGTH 1024
@@ -44,7 +44,14 @@ extern "C" {
 /*! @ingroup vpt
  */
 enum menoh_dtype_constant {
-    menoh_dtype_float,
+    menoh_dtype_float, // float32
+    menoh_dtype_float16,
+    menoh_dtype_float32 = menoh_dtype_float,
+    menoh_dtype_float64 = menoh_dtype_float16 + 1,
+    menoh_dtype_int8,
+    menoh_dtype_int16,
+    menoh_dtype_int32,
+    menoh_dtype_int64,
 };
 /*! @ingroup vpt
  */
@@ -89,6 +96,13 @@ typedef int32_t menoh_error_code;
  */
 MENOH_API const char* menoh_get_last_error_message();
 /** @} */
+
+/*! @ingroup vpt
+ */
+/*! \breaf Element size of given menoh_dtype.
+ */
+menoh_error_code MENOH_API menoh_dtype_size(menoh_dtype dtype,
+                                            int32_t* dst_size);
 
 /*! @addtogroup model_data Model data types and operations
  * @{ */
@@ -213,7 +227,8 @@ menoh_variable_profile_table_builder_add_input_profile(
  *
  * Input profile contains name, dtype and dims (num, size). This 2D input is
  * conventional batched 1D inputs.
- * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_input_profile() instead
+ * \warning This function is depreated. Please use
+ * menoh_variable_profile_table_builder_add_input_profile() instead
  */
 MENOH_DEPRECATED_ATTRIBUTE(
   "please use menoh_variable_profile_table_builder_add_input_profile() instead")
@@ -227,7 +242,8 @@ menoh_variable_profile_table_builder_add_input_profile_dims_2(
  * Input profile contains name, dtype and dims (num, channel, height, width).
  * This 4D input is conventional batched image inputs. Image input is
  * 3D(channel, height, width).
- * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_input_profile() instead
+ * \warning This function is depreated. Please use
+ * menoh_variable_profile_table_builder_add_input_profile() instead
  */
 MENOH_DEPRECATED_ATTRIBUTE(
   "please use menoh_variable_profile_table_builder_add_input_profile() instead")
@@ -249,7 +265,8 @@ menoh_error_code MENOH_API menoh_variable_profile_table_builder_add_output_name(
  *
  * Output profile contains name and dtype. Its dims are calculated automatically
  * when calling of menoh_build_variable_profile_table.
- * \warning This function is depreated. Please use menoh_variable_profile_table_builder_add_output_name() instead
+ * \warning This function is depreated. Please use
+ * menoh_variable_profile_table_builder_add_output_name() instead
  */
 MENOH_DEPRECATED_ATTRIBUTE(
   "please use menoh_variable_profile_table_builder_add_output_name() instead. "
@@ -271,9 +288,11 @@ typedef struct menoh_variable_profile_table*
 
 /*! \brief Factory function for variable_profile_table
  *
- * \note this function throws menoh_input_not_found_error when no nodes have given input name.
- * \note this function throws menoh_output_not_found_error when no nodes have given output name.
- * \note this function throws menoh_variable_not_found_error when needed variable for model execution does not exist.
+ * \note this function throws menoh_input_not_found_error when no nodes have
+ * given input name. \note this function throws menoh_output_not_found_error
+ * when no nodes have given output name. \note this function throws
+ * menoh_variable_not_found_error when needed variable for model execution does
+ * not exist.
  */
 menoh_error_code MENOH_API menoh_build_variable_profile_table(
   const menoh_variable_profile_table_builder_handle builder,
@@ -314,6 +333,15 @@ menoh_error_code MENOH_API menoh_variable_profile_table_get_dims_size(
 menoh_error_code MENOH_API menoh_variable_profile_table_get_dims_at(
   const menoh_variable_profile_table_handle variable_profile_table,
   const char* variable_name, int32_t index, int32_t* dst_size);
+
+/*! \brief Accessor function for variable_profile_table
+ *
+ * Select variable name, then get its dims size and dims array
+ *
+ */
+menoh_error_code MENOH_API menoh_variable_profile_table_get_dims(
+  const menoh_variable_profile_table_handle variable_profile_table,
+  const char* variable_name, int32_t* dst_size, const int32_t** dims);
 
 /** @} */
 
@@ -424,6 +452,15 @@ menoh_error_code MENOH_API menoh_model_get_variable_dims_size(
 menoh_error_code MENOH_API menoh_model_get_variable_dims_at(
   const menoh_model_handle model, const char* variable_name, int32_t index,
   int32_t* dst_size);
+
+/*! \brief Get dims of target variable
+ *
+ * \sa
+ * menoh_variable_profile_table_get_dims()
+ */
+menoh_error_code MENOH_API menoh_model_get_variable_dims(
+  const menoh_model_handle model, const char* variable_name, int32_t* dst_size,
+  const int32_t** dims);
 
 /*! \brief Run model inference
  *

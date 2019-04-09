@@ -7,7 +7,7 @@
 #include <filesystem/path.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <onnx/onnx.pb.h>
+#include <onnx/onnx_pb.h>
 
 #include <menoh/menoh.hpp>
 
@@ -35,7 +35,7 @@ namespace {
         gpio::CodedInputStream cis(&iis);
         cis.SetTotalBytesLimit(std::numeric_limits<int>::max(),
                                std::numeric_limits<int>::max());
-        onnx::TensorProto tensor;
+        menoh_onnx::TensorProto tensor;
         if(!tensor.ParseFromCodedStream(&cis)) {
             std::cout << "invalid filename" << std::endl;
             throw "onnx_parse_error";
@@ -52,16 +52,31 @@ namespace {
         auto total_size =
           std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<int>());
         assert(tensor.has_raw_data());
-        assert(
-          tensor.raw_data().length() ==
-          static_cast<decltype(tensor.raw_data().length())>(total_size * 4));
+        if(tensor.data_type() == menoh_onnx::TensorProto_DataType_FLOAT) {
+            assert(tensor.raw_data().length() ==
+                   static_cast<decltype(tensor.raw_data().length())>(
+                     total_size * 4));
 
-        auto data = std::make_unique<char[]>(total_size * 4);
-        std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
-                  data.get());
-        // TODO other dtype
-        return named_array_data{tensor.name(), menoh::dtype_t::float_,
-                                std::move(dims), std::move(data)};
+            auto data = std::make_unique<char[]>(total_size * 4);
+            std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
+                      data.get());
+            // TODO other dtype
+            return named_array_data{tensor.name(), menoh::dtype_t::float32,
+                                    std::move(dims), std::move(data)};
+        }
+        if(tensor.data_type() == menoh_onnx::TensorProto_DataType_INT64) {
+            assert(tensor.raw_data().length() ==
+                   static_cast<decltype(tensor.raw_data().length())>(
+                     total_size * 8));
+
+            auto data = std::make_unique<char[]>(total_size * 8);
+            std::copy(tensor.raw_data().begin(), tensor.raw_data().end(),
+                      data.get());
+            // TODO other dtype
+            return named_array_data{tensor.name(), menoh::dtype_t::int64,
+                                    std::move(dims), std::move(data)};
+        }
+        throw "unexpected tensor data type";
     }
 
     class OperatorTest : public ::testing::Test {
@@ -206,6 +221,10 @@ namespace {
     // TEST_OP(mkldnn, test_conv_with_strides_padding, eps);
     // TEST_OP_SQUASH_DIMS(mkldnn, test_convtranspose, eps); // not found
     // TEST_OP(mkldnn, test_gemm_nobroadcast, eps);
+    TEST_OP(mkldnn, test_globalaveragepool, eps);
+    TEST_OP(mkldnn, test_globalaveragepool_precomputed, eps);
+    TEST_OP(mkldnn, test_globalmaxpool, eps);
+    TEST_OP(mkldnn, test_globalmaxpool_precomputed, eps);
     // TEST_OP(mkldnn, test_globalaveragepool, eps);
     // TEST_OP(mkldnn, test_globalmaxpool, eps);
     TEST_OP(mkldnn, test_maxpool_2d_default, eps);
@@ -230,6 +249,8 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_and_asymmetric_padding, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_no_padding, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_conv_with_strides_padding, eps);
+
+    TEST_OP(mkldnn_with_generic_fallback, test_constant, eps);
   
     // Eltwise
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_abs, eps);
@@ -242,6 +263,8 @@ namespace {
     TEST_OP_SQUASH_DIMS(mkldnn_with_generic_fallback, test_tanh, eps);
 
     //TEST_OP(mkldnn_with_generic_fallback, test_gemm_nobroadcast, eps);
+    
+    TEST_OP(mkldnn_with_generic_fallback, test_identity, eps);
 
     // Mul
     TEST_OP(mkldnn_with_generic_fallback, test_mul, eps);
@@ -274,6 +297,13 @@ namespace {
     //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_with_argmax_2d_precomputed_pads, eps);
     //TEST_OP(mkldnn_with_generic_fallback, test_maxpool_with_argmax_2d_precomputed_strides, eps);
 
+    // Reshape
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_extended_dims, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_negative_dim, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_one_dim, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_reduced_dims, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_reordered_dims, eps);
+
     // Softmax
     //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_0, eps);
     //TEST_OP(mkldnn_with_generic_fallback, test_softmax_axis_1, eps);
@@ -281,6 +311,25 @@ namespace {
     //TEST_OP(mkldnn_with_generic_fallback, test_softmax_default_axis, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_softmax_example, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_softmax_large_number, eps);
+
+    // Sum and Add
+    TEST_OP(mkldnn_with_generic_fallback, test_sum_example, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_sum_one_input, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_sum_two_inputs, eps);
+    // TEST_OP(mkldnn_with_generic_fallback, test_add, eps); // ndims=3 is not
+    // implemented yet (mkldnn will support soon)
+    // TEST_OP(mkldnn_with_generic_fallback, test_add_bcast, eps); //broadcast
+    // is not implemented yet
+
+    // Transpose
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_0, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_1, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_2, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_3, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_4, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_5, eps);
+    TEST_OP(mkldnn_with_generic_fallback, test_transpose_default, eps);
+
 
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP
