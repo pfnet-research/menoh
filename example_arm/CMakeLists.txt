@@ -27,11 +27,11 @@ add_executable(vgg19_example_in_cpp vgg19_example_in_cpp.cpp)
 target_link_libraries(vgg19_example_in_cpp menoh ${OpenCV_LIBS})
 
 # Build resnet50_example_in_cpp
-add_executable(resnet50_example_in_cpp resnet50_example_in_cpp.cpp)
-target_link_libraries(resnet50_example_in_cpp menoh ${OpenCV_LIBS})
+#add_executable(resnet50_example_in_cpp resnet50_example_in_cpp.cpp)
+#target_link_libraries(resnet50_example_in_cpp menoh ${OpenCV_LIBS})
 
 # Build squeezenet_example_in_cpp
-add_executable(squeezenet_example_in_cpp squeezenet_example_in_cpp.cpp)
-target_link_libraries(squeezenet_example_in_cpp menoh ${OpenCV_LIBS})
+#add_executable(squeezenet_example_in_cpp squeezenet_example_in_cpp.cpp)
+#target_link_libraries(squeezenet_example_in_cpp menoh ${OpenCV_LIBS})
 
 
