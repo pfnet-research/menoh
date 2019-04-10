@@ -106,6 +106,7 @@ namespace menoh_impl {
             OperationPtr ParseConv2D(            const menoh_impl::node& node);
             OperationPtr ParseDepthwiseConv2D(   const menoh_impl::node& node);
             OperationPtr ParseBatchNormalization(const menoh_impl::node& node);
+            OperationPtr ParseConcat(            const menoh_impl::node& node);
             OperationPtr ParseConcatV2(          const menoh_impl::node& node);
             OperationPtr ParseIdentity(          const menoh_impl::node& node);
             OperationPtr ParseLrn(               const menoh_impl::node& node);

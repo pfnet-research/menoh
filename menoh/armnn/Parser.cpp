@@ -977,6 +977,69 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
+        OperationPtr Parser::ParseConcat(const menoh_impl::node& node) {
+            std::string name = NodeName(node);
+	    
+            std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
+
+            unsigned int numInputs = static_cast<unsigned int>(nodes.size());
+            std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
+
+            OriginsDescriptor concatDescriptor(static_cast<uint32_t>(numInputs), MaxNumOfTensorDimensions);
+            std::vector<unsigned int>mergeDimSizes(MaxNumOfTensorDimensions, 0u);
+
+            auto axis = get<int>(node.attribute_table.at("axis"));
+            if(axis < 0) {
+                IOutputSlot& inputSlot = inputs[0].m_Value->Output(inputs[0].m_Index);
+                TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
+                axis += inputTensorInfo.GetNumDimensions();
+            }
+            concatDescriptor.SetConcatAxis(axis);
+
+            unsigned int mergeDim = 0;
+            const unsigned int concatDim = 1;
+            for (unsigned int viewIndex = 0; viewIndex < numInputs; ++viewIndex)
+            {
+                IOutputSlot& inputSlot = inputs[viewIndex].m_Value->Output(inputs[viewIndex].m_Index);
+                TensorInfo inputTensorInfo = inputSlot.GetTensorInfo();
+                if (inputTensorInfo.GetNumDimensions() != MaxNumOfTensorDimensions)
+                {
+                    throw ParseException("The number of dimensions for input tensors of the concatenation op should be 4");
+                }
+
+                for (unsigned int dim = 0; dim < MaxNumOfTensorDimensions; ++dim)
+                {
+                    mergeDimSizes[dim] = inputTensorInfo.GetShape()[dim];
+                }
+
+                for (unsigned int j = 0; j < concatDim; ++j)
+                {
+                    concatDescriptor.SetViewOriginCoord(viewIndex, j, 0);
+                }
+
+                concatDescriptor.SetViewOriginCoord(viewIndex, concatDim, mergeDim);
+                mergeDim += mergeDimSizes[concatDim];
+
+                for (unsigned int j = concatDim+1; j < MaxNumOfTensorDimensions; ++j)
+                {
+                    concatDescriptor.SetViewOriginCoord(viewIndex, j, 0);
+                }
+            }
+
+            mergeDimSizes[concatDim] = mergeDim;
+            armnn::IConnectableLayer *layer = m_Network->AddMergerLayer(concatDescriptor, name.c_str());
+
+            layer->GetOutputSlot(0).SetTensorInfo(armnn::TensorInfo(MaxNumOfTensorDimensions, mergeDimSizes.data(),
+                                                                    DataType::Float32));
+
+            for (unsigned int v = 0; v < numInputs; ++v)
+            {
+                IOutputSlot* slot = GetSlot(inputs[v]);
+                slot->Connect(layer->GetInputSlot(v));
+            }
+            return std::make_unique<SingleLayerOperation>(this, node, layer);
+        }
+ 
         OperationPtr Parser::ParseConcatV2(const menoh_impl::node& node) {
             std::string name = NodeName(node);
 	    
@@ -1073,7 +1136,7 @@ namespace menoh_impl {
             }
             return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
-        
+
         OperationPtr Parser::ParseShape(const menoh_impl::node& node) {
 
             std::vector<OutputOfOperation> inputs = InputCheck(node, 1);
@@ -1814,6 +1877,7 @@ namespace menoh_impl {
           { "Conv",                  &Parser::ParseConv2D },
           { "DepthwiseConv2dNative", &Parser::ParseDepthwiseConv2D },
           { "BatchNormalization",    &Parser::ParseBatchNormalization },
+          { "Concat",                &Parser::ParseConcat },
           { "ConcatV2",              &Parser::ParseConcatV2 },
           { "LRN",                   &Parser::ParseLrn },
           { "MatMul",                &Parser::ParseMatMul },

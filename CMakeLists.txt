@@ -181,6 +181,7 @@ if (ENABLE_ARMNN)
 
     set(ARMNN_LIBRARY armnn)
     set(ACL_LIBRARY   arm_compute-static arm_compute_core-static arm_compute_graph-static)
+    set(ARMNN_LIBRARIES ${ARMNN_LIBRARY} ${ACL_LIBRARY} pthread)
 endif()
 
 if(${ENABLE_TEST})

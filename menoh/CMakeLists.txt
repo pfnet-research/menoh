@@ -84,7 +84,7 @@ target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES} onnx)
 endif()
 
 if(ENABLE_ARMNN)
-target_link_libraries(menoh PRIVATE ${ARMNN_LIBRARY} ${ACL_LIBRARY} pthread onnx)
+target_link_libraries(menoh PRIVATE ${ARMNN_LIBRARIES} onnx)
 endif()
 
 if(LINK_STATIC_LIBGCC)
@@ -96,7 +96,13 @@ endif()
 
 # menoh_test_target: only used in `test` subdirectory
 add_library(menoh_test_target $<TARGET_OBJECTS:menoh_objlib>)
-target_link_libraries(menoh_test_target PRIVATE ${MKLDNN_LIBRARIES} onnx)
+if(ENABLE_MKLDNN)
+  target_link_libraries(menoh_test_target PRIVATE ${MKLDNN_LIBRARIES} onnx)
+endif()
+
+if(ENABLE_ARMNN)
+  target_link_libraries(menoh_test_target PRIVATE ${ARMNN_LIBRARIES} onnx)
+endif()
 
 install(TARGETS menoh
     RUNTIME DESTINATION "bin"
