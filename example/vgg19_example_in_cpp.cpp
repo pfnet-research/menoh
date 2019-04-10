@@ -119,7 +119,12 @@ int main(int argc, char** argv) {
                                          static_cast<void*>(image_data.data()));
 
     // Build model
+#ifdef ENABLE_MKLDNN
     auto model = model_builder.build_model(model_data, "mkldnn");
+#endif
+#ifdef ENABLE_ARMNN
+    auto model = model_builder.build_model(model_data, "armnn");
+#endif
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
