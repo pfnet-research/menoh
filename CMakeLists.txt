@@ -7,18 +7,11 @@ set(MENOH_MINOR_VERSION 2)
 set(MENOH_PATCH_VERSION 0)
 
 # Options
-
-option(ENABLE_MKLDNN          "Use MKLDNN"           ON)
-option(ENABLE_ARMNN           "Use ARM NN"           OFF)
-option(ENABLE_ARMNN_X86_64    "Use ARM NN on X64_64" OFF)
+option(ENABLE_MKLDNN          "Use MKLDNN"           OFF)
+option(ENABLE_ARMNN           "Use ARM NN"           ON)
+option(ENABLE_ARMNN_X86_64    "Use ARM NN on X64_64" ON)
 option(ENABLE_ANDROID_AARCH64 "Make Android AArch64" OFF)
 option(ENABLE_OPENCL          "Use OpenCL"           OFF)
-
-option(BUILD_SHARED_LIBS      "Build shared libs" ON)
-option(ENABLE_TEST            "Build test"        OFF)
-option(ENABLE_BENCHMARK       "Build benchmark"   ON)
-option(ENABLE_EXAMPLE         "Build example"     ON)
-option(ENABLE_TOOL            "Build tool"        OFF)
 
 option(USE_OLD_GLIBCXX_ABI "Generate binaries for the old libstdc++ ABI" OFF)
 option(LINK_STATIC_LIBPROTOBUF "Link static libprotobuf to libmenoh" OFF)
@@ -121,56 +114,26 @@ endif()
 ## Build libonnx.a
 message(STATUS "Adding external/onnx")
 
-# for ARM Environment
-if (ENABLE_ARMNN)
-    set(ARM_HOME   ~/ARM_HOME)
-    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.11)
-    set(ARMNN_HOME ${ARM_HOME}/armnn/v18.11)
-endif()
-
-# for protobuf
-if (ENABLE_ANDROID_AARCH64)
-    message("-- Build for Android AArch64")
-    include_directories(${ARM_HOME}/armnn/google/arm64_pb_install/include)
-    link_directories(${ARM_HOME}/armnn/google/arm64_pb_install/lib)
-    set(PROTOBUF_LIBRARY protobuf)
-else()
-    set(Protobuf_PROTOC_EXECUTABLE protoc CACHE STRING "protoc path")
-    include(FindProtobuf)
-    find_package(Protobuf 2.6.1 REQUIRED)
-    include_directories(${PROTOBUF_INCLUDE_DIR})
-endif()
-
-# ONNX setup
-set(ONNX_DIR ${EXTERNAL_DIR}/onnx)
-
-execute_process(COMMAND git submodule update --init -- ${ONNX_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} -I=${ONNX_DIR} --cpp_out=${ONNX_DIR} ${ONNX_DIR}/onnx/onnx.proto WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-set(ONNX_PROTO_HEADER ${ONNX_DIR}/onnx/onnx.pb.h)
-set(ONNX_PROTO_SRC ${ONNX_DIR}/onnx/onnx.pb.cc)
-include_directories(${EXTERNAL_DIR})
-include_directories(${ONNX_DIR})
-
 set(ONNX_SRC_DIR ${EXTERNAL_DIR}/onnx)
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- ${ONNX_SRC_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # TODO: enable the following option when it is ready for migrating to onnx-ml
 #set(ONNX_ML 1)
 
-if (ENABLE_MKLDNN)
-    set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
-    set(BUILD_SHARED_LIBS OFF)
-    set(ONNX_NAMESPACE "menoh_onnx" CACHE INTERNAL "onnx namespace")
-    add_subdirectory(${EXTERNAL_DIR}/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
-    if(NOT ${BUILD_SHARED_LIBS_SAVED}) # install libmenoh_onnx and lib_menoh_onnx_proto
-        set_target_properties(onnx_proto PROPERTIES OUTPUT_NAME "menoh_onnx_proto")
-        set_target_properties(onnx PROPERTIES OUTPUT_NAME "menoh_onnx")
-        find_library(MENOH_ONNX_PROTO_LIB "menoh_onnx_proto" "${CMAKE_CURRENT_BINARY_DIR}/external/onnx")
-        find_library(MENOH_ONNX_LIB "menoh_onnx" "${CMAKE_CURRENT_BINARY_DIR}/external/onnx")
-        install(FILES "${MENOH_ONNX_LIB}" "${MENOH_ONNX_PROTO_LIB}" DESTINATION "lib")
-    endif()
-    set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
+set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
+set(BUILD_SHARED_LIBS OFF)
+set(ONNX_NAMESPACE "menoh_onnx" CACHE INTERNAL "onnx namespace")
+add_subdirectory(${EXTERNAL_DIR}/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIBS must be OFF in this place
+if(NOT ${BUILD_SHARED_LIBS_SAVED}) # install libmenoh_onnx and lib_menoh_onnx_proto
+    set_target_properties(onnx_proto PROPERTIES OUTPUT_NAME "menoh_onnx_proto")
+    set_target_properties(onnx PROPERTIES OUTPUT_NAME "menoh_onnx")
+    find_library(MENOH_ONNX_PROTO_LIB "menoh_onnx_proto" "${CMAKE_CURRENT_BINARY_DIR}/external/onnx")
+    find_library(MENOH_ONNX_LIB "menoh_onnx" "${CMAKE_CURRENT_BINARY_DIR}/external/onnx")
+    install(FILES "${MENOH_ONNX_LIB}" "${MENOH_ONNX_PROTO_LIB}" DESTINATION "lib")
+endif()
+set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 
+if (ENABLE_MKLDNN)
     if(${ENABLE_TEST})
         message(STATUS "Adding test")
         enable_testing()
@@ -184,6 +147,28 @@ if (ENABLE_MKLDNN)
     if(ENABLE_EXAMPLE)
         add_subdirectory(example)
     endif()
+endif()
+
+# for ARM Environment
+if (ENABLE_ARMNN)
+    set(ARM_HOME   ~/home/DL/ARM_HOME)
+    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v19.02)
+    set(ARMNN_HOME ${ARM_HOME}/armnn/v19.02)
+    #set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.11)
+    #set(ARMNN_HOME ${ARM_HOME}/armnn/v18.11)
+endif()
+
+# for protobuf
+if (ENABLE_ANDROID_AARCH64)
+    message("-- Build for Android AArch64")
+    include_directories(${ARM_HOME}/armnn/google/arm64_pb_install/include)
+    link_directories(${ARM_HOME}/armnn/google/arm64_pb_install/lib)
+    set(PROTOBUF_LIBRARY protobuf)
+else()
+    set(Protobuf_PROTOC_EXECUTABLE protoc CACHE STRING "protoc path")
+    include(FindProtobuf)
+    find_package(Protobuf 2.6.1 REQUIRED)
+    include_directories(${PROTOBUF_INCLUDE_DIR})
 endif()
 
 if (ENABLE_ARMNN)

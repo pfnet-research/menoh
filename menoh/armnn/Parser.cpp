@@ -508,7 +508,7 @@ namespace menoh_impl {
 
                 if (swizzleForConvolutionWeights)
                 {
-                    armnnUtils::Permute(outInfo.GetShape(), HWIOToOIHW, m_Storage.data(), outputTensorData.data());
+                    armnnUtils::Permute(outInfo.GetShape(), HWIOToOIHW, m_Storage.data(), outputTensorData.data(), sizeof(T));
                 }
                 else
                 {
