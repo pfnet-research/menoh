@@ -977,7 +977,7 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
-        OperationPtr Parser::ParseConcat(const menoh_impl::node& node) {
+        OperationPtr Parser::ParseConcatV2(const menoh_impl::node& node) {
             std::string name = NodeName(node);
 	    
             std::vector<OutputOfConstNodeDef> nodes = InputNodes(node);
@@ -1814,7 +1814,7 @@ namespace menoh_impl {
           { "Conv",                  &Parser::ParseConv2D },
           { "DepthwiseConv2dNative", &Parser::ParseDepthwiseConv2D },
           { "BatchNormalization",    &Parser::ParseBatchNormalization },
-          { "ConcatV2",              &Parser::ParseConcat },
+          { "ConcatV2",              &Parser::ParseConcatV2 },
           { "LRN",                   &Parser::ParseLrn },
           { "MatMul",                &Parser::ParseMatMul },
           { "Mul",                   &Parser::ParseMul },
