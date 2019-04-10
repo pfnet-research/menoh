@@ -99,11 +99,11 @@ namespace menoh_impl {
             IOutputSlot* GetSlot(OutputOfOperation& input);
           
             OperationPtr ParseConst(             const menoh_impl::node& node);
-	    OperationPtr ParseAdd(               const menoh_impl::node& node);
-	    OperationPtr ParseBiasAdd(           const menoh_impl::node& node);
-	    OperationPtr ParseFC(                const menoh_impl::node& node);
+            OperationPtr ParseAdd(               const menoh_impl::node& node);
+            OperationPtr ParseBiasAdd(           const menoh_impl::node& node);
+            OperationPtr ParseFC(                const menoh_impl::node& node);
             OperationPtr ParseGemm(              const menoh_impl::node& node);
-	    OperationPtr ParseConv2D(            const menoh_impl::node& node);
+            OperationPtr ParseConv2D(            const menoh_impl::node& node);
             OperationPtr ParseDepthwiseConv2D(   const menoh_impl::node& node);
             OperationPtr ParseBatchNormalization(const menoh_impl::node& node);
             OperationPtr ParseConcat(            const menoh_impl::node& node);
@@ -133,7 +133,7 @@ namespace menoh_impl {
 
             IConnectableLayer* AddFullyConnectedLayer(    const menoh_impl::node& matMulNodeDef, 
                                                           const menoh_impl::node* addNodeDef, const char* armnnLayerName);
- 	    IConnectableLayer* AddFullyConnectedLayer(    const menoh_impl::node& node, const char* armnnLayerName);
+            IConnectableLayer* AddFullyConnectedLayer(    const menoh_impl::node& node, const char* armnnLayerName);
 	  
             static std::pair<armnn::LayerBindingId, armnn::TensorInfo> GetBindingInfo(const std::string& layerName,
                 const char* bindingPointDesc,
