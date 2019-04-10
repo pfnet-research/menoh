@@ -39,21 +39,8 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 ## Compiler dependent options
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # check Clang and AppleClang
     # using Clang
-    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -DARM_DEBUG")
-    if (ENABLE_ANDROID_AARCH64)
-      if (ENABLE_OPENCL) 
-        set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fPIE -fPIC -DANDROID_ARM -DENABLE_OPENCL")
-      else()
-        set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fPIE -fPIC -DANDROID_ARM")
-      endif()
-      set(CMAKE_EXE_LINKER_FLAGS "-pie -llog")
-    else()
-      set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -march=native")
-    endif()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    # using GCC
-    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -DARM_DEBUG")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -s -DNDEBUG -march=native")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
@@ -133,29 +120,11 @@ if(NOT ${BUILD_SHARED_LIBS_SAVED}) # install libmenoh_onnx and lib_menoh_onnx_pr
 endif()
 set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 
-if (ENABLE_MKLDNN)
-    if(${ENABLE_TEST})
-        message(STATUS "Adding test")
-        enable_testing()
-        add_subdirectory(test)
-    endif()
-
-    if(ENABLE_BENCHMARK)
-        add_subdirectory(benchmark)
-    endif()
-
-    if(ENABLE_EXAMPLE)
-        add_subdirectory(example)
-    endif()
-endif()
-
 # for ARM Environment
 if (ENABLE_ARMNN)
     set(ARM_HOME   ~/home/DL/ARM_HOME)
     set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v19.02)
     set(ARMNN_HOME ${ARM_HOME}/armnn/v19.02)
-    #set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v18.11)
-    #set(ARMNN_HOME ${ARM_HOME}/armnn/v18.11)
 endif()
 
 # for protobuf
@@ -212,14 +181,22 @@ if (ENABLE_ARMNN)
 
     set(ARMNN_LIBRARY armnn)
     set(ACL_LIBRARY   arm_compute-static arm_compute_core-static arm_compute_graph-static)
+endif()
 
-    if(ENABLE_BENCHMARK)
-        add_subdirectory(benchmark)
-    endif()
+if(${ENABLE_TEST})
+    message(STATUS "Adding test")
+    enable_testing()
+    add_subdirectory(test)
+endif()
 
-    if(ENABLE_EXAMPLE)
-        add_subdirectory(example_arm)
-    endif()
+if(${ENABLE_BENCHMARK})
+    message(STATUS "Adding benchmark")
+    add_subdirectory(benchmark)
+endif()
+
+if(${ENABLE_EXAMPLE})
+    message(STATUS "Adding example")
+    add_subdirectory(example)
 endif()
 
 ## Build libmenoh

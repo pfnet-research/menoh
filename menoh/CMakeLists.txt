@@ -47,8 +47,6 @@ if(ENABLE_ARMNN)
         dtype.cpp
         array.cpp
         onnx.cpp
-        composite_backend/backend/generic/generic_context.cpp
-        composite_backend/model_core.cpp
         model_core_factory.cpp
         dims.cpp
         node.cpp
@@ -80,7 +78,15 @@ if(NOT APPLE AND NOT MSVC)
         TARGET menoh APPEND_STRING PROPERTY
             LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif()
+
+if(ENABLE_MKLDNN)
 target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES} onnx)
+endif()
+
+if(ENABLE_ARMNN)
+target_link_libraries(menoh PRIVATE ${ARMNN_LIBRARY} ${ACL_LIBRARY} pthread onnx)
+endif()
+
 if(LINK_STATIC_LIBGCC)
     target_link_libraries(menoh PRIVATE -static-libgcc)
 endif()

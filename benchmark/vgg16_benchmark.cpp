@@ -47,7 +47,6 @@ int main(int argc, char** argv) {
 #ifdef ENABLE_MKLDNN
     auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
 #endif
-    auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
