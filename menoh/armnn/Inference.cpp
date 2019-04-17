@@ -165,7 +165,7 @@ namespace menoh_impl {
                 // profiler->Print(std::cout);
             }
 #ifdef ARM_DEBUG
-            std::cout << "Inference::Run::done" << std::endl;          
+                std::cout << "Inference::Run::done" << std::endl;
 #endif
             if (ret == armnn::Status::Failure)
             {
