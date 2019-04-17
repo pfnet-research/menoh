@@ -113,6 +113,8 @@ namespace menoh_impl {
             OperationPtr ParseMatMul(            const menoh_impl::node& node);
             OperationPtr ParseMul(               const menoh_impl::node& node);
             OperationPtr ParsePlaceholder(       const menoh_impl::node& node);
+            OperationPtr ParseAbs(               const menoh_impl::node& node);
+            OperationPtr ParseLeakyRelu(         const menoh_impl::node& node);
             OperationPtr ParseRelu(              const menoh_impl::node& node);
             OperationPtr ParseRelu6(             const menoh_impl::node& node);
             OperationPtr ParseReshape(           const menoh_impl::node& node);
@@ -121,6 +123,7 @@ namespace menoh_impl {
             OperationPtr ParseSigmoid(           const menoh_impl::node& node);
             OperationPtr ParseSoftmax(           const menoh_impl::node& node);
             OperationPtr ParseSoftplus(          const menoh_impl::node& node);
+            OperationPtr ParseSqrt(              const menoh_impl::node& node);
             OperationPtr ParseTanh(              const menoh_impl::node& node);
             OperationPtr ParseMaxPool(           const menoh_impl::node& node);
             OperationPtr ParseAvgPool(           const menoh_impl::node& node);
@@ -128,7 +131,7 @@ namespace menoh_impl {
             OperationPtr ParseGlobalMaxPool(     const menoh_impl::node& node);
             OperationPtr ParseGlobalAvgPool(     const menoh_impl::node& node);
             OperationPtr ParseGlobalPooling2d(   const menoh_impl::node& node, armnn::PoolingAlgorithm pooltype);
-          
+
             OperationPtr AddActivationLayer(     const menoh_impl::node& node, armnn::ActivationDescriptor& desc);
             OperationPtr AddAdditionLayer(       const menoh_impl::node& node, bool isBiasAdd = false);
 

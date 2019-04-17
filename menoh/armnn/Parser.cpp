@@ -70,7 +70,7 @@ namespace menoh_impl {
             return name;
         }
 	
-        void dumpTensorInfo(TensorInfo& info) {
+        void dumpTensorInfo(const TensorInfo& info) {
             std::cout << "   output = " << info.GetNumDimensions() << ", " << info.GetNumElements() << std::endl;
             std::cout << "   outputShape = ";
             for( unsigned int i=0 ; i<info.GetNumDimensions() ; i++ )
@@ -723,13 +723,13 @@ namespace menoh_impl {
 
             if (dataFormat == "WHCH")
             {
-	        desc.m_StrideX = strides[0];
-	        desc.m_StrideY = strides[1];
+                desc.m_StrideX = strides[0];
+                desc.m_StrideY = strides[1];
             }
             else if (dataFormat == "NCHW")
             {
-	        desc.m_StrideX = strides[0];
-	        desc.m_StrideY = strides[1];
+                desc.m_StrideX = strides[0];
+                desc.m_StrideY = strides[1];
             }
             else
             {
@@ -804,7 +804,7 @@ namespace menoh_impl {
 
             if (dataFormat == "NHWC")
             {
-	        layer = SwizzleInDeswizzleOut(*m_Network, *slot, *layer, name);
+                layer = SwizzleInDeswizzleOut(*m_Network, *slot, *layer, name);
             }
             else
             {
@@ -984,7 +984,7 @@ namespace menoh_impl {
 
             unsigned int numInputs = static_cast<unsigned int>(nodes.size());
             std::vector<OutputOfOperation> inputs = InputCheck(node, numInputs);
-
+            const unsigned int concatDim = numInputs - 1;
             OriginsDescriptor concatDescriptor(static_cast<uint32_t>(numInputs), MaxNumOfTensorDimensions);
             std::vector<unsigned int>mergeDimSizes(MaxNumOfTensorDimensions, 0u);
 
@@ -997,7 +997,6 @@ namespace menoh_impl {
             concatDescriptor.SetConcatAxis(axis);
 
             unsigned int mergeDim = 0;
-            const unsigned int concatDim = 1;
             for (unsigned int viewIndex = 0; viewIndex < numInputs; ++viewIndex)
             {
                 IOutputSlot& inputSlot = inputs[viewIndex].m_Value->Output(inputs[viewIndex].m_Index);
@@ -1027,9 +1026,10 @@ namespace menoh_impl {
             }
 
             mergeDimSizes[concatDim] = mergeDim;
+
             armnn::IConnectableLayer *layer = m_Network->AddMergerLayer(concatDescriptor, name.c_str());
 
-            layer->GetOutputSlot(0).SetTensorInfo(armnn::TensorInfo(MaxNumOfTensorDimensions, mergeDimSizes.data(),
+            layer->GetOutputSlot(0).SetTensorInfo(armnn::TensorInfo(MaxNumOfTensorDimensions, mergeDimSizes.data(), 
                                                                     DataType::Float32));
 
             for (unsigned int v = 0; v < numInputs; ++v)
@@ -1159,8 +1159,7 @@ namespace menoh_impl {
         }
 
         OperationPtr Parser::ParseReshape(const menoh_impl::node& node) {
-	    std::string name = NodeName(node);
-	    
+            std::string name = NodeName(node);
             std::vector<OutputOfOperation> inputs = InputCheck(node, 2);
             Operation* inputNode = inputs[0].m_Value;
 
@@ -1289,6 +1288,21 @@ namespace menoh_impl {
             return std::make_unique<SingleLayerOperation>(this, node, layer);
         }
 
+        OperationPtr Parser::ParseAbs(const menoh_impl::node& node) {
+	    
+            ActivationDescriptor desc;
+            desc.m_Function = ActivationFunction::Abs;
+
+            return AddActivationLayer(node, desc);
+        }    
+
+        OperationPtr Parser::ParseLeakyRelu(const menoh_impl::node& node) {
+	    
+            ActivationDescriptor desc;
+            desc.m_Function = ActivationFunction::LeakyReLu;
+            return AddActivationLayer(node, desc);
+        }
+
         OperationPtr Parser::ParseRelu(const menoh_impl::node& node) {
 	    
             ActivationDescriptor desc;
@@ -1318,6 +1332,14 @@ namespace menoh_impl {
 	    
             ActivationDescriptor desc;
             desc.m_Function = ActivationFunction::SoftReLu;
+
+            return AddActivationLayer(node, desc);
+        }   
+
+        OperationPtr Parser::ParseSqrt(const menoh_impl::node& node) {
+	    
+            ActivationDescriptor desc;
+            desc.m_Function = ActivationFunction::Sqrt;
 
             return AddActivationLayer(node, desc);
         }    
@@ -1499,7 +1521,7 @@ namespace menoh_impl {
             slot->Connect(layer->GetInputSlot(0));
 
             return std::make_unique<SingleLayerOperation>(this, node, layer);
-        }
+        } 
 
         OperationPtr Parser::AddAdditionLayer(const menoh_impl::node& node, bool isBiasAdd){
             std::string name = NodeName(node);
@@ -1550,7 +1572,25 @@ namespace menoh_impl {
             input0->Connect(layer->GetInputSlot(0));
             input1->Connect(layer->GetInputSlot(1));
 
-            if (input0Info.GetNumDimensions() == 1 && isBiasAdd == false)
+            if (input0Info.GetNumDimensions() == input1Info.GetNumDimensions())
+            {
+                const TensorShape& input0Shape = input0Info.GetShape();
+                const TensorShape& input1Shape = input1Info.GetShape();
+
+                std::vector<unsigned int> outputShape;
+                outputShape.reserve(input0Shape.GetNumDimensions());
+                TensorInfo outputInfo(input0Info);
+
+                for (unsigned int i = 0; i < input0Shape.GetNumDimensions(); i++)
+                {
+                    outputShape.push_back(std::max(input0Shape[i], input1Shape[i]));
+                }
+
+                outputInfo.SetShape(TensorShape(input0Shape.GetNumDimensions(), outputShape.data()));
+
+                layer->GetOutputSlot(0).SetTensorInfo(outputInfo);
+            }
+            else if (input0Info.GetNumDimensions() == 1 && isBiasAdd == false)
             {
                 layer->GetOutputSlot(0).SetTensorInfo(input1->GetTensorInfo());
             }
@@ -1675,20 +1715,19 @@ namespace menoh_impl {
             TensorInfo outputInfo({ batches, weights.GetShape()[0] }, DataType::Float32);
             layer->GetOutputSlot(0).SetTensorInfo(outputInfo);
 #ifdef ARM_DEBUG
-	    std::cout << "   output = " << outputInfo.GetNumDimensions() << ", " << outputInfo.GetNumElements() << std::endl;
-	    std::cout << "   outputShape = ";
-	    for( unsigned int i=0 ; i<outputInfo.GetNumDimensions() ; i++ )
-	      std::cout << outputInfo.GetShape()[i] << " ";
-	    std::cout << std::endl;
+            std::cout << "   output = " << outputInfo.GetNumDimensions() << ", " << outputInfo.GetNumElements() << std::endl;
+            std::cout << "   outputShape = ";
+            for( unsigned int i=0 ; i<outputInfo.GetNumDimensions() ; i++ )
+                std::cout << outputInfo.GetShape()[i] << " ";
+            std::cout << std::endl;
 #endif
-	    return layer;
+            return layer;
         }
 
         void Parser::LoadNode(const menoh_impl::node& node) {
-	    std::string name = NodeName(node);
+            std::string name = NodeName(node);
 	    
             dtype_t type = dtype_t::float_;
-
             const std::string& operation = node.op_type;
             auto it = m_Functions.find(operation);
             if (it != m_Functions.end())
@@ -1700,7 +1739,7 @@ namespace menoh_impl {
                 auto it = m_Operations.find(name);
                 if (it != m_Operations.end())
                 {
-		  throw ParseException(boost::str(boost::format("Name %1% used by more than one node") % name));
+                    throw ParseException(boost::str(boost::format("Name %1% used by more than one node") % name));
                 }
 
                 m_Operations[name] = std::move(parsedMenohOperation);
@@ -1716,7 +1755,7 @@ namespace menoh_impl {
 
                     prevSlot.Connect(outputLayer->GetInputSlot(0));
 
-		    TrackOutputBinding(outputLayer, layerId, tensorInfo);
+                    TrackOutputBinding(outputLayer, layerId, tensorInfo);
                 }
             }
             else
@@ -1743,7 +1782,7 @@ namespace menoh_impl {
                     auto nodeIt = std::find(node.output_name_list.begin(), node.output_name_list.end(), name);
                     if (nodeIt != node.output_name_list.end())
                     {
-		        outputNodes.push_back(&node);
+                        outputNodes.push_back(&node);
                         found = true;
                         break;
                     }
@@ -1754,15 +1793,15 @@ namespace menoh_impl {
             }
 
 	    for( auto node : outputNodes )
-	      m_Outputs.push_back(NodeName(*node));
+            m_Outputs.push_back(NodeName(*node));
         }
 
         void Parser::LoadParameter(std::unordered_map<std::string, array> const& parameter_table) {
             for( auto param : parameter_table )
             {
                 auto arr = param.second;
-	        array param_arr(arr.dtype(), std::move(arr.dims()), std::move(arr.data()));
-	        m_Params[param.first] = param_arr;
+                array param_arr(arr.dtype(), std::move(arr.dims()), std::move(arr.data()));
+                m_Params[param.first] = param_arr;
             }
         }
           
@@ -1770,8 +1809,8 @@ namespace menoh_impl {
 
             for( unsigned int i=0; i<graph.node_list().size() ; ++i)
             {
-	        const menoh_impl::node& my_node = graph.node_list().at(i);
-	        m_Nodes[NodeName(my_node)] = &my_node;
+                const menoh_impl::node& my_node = graph.node_list().at(i);
+                m_Nodes[NodeName(my_node)] = &my_node;
             }
 
 
@@ -1798,7 +1837,7 @@ namespace menoh_impl {
             {
                 CheckOutput(graph, outputs);
                 LoadParameter(parameter_table);
-		LoadGraph(graph);
+                LoadGraph(graph);
             }
             catch (const ParseException& e)
             {
@@ -1867,7 +1906,7 @@ namespace menoh_impl {
         }
 
         const std::map<std::string, Parser::ParseFunction> Parser::m_Functions = {
-	  { "Const",                 &Parser::ParseConst },
+          { "Const",                 &Parser::ParseConst },
           { "Add",                   &Parser::ParseAdd },
           { "Sum",                   &Parser::ParseAdd },
           { "BiasAdd",               &Parser::ParseBiasAdd },
@@ -1883,6 +1922,8 @@ namespace menoh_impl {
           { "MatMul",                &Parser::ParseMatMul },
           { "Mul",                   &Parser::ParseMul },
           { "Placeholder",           &Parser::ParsePlaceholder },
+          { "Abs",                   &Parser::ParseAbs },
+          { "LeakyRelu",             &Parser::ParseLeakyRelu },
           { "Relu",                  &Parser::ParseRelu },
           { "Relu6",                 &Parser::ParseRelu6 },
           { "Reshape",               &Parser::ParseReshape },
@@ -1890,6 +1931,7 @@ namespace menoh_impl {
           { "Sigmoid",               &Parser::ParseSigmoid },
           { "Softmax",               &Parser::ParseSoftmax },
           { "Softplus",              &Parser::ParseSoftplus },
+          { "Sqrt",                  &Parser::ParseSqrt },
           { "Tanh",                  &Parser::ParseTanh },
           { "MaxPool",               &Parser::ParseMaxPool },
           { "AveragePool",           &Parser::ParseAvgPool },
