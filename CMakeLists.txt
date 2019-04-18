@@ -108,9 +108,7 @@ add_subdirectory(${EXTERNAL_DIR}/onnx EXCLUDE_FROM_ALL) # Note: BUILD_SHARED_LIB
 if(NOT ${BUILD_SHARED_LIBS_SAVED}) # install libmenoh_onnx and lib_menoh_onnx_proto
     set_target_properties(onnx_proto PROPERTIES OUTPUT_NAME "menoh_onnx_proto")
     set_target_properties(onnx PROPERTIES OUTPUT_NAME "menoh_onnx")
-    find_library(MENOH_ONNX_PROTO_LIB "menoh_onnx_proto" "${CMAKE_CURRENT_BINARY_DIR}/external/onnx")
-    find_library(MENOH_ONNX_LIB "menoh_onnx" "${CMAKE_CURRENT_BINARY_DIR}/external/onnx")
-    install(FILES "${MENOH_ONNX_LIB}" "${MENOH_ONNX_PROTO_LIB}" DESTINATION "lib")
+    install(TARGETS onnx_proto onnx ARCHIVE DESTINATION "lib")
 endif()
 set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 
