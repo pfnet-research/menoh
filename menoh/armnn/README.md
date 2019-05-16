@@ -43,7 +43,7 @@ We checked the operation with the following software.
   
   $ sudo apt install binutils-arm-linux-gnueabihf
   
-  $ scons Werror=1 -j4 debug=0 neon=1 opencl=0 os=linux arch=armv7a openmp=yes extra_cxx_flags=”-fPIC”
+  $ scons Werror=1 -j4 debug=0 neon=1 opencl=0 os=linux arch=armv7a openmp=yes extra_cxx_flags=-fPIC
 
 ## Arm NN SDK          : v19.02
   - https://github.com/ARM-software/armnn/tree/v19.02
