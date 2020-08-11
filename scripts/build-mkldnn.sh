@@ -48,7 +48,7 @@ test -n "${ARG_EXTRACT_DIR}" || { echo "--extract-dir is not specified" 1>&2; ex
 # options that have default value
 test -n "${ARG_VERSION}" || readonly ARG_VERSION=0.16
 
-readonly LIBRARY_NAME=mkl-dnn-${ARG_VERSION}
+readonly LIBRARY_NAME=oneDNN-${ARG_VERSION}
 readonly SOURCE_DIR="${ARG_EXTRACT_DIR}/${LIBRARY_NAME}"
 
 test -n "${ARG_BUILD_DIR}" || readonly ARG_BUILD_DIR="${SOURCE_DIR}/build"
