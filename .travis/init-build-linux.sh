@@ -64,7 +64,7 @@ function build_mkldnn() {
 function install_mkldnn() {
     docker_exec_script \
         "${PROJ_DIR}/scripts/install-mkldnn.sh" \
-            --build-dir "${WORK_DIR}/build/mkl-dnn-${MKLDNN_VERSION}/build"
+            --build-dir "${WORK_DIR}/build/oneDNN-${MKLDNN_VERSION}/build"
 }
 
 function prepare_menoh_data() {
