@@ -1,3 +1,6 @@
+**Notice: Menoh is no longer maintained. Part of its functionality is inherited by [chainer-compiler](https://github.com/pfnet-research/chainer-compiler).**
+
+
 # Menoh
 
 [![travis](https://img.shields.io/travis/pfnet-research/menoh/master.svg)](https://travis-ci.org/pfnet-research/menoh) [![Build status](https://ci.appveyor.com/api/projects/status/luo2m9p5fg9jxjsh/branch/master?svg=true)](https://ci.appveyor.com/project/pfnet-research/menoh/branch/master)
