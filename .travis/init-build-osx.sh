@@ -7,7 +7,23 @@ test -n "${BUILD_STATIC_LIBS}" || BUILD_STATIC_LIBS=false
 export WORK_DIR=${HOME}
 export PROJ_DIR=${TRAVIS_BUILD_DIR} # = ${HOME}/build/${TRAVIS_REPO_SLUG}
 
+export MKLDNN_INSTALL_DIR=/usr/local
+
 ## define shared functions for macOS (OSX) platforms
+
+function build_mkldnn() {
+    bash -ex "${PROJ_DIR}/scripts/build-mkldnn.sh" \
+        --version ${MKLDNN_VERSION} \
+        --download-dir "${WORK_DIR}/downloads" \
+        --extract-dir "${WORK_DIR}/build" \
+        --install-dir "${MKLDNN_INSTALL_DIR}" \
+        --parallel ${MAKE_JOBS}
+}
+
+function install_mkldnn() {
+    bash -ex "${PROJ_DIR}/scripts/install-mkldnn.sh" \
+        --build-dir "${WORK_DIR}/build/oneDNN-${MKLDNN_VERSION}/build"
+}
 
 function prepare_menoh_data() {
     bash -ex "${PROJ_DIR}/scripts/prepare-menoh-data.sh" \
