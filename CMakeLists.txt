@@ -7,6 +7,12 @@ set(MENOH_MINOR_VERSION 2)
 set(MENOH_PATCH_VERSION 0)
 
 # Options
+option(ENABLE_MKLDNN          "Use MKLDNN"           OFF)
+option(ENABLE_ARMNN           "Use ARM NN"           ON)
+option(ENABLE_ARMNN_X86_64    "Use ARM NN on X64_64" ON)
+option(ENABLE_ANDROID_AARCH64 "Make Android AArch64" OFF)
+option(ENABLE_OPENCL          "Use OpenCL"           OFF)
+
 option(USE_OLD_GLIBCXX_ABI "Generate binaries for the old libstdc++ ABI" OFF)
 option(LINK_STATIC_LIBPROTOBUF "Link static libprotobuf to libmenoh" OFF)
 
@@ -113,6 +119,70 @@ if(NOT ${BUILD_SHARED_LIBS_SAVED}) # install libmenoh_onnx and lib_menoh_onnx_pr
     install(FILES "${MENOH_ONNX_LIB}" "${MENOH_ONNX_PROTO_LIB}" DESTINATION "lib")
 endif()
 set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
+
+# for ARM Environment
+if (ENABLE_ARMNN)
+    set(ARM_HOME   ~/home/DL/ARM_HOME)
+    set(ACL_HOME   ${ARM_HOME}/ComputeLibrary/v19.02)
+    set(ARMNN_HOME ${ARM_HOME}/armnn/v19.02)
+endif()
+
+# for protobuf
+if (ENABLE_ANDROID_AARCH64)
+    message("-- Build for Android AArch64")
+    include_directories(${ARM_HOME}/armnn/google/arm64_pb_install/include)
+    link_directories(${ARM_HOME}/armnn/google/arm64_pb_install/lib)
+    set(PROTOBUF_LIBRARY protobuf)
+else()
+    set(Protobuf_PROTOC_EXECUTABLE protoc CACHE STRING "protoc path")
+    include(FindProtobuf)
+    find_package(Protobuf 2.6.1 REQUIRED)
+    include_directories(${PROTOBUF_INCLUDE_DIR})
+endif()
+
+if (ENABLE_ARMNN)
+    add_definitions(-DENABLE_ARMNN)
+
+    include_directories(${Boost_INCLUDE_DIR})
+    link_directories(${Boost_LIBRARY_DIR})
+    
+    include_directories(${ACL_HOME}/arm_compute)
+    include_directories(${ARMNN_HOME}/include)
+    include_directories(${ARMNN_HOME}/src)
+    
+    if(ENABLE_ANDROID_AARCH64)
+        include_directories(${ARM_HOME}/armnn/boost/install/include)
+        link_directories(${ARM_HOME}/armnn/boost/install/lib)
+	
+        if(ENABLE_OPENCL)
+            set(ACL_LIBRARY_DIR ${ACL_HOME}/build_android_aarch64_opencl)
+            set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build_android_aarch64_opencl)
+        else()
+            set(ACL_LIBRARY_DIR ${ACL_HOME}/build_android_aarch64)
+            set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build_android_aarch64)
+        endif()
+    else()
+        find_package(Boost 1.60 REQUIRED)
+        if (NOT Boost_FOUND)
+            message(FATAL_ERROR "Boost is not found")
+        endif()
+
+        if (ENABLE_ARMNN_X86_64) 
+            set(ACL_LIBRARY_DIR ${ACL_HOME}/build_x86_64)
+            set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build_x86_64)
+        else()
+            set(ACL_LIBRARY_DIR ${ACL_HOME}/build)
+            set(ARMNN_LIBRARY_DIR ${ARMNN_HOME}/build)
+        endif()
+    endif()
+
+    link_directories(${ACL_LIBRARY_DIR})
+    link_directories(${ARMNN_LIBRARY_DIR})
+
+    set(ARMNN_LIBRARY armnn)
+    set(ACL_LIBRARY   arm_compute-static arm_compute_core-static arm_compute_graph-static)
+    set(ARMNN_LIBRARIES ${ARMNN_LIBRARY} ${ACL_LIBRARY} pthread)
+endif()
 
 if(${ENABLE_TEST})
     message(STATUS "Adding test")

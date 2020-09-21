@@ -62,15 +62,10 @@ auto load_category_list(std::string const& synset_words_path) {
 }
 
 int main(int argc, char** argv) {
-    std::cout << "vgg16 example" << std::endl;
-
-    // Aliases to onnx's node input and output tensor name
-    // Please use [Netron](https://github.com/lutzroeder/Netron)
-    // See Menoh tutorial for more information.
-    const std::string conv1_1_in_name = "140326425860192";
-    const std::string fc6_out_name = "140326200777584";
-    const std::string softmax_out_name = "140326200803680";
-
+    std::cout << "squeezenet example" << std::endl;
+    const std::string in_name  = "data_0";
+    const std::string out_name = "softmaxout_1";
+    
     const int batch_size = 1;
     const int channel_num = 3;
     const int height = 224;
@@ -80,7 +75,7 @@ int main(int argc, char** argv) {
     a.add<std::string>("input_image", 'i', "input image path", false,
                        "../data/Light_sussex_hen.jpg");
     a.add<std::string>("model", 'm', "onnx model path", false,
-                       "../data/VGG16.onnx");
+                       "../data/squeezenet_opset_7.onnx");
     a.add<std::string>("synset_words", 's', "synset words path", false,
                        "../data/synset_words.txt");
     a.parse_check(argc, argv);
@@ -89,7 +84,8 @@ int main(int argc, char** argv) {
     auto onnx_model_path = a.get<std::string>("model");
     auto synset_words_path = a.get<std::string>("synset_words");
 
-    cv::Mat image_mat = cv::imread(input_image_path.c_str(), cv::IMREAD_COLOR);
+    cv::Mat image_mat =
+      cv::imread(input_image_path.c_str(), CV_LOAD_IMAGE_COLOR);
     if(!image_mat.data) {
         throw std::runtime_error("Invalid input image path: " +
                                  input_image_path);
@@ -98,7 +94,9 @@ int main(int argc, char** argv) {
     // Preprocess
     cv::resize(image_mat, image_mat, cv::Size(width, height));
     image_mat.convertTo(image_mat, CV_32FC3);
-    image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
+    //    image_mat -= cv::Scalar(103.939, 116.779, 123.68); // subtract BGR mean
+    image_mat -= 128.0f;
+    image_mat /= 128.0f;
     auto image_data = reorder_to_chw(image_mat);
 
     // Load ONNX model data
@@ -107,53 +105,46 @@ int main(int argc, char** argv) {
     // Define input profile (name, dtype, dims) and output profile (name, dtype)
     // dims of output is automatically calculated later
     menoh::variable_profile_table_builder vpt_builder;
-    vpt_builder.add_input_profile(conv1_1_in_name, menoh::dtype_t::float_,
+    vpt_builder.add_input_profile(in_name, menoh::dtype_t::float_,
                                   {batch_size, channel_num, height, width});
-    vpt_builder.add_output_name(fc6_out_name);
-    vpt_builder.add_output_name(softmax_out_name);
+    vpt_builder.add_output_name(out_name);
 
     // Build variable_profile_table and get variable dims (if needed)
     auto vpt = vpt_builder.build_variable_profile_table(model_data);
-    auto fc6_dims = vpt.get_variable_profile(fc6_out_name).dims;
-    std::vector<float> fc6_out_data(std::accumulate(
-      fc6_dims.begin(), fc6_dims.end(), 1, std::multiplies<int32_t>()));
 
     // Make model_builder and attach extenal memory buffer
     // Variables which are not attached external memory buffer here are attached
     // internal memory buffers which are automatically allocated
     menoh::model_builder model_builder(vpt);
-    model_builder.attach_external_buffer(conv1_1_in_name,
-                                         static_cast<void*>(image_data.data()));
-    model_builder.attach_external_buffer(
-      fc6_out_name, static_cast<void*>(fc6_out_data.data()));
 
+    model_builder.attach_external_buffer(in_name,
+                                         static_cast<void*>(image_data.data()));
     // Build model
-    auto model =
-      model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
+#ifdef ENABLE_MKLDNN
+    auto model = model_builder.build_model(model_data, "mkldnn");
+#endif
+#ifdef ENABLE_ARMNN
+    auto model = model_builder.build_model(model_data, "armnn");
+#endif
     model_data
       .reset(); // you can delete model_data explicitly after model building
 
     // Get buffer pointer of output
-    auto softmax_output_var = model.get_variable(softmax_out_name);
-    float* softmax_output_buff =
-      static_cast<float*>(softmax_output_var.buffer_handle);
+    auto output_var = model.get_variable(out_name);
+    float* output_buff =
+      static_cast<float*>(output_var.buffer_handle);
 
     // Run inference
     model.run();
 
-    // Get output
-    for(int i = 0; i < 10; ++i) {
-        std::cout << fc6_out_data.at(i) << " ";
-    }
-    std::cout << "\n";
     auto categories = load_category_list(synset_words_path);
     auto top_k = 5;
     auto top_k_indices = extract_top_k_index_list(
-      softmax_output_buff, softmax_output_buff + softmax_output_var.dims.at(1),
+      output_buff, output_buff + output_var.dims.at(1),
       top_k);
     std::cout << "top " << top_k << " categories are\n";
     for(auto ki : top_k_indices) {
-        std::cout << ki << " " << *(softmax_output_buff + ki) << " "
+        std::cout << ki << " " << *(output_buff + ki) << " "
                   << categories.at(ki) << std::endl;
     }
 }

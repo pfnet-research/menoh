@@ -203,6 +203,7 @@ namespace {
 
     float eps = 1.e-4;
 
+#ifdef ENABLE_MKLDNN
     // Tests for MKLDNN backend
     TEST_OP_SQUASH_DIMS(mkldnn, test_abs, eps);
     TEST_OP_SQUASH_DIMS(mkldnn, test_elu, eps);
@@ -329,7 +330,60 @@ namespace {
     TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_4, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_transpose_all_permutations_5, eps);
     TEST_OP(mkldnn_with_generic_fallback, test_transpose_default, eps);
+#endif
 
+#ifdef ENABLE_ARMNN
+    TEST_OP_SQUASH_DIMS(armnn, test_relu, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_tanh, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_abs, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_sqrt, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_softmax_axis_1, eps);
+
+    TEST_OP(armnn, test_identity, eps);
+    TEST_OP(armnn, test_averagepool_2d_pads, eps);
+    TEST_OP(armnn, test_averagepool_2d_precomputed_pads, eps);
+    TEST_OP(armnn, test_averagepool_2d_precomputed_same_upper, eps);
+    TEST_OP(armnn, test_averagepool_2d_default, eps);
+    TEST_OP(armnn, test_globalaveragepool, eps);
+    TEST_OP(armnn, test_globalaveragepool_precomputed, eps);
+    TEST_OP(armnn, test_globalmaxpool, eps);
+    TEST_OP(armnn, test_globalmaxpool_precomputed, eps);
+    TEST_OP(armnn, test_maxpool_2d_default, eps);
+    
+    TEST_OP_SQUASH_DIMS(armnn, test_leakyrelu, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_leakyrelu_default, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_add, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_sum_one_input, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_sum_two_inputs, eps);
+    TEST_OP(armnn, test_concat_2d_axis_0, eps);
+    TEST_OP(armnn, test_concat_2d_axis_1, eps);
+    TEST_OP(armnn, test_conv_with_strides_padding, eps);
+    TEST_OP_SQUASH_DIMS(armnn, test_convtranspose, eps); // not found
+    TEST_OP_SQUASH_DIMS(armnn, test_batchnormalization, eps); // not found
+    //TEST_OP(armnn, test_gemm_nobroadcast, eps);
+    TEST_OP(armnn, test_gemm, eps);
+    TEST_OP(armnn, test_mul, eps);
+    TEST_OP(armnn, test_mul_bcast, eps);
+    TEST_OP(armnn, test_mul_example, eps);
+    
+    TEST_OP(armnn, test_reshape_extended_dims, eps);
+    TEST_OP(armnn, test_reshape_negative_dim, eps);
+    TEST_OP(armnn, test_reshape_one_dim, eps);
+    TEST_OP(armnn, test_reshape_reduced_dims, eps);
+    TEST_OP(armnn, test_reshape_reordered_dims, eps);
+
+    // Not support
+    //TEST_OP_SQUASH_DIMS(armnn, test_elu, eps);
+    //TEST_OP_SQUASH_DIMS(armnn, test_elu_default, eps);   
+#endif
+
+#if 0
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_extended_dims, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_negative_dim, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_one_dim, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_reduced_dims, eps);
+    //TEST_OP(mkldnn_with_generic_fallback, test_reshape_reordered_dims, eps);
+#endif
 
 #undef TEST_OP_SQUASH_DIMS
 #undef TEST_OP

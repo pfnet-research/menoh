@@ -41,7 +41,12 @@ int main(int argc, char** argv) {
 
     // Build model
     menoh::model_builder model_builder(vpt);
+#ifdef ENABLE_ARMNN
+    auto model = model_builder.build_model(model_data, "armnn");
+#endif
+#ifdef ENABLE_MKLDNN
     auto model = model_builder.build_model(model_data, "mkldnn_with_generic_fallback");
+#endif
     model_data
       .reset(); // you can delete model_data explicitly after model building
 

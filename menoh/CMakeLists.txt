@@ -1,43 +1,64 @@
 option(LINK_STATIC_LIBGCC OFF)
 option(LINK_STATIC_LIBSTDCXX OFF)
 
-## Setup MKLDNN
-find_package(MKLDNN "0.14")
-if(NOT MKLDNN_FOUND)
-    message(FATAL_ERROR "MKLDNN is not found")
+if(ENABLE_MKLDNN)
+    ## Setup MKLDNN
+    find_package(MKLDNN "0.14")
+    if(NOT MKLDNN_FOUND)
+        message(FATAL_ERROR "MKLDNN is not found")
+    endif()
+
+    # Create a object library for generating shared library
+    add_library(menoh_objlib OBJECT
+        dtype.cpp
+        array.cpp
+        onnx.cpp
+        composite_backend/backend/mkldnn/memory_cache.cpp
+        composite_backend/backend/mkldnn/mkldnn_context.cpp
+        composite_backend/backend/mkldnn/memory_conversion.cpp
+        composite_backend/backend/generic/generic_context.cpp
+        composite_backend/model_core.cpp
+        model_core_factory.cpp
+        dims.cpp
+        node.cpp
+        graph.cpp
+        mkldnn/utility.cpp
+        mkldnn/operator/conv_transpose.cpp
+        mkldnn/operator/softmax.cpp
+        mkldnn/operator/gemm.cpp
+        mkldnn/operator/eltwise.cpp
+        mkldnn/operator/lrn.cpp
+        mkldnn/operator/conv.cpp
+        mkldnn/operator/sum.cpp
+        mkldnn/operator/add.cpp
+        mkldnn/operator/concat.cpp
+        mkldnn/operator/pool.cpp
+        mkldnn/operator/fc.cpp
+        mkldnn/operator/batch_norm.cpp
+        mkldnn/model_core.cpp
+        menoh.cpp
+        model_core.cpp
+   )
 endif()
 
-# Create a object library for generating shared library
-add_library(menoh_objlib OBJECT
-    dtype.cpp
-    array.cpp
-    onnx.cpp
-    composite_backend/backend/mkldnn/memory_cache.cpp
-    composite_backend/backend/mkldnn/mkldnn_context.cpp
-    composite_backend/backend/mkldnn/memory_conversion.cpp
-    composite_backend/backend/generic/generic_context.cpp
-    composite_backend/model_core.cpp
-    model_core_factory.cpp
-    dims.cpp
-    node.cpp
-    graph.cpp
-    mkldnn/utility.cpp
-    mkldnn/operator/conv_transpose.cpp
-    mkldnn/operator/softmax.cpp
-    mkldnn/operator/gemm.cpp
-    mkldnn/operator/eltwise.cpp
-    mkldnn/operator/lrn.cpp
-    mkldnn/operator/conv.cpp
-    mkldnn/operator/sum.cpp
-    mkldnn/operator/add.cpp
-    mkldnn/operator/concat.cpp
-    mkldnn/operator/pool.cpp
-    mkldnn/operator/fc.cpp
-    mkldnn/operator/batch_norm.cpp
-    mkldnn/model_core.cpp
-    menoh.cpp
-    model_core.cpp
-)
+if(ENABLE_ARMNN)
+    # Create a object library for generating shared library
+    add_library(menoh_objlib OBJECT
+        dtype.cpp
+        array.cpp
+        onnx.cpp
+        model_core_factory.cpp
+        dims.cpp
+        node.cpp
+        graph.cpp
+        armnn/Inference.cpp
+        armnn/Parser.cpp
+        armnn/model_core.cpp
+        menoh.cpp
+        model_core.cpp
+   )
+endif()
+
 set_target_properties(menoh_objlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_dependencies(menoh_objlib gen_onnx_proto) # custom target defined in onnx
 target_include_directories(menoh_objlib PUBLIC
@@ -57,7 +78,15 @@ if(NOT APPLE AND NOT MSVC)
         TARGET menoh APPEND_STRING PROPERTY
             LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/menoh.map")
 endif()
+
+if(ENABLE_MKLDNN)
 target_link_libraries(menoh PRIVATE ${MKLDNN_LIBRARIES} onnx)
+endif()
+
+if(ENABLE_ARMNN)
+target_link_libraries(menoh PRIVATE ${ARMNN_LIBRARIES} onnx)
+endif()
+
 if(LINK_STATIC_LIBGCC)
     target_link_libraries(menoh PRIVATE -static-libgcc)
 endif()
@@ -67,7 +96,13 @@ endif()
 
 # menoh_test_target: only used in `test` subdirectory
 add_library(menoh_test_target $<TARGET_OBJECTS:menoh_objlib>)
-target_link_libraries(menoh_test_target PRIVATE ${MKLDNN_LIBRARIES} onnx)
+if(ENABLE_MKLDNN)
+  target_link_libraries(menoh_test_target PRIVATE ${MKLDNN_LIBRARIES} onnx)
+endif()
+
+if(ENABLE_ARMNN)
+  target_link_libraries(menoh_test_target PRIVATE ${ARMNN_LIBRARIES} onnx)
+endif()
 
 install(TARGETS menoh
     RUNTIME DESTINATION "bin"
