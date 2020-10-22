@@ -22,7 +22,7 @@ brew upgrade python
 export PATH=/usr/local/opt/python/libexec/bin:$PATH
 
 brew install numpy || true
-brew install opencv mkl-dnn
+brew install opencv
 
 if [ "$LINK_STATIC" != "true" ]; then brew install protobuf; fi
 
@@ -30,6 +30,10 @@ pip install --user chainer # for generating test data
 
 brew list --versions
 pip list
+
+# build and install prerequisites
+build_mkldnn
+install_mkldnn
 
 # build and test menoh
 build_menoh

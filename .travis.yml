@@ -22,13 +22,12 @@ cache:
 
 matrix:
     include:
-        # osx builds were disabled, because Menoh does not yet support newer mkl-dnn (oneDNN) installed by current Homebrew.
-        # - os: osx
-        #   env: PLATFORM=macosx-x86_64
-        # - os: osx
-        #   env: PLATFORM=macosx-x86_64 LINK_STATIC=true
-        # - os: osx
-        #   env: PLATFORM=macosx-x86_64 BUILD_STATIC_LIBS=true
+        - os: osx
+          env: PLATFORM=macosx-x86_64
+        - os: osx
+          env: PLATFORM=macosx-x86_64 LINK_STATIC=true
+        - os: osx
+          env: PLATFORM=macosx-x86_64 BUILD_STATIC_LIBS=true
         - os: linux
           env: PLATFORM=linux-x86_64 BUILDENV_IMAGE=okapies/buildenv:linux-x64-devtoolset-6
         - os: linux
