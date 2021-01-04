@@ -7,5 +7,5 @@ Name: Menoh
 Description: DNN inference library written in C++
 Version: @MENOH_MAJOR_VERSION@.@MENOH_MINOR_VERSION@.@MENOH_PATCH_VERSION@
 Libs: -L${libdir} -lmenoh
-Libs.private: -lmenoh_onnx -lmenoh_onnx_proto
+Libs.private: -lmenoh_onnx -lmenoh_onnx_proto @MKLDNN_LIBRARY@ @PROTOBUF_LIBRARY@ -lstdc++ -lm
 Cflags: -I${includedir}
