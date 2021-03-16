@@ -71,7 +71,11 @@ else()
     # Note: It may conflict with the loading mechanism in onnx's CMake configuration.
     # See external/onnx/CMakeLists.txt for more details.
     include(FindProtobuf)
-    find_package(Protobuf ${PROTOBUF_VERSION} REQUIRED)
+
+    # As today, it s not sure that menoh will work perfectly with future version of protobuf (2.7.0, ...) : 
+    # https://github.com/protocolbuffers/protobuf/releases
+    # Let's be safe and require protobuf 2.6.1:
+    find_package(Protobuf 2.6.1 REQUIRED)
 
     # Note: `protobuf::protoc` is not supported in CMake 3.9.4 or older
     if(NOT TARGET protobuf::protoc)
